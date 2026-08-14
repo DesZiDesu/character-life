@@ -1,7 +1,7 @@
 <div id="character-life-settings" class="character-life-settings">
     <div class="inline-drawer">
         <div class="inline-drawer-toggle inline-drawer-header interactable" tabindex="0" role="button" aria-expanded="false">
-            <b><i class="fa-solid fa-address-book" aria-hidden="true"></i> Character Life's <small>v1.2.0</small></b>
+            <b><i class="fa-solid fa-address-book" aria-hidden="true"></i> Character Life's <small>v1.3.0</small></b>
             <div class="inline-drawer-icon fa-solid fa-circle-chevron-down down" aria-hidden="true"></div>
         </div>
         <div class="inline-drawer-content">
@@ -36,16 +36,20 @@
                 <label><span>Portrait size <output id="character-life-size-output">76 px</output></span><input id="character-life-size" type="range" min="52" max="124" step="4"></label>
                 <label><span>Missing portrait</span><select id="character-life-missing"><option value="empty">Keep empty frame</option><option value="hidden">Hide image frame</option></select></label>
                 <label><span>Language / ภาษา</span><select id="character-life-language"><option value="en">English</option><option value="th">ไทย</option></select></label>
-                <label><span>Header color</span><input id="character-life-header-color" type="color"></label>
-                <label><span>Thought color</span><input id="character-life-thought-color" type="color"></label>
-                <label><span>Dialogue color</span><input id="character-life-dialogue-color" type="color"></label>
+                <label><span>Manager accent</span><input id="character-life-ui-accent" type="color"></label>
+                <label><span>Manager background</span><input id="character-life-ui-background" type="color"></label>
+                <label><span>Manager surface</span><input id="character-life-ui-surface" type="color"></label>
+                <label><span>Manager text</span><input id="character-life-ui-text" type="color"></label>
+                <label><span>Unknown NPC header fallback</span><input id="character-life-header-color" type="color"></label>
+                <label><span>Unknown NPC thought fallback</span><input id="character-life-thought-color" type="color"></label>
+                <label><span>Unknown NPC dialogue fallback</span><input id="character-life-dialogue-color" type="color"></label>
             </div>
 
             <details class="cl-tag-guide">
                 <summary><i class="fa-solid fa-code"></i> Speaker tag format</summary>
-                <pre>[CL_THOUGHT|Roxy|school-uniform]Inner thought.[/CL_THOUGHT]
-[CL_HEADER|Roxy|school-uniform]
-[CL_DIALOGUE|Roxy|school-uniform]Spoken dialogue.[/CL_DIALOGUE]</pre>
+                <pre>[CL_THOUGHT|Avery|field-uniform]Inner thought.[/CL_THOUGHT]
+[CL_HEADER|Avery|field-uniform]
+[CL_DIALOGUE|Avery|field-uniform]Spoken dialogue.[/CL_DIALOGUE]</pre>
                 <p>The form is optional. The extension also understands Chronicle <code>[THINK]</code>, <code>[CHAR]</code>, <code>[NPC]</code>, and <code>[SAY]</code> tags.</p>
             </details>
         </div>

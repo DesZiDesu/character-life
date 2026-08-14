@@ -10,15 +10,20 @@ Character Life's is a responsive SillyTavern extension that stores NPC identitie
 - Active/default form selection plus per-image X/Y framing and zoom.
 - Direct portrait framing on PC and mobile: mouse/finger drag, touch pinch, mouse-wheel zoom, precise sliders, and reset control.
 - New portrait files display adjustable previews before the NPC is saved.
+- Crop previews mirror the configured chat portrait shape, including portrait and hexagonal frames.
 - Images are compressed and stored locally in IndexedDB; no Catbox, GitHub image upload, or external image host is required.
 - NPC metadata remains in SillyTavern extension settings or chat metadata according to its selected scope.
 - Rich AI-readable profiles: pronouns, age, species, appearance, personality, relationships, background, goals, abilities, speech style, and current state.
 - Optional hidden profile-update tags let the active model save newly established NPC facts back into the correct library scope.
 - AI Appearance Reader uses SillyTavern's configured multimodal Image Captioning model with Full Appearance and clothing-independent Key Features modes.
+- One-tap AI assistance for every editable NPC identity and profile field through the active SillyTavern model.
+- Optional adult-only anatomy field and vision mode, gated behind explicit 18+ confirmation and a numeric adult age.
 - Wand-menu launcher, Extension Settings drawer, and responsive NPC manager.
 - Chronicle Signature and Chronicle Imperial designs, switchable in Settings.
 - Left, middle, or right speaker alignment. Thought and dialogue automatically follow the header.
 - Adjustable portrait size, shape, missing-image behavior, and independent header/thought/dialogue colors.
+- Independent automatic NPC palettes derived from portraits, with name-based fallback and optional custom colors per NPC.
+- Editable manager accent, background, surface, and text colors.
 - English and Thai interface.
 - Chat renderer for Character Life tags and the existing Chronicle `[THINK]`, `[CHAR]`, `[NPC]`, and `[SAY]` formats.
 - Optional prompt injection that teaches the current bot to emit the correct order: thought → header → dialogue.
@@ -40,9 +45,9 @@ Open **Character Life's** from the Wand menu beside the chat input or from **Ext
 ## Speaker tags
 
 ```text
-[CL_THOUGHT|Roxy|school-uniform]I recognize that seal.[/CL_THOUGHT]
-[CL_HEADER|Roxy|school-uniform]
-[CL_DIALOGUE|Roxy|school-uniform]Do not touch it yet.[/CL_DIALOGUE]
+[CL_THOUGHT|Avery|field-uniform]I recognize that seal.[/CL_THOUGHT]
+[CL_HEADER|Avery|field-uniform]
+[CL_DIALOGUE|Avery|field-uniform]Do not touch it yet.[/CL_DIALOGUE]
 ```
 
 The portrait form is optional. If it is omitted, the NPC's active form is used. Dialogue numbering is created by the extension and does not need to be written by the model.
@@ -52,7 +57,7 @@ One header can contain several dialogue blocks from the same speaker with ordina
 When automatic profile updates are enabled, the model may append hidden updates such as:
 
 ```text
-[CL_NPC_UPDATE|Roxy|relationship]She now trusts the user with restricted research notes.[/CL_NPC_UPDATE]
+[CL_NPC_UPDATE|Avery|relationship]They now trust the user with restricted research notes.[/CL_NPC_UPDATE]
 ```
 
 Character Life's removes this tag from the visible reply and saves the supported field to the resolved NPC scope. Updates are limited to facts established in the conversation or saved profile.
@@ -60,10 +65,10 @@ Character Life's removes this tag from the visible reply and saves the supported
 Existing Chronicle formats are also recognized:
 
 ```text
-[THINK|Roxy|#a96f7c|I recognize that seal.]
-[CHAR|any-value|Roxy|#c39a62]
+[THINK|Avery|#a96f7c|I recognize that seal.]
+[CHAR|any-value|Avery|#c39a62]
 [NPC|Unknown Guard|#c39a62|Royal Watch]
-[SAY|Roxy|#7792bd|Do not touch it yet.]
+[SAY|Avery|#7792bd|Do not touch it yet.]
 ```
 
 When Character Life's renders the chat itself, disable overlapping Header/Monologue/Dialogue regex scripts for the same tags to avoid two formatters styling the same message.
@@ -77,6 +82,15 @@ When Character Life's renders the chat itself, disable overlapping Header/Monolo
 - The AI Appearance Reader sends the selected image to the multimodal provider configured under SillyTavern's Image Captioning settings. This can use that provider's API quota. The generated description is shown for review and is not saved until **Save NPC** is pressed.
 
 ## Version
+
+### 1.3.0
+
+- Added compact speaker-block spacing and repaired left/center/right alignment on mobile.
+- Added portrait-derived per-NPC header, thought, and dialogue palettes plus custom per-NPC overrides.
+- Rebuilt the mobile manager as full-screen list and detail/edit views with Back navigation.
+- Made crop previews match the active chat frame geometry.
+- Added editable manager colors and removed franchise-specific placeholders and examples.
+- Added AI help for every NPC field and a separately gated adult-only profile workflow.
 
 ### 1.2.0
 

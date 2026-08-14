@@ -6,11 +6,11 @@ const CHAT_KEY = 'character_life_npcs';
 const PROMPT_KEY = 'character_life_speaker_protocol';
 const DB_NAME = 'character-life-portraits';
 const DB_STORE = 'portraits';
-const VERSION = '1.2.0';
+const VERSION = '1.3.0';
 
 const NPC_PROFILE_FIELDS = Object.freeze([
     'pronouns', 'age', 'species', 'appearance', 'personality', 'relationship',
-    'background', 'goals', 'abilities', 'speechStyle', 'currentState',
+    'background', 'goals', 'abilities', 'speechStyle', 'currentState', 'adultAppearance',
 ]);
 const NPC_UPDATE_FIELDS = new Map([
     ['pronouns', 'pronouns'], ['age', 'age'], ['species', 'species'], ['race', 'species'],
@@ -23,6 +23,7 @@ const NPC_UPDATE_FIELDS = new Map([
     ['speechstyle', 'speechStyle'], ['speech-style', 'speechStyle'], ['speech_style', 'speechStyle'],
     ['currentstate', 'currentState'], ['current-state', 'currentState'], ['current_state', 'currentState'], ['status', 'currentState'],
     ['notes', 'notes'],
+    ['adultappearance', 'adultAppearance'], ['adult-appearance', 'adultAppearance'], ['intimateanatomy', 'adultAppearance'],
 ]);
 
 const DEFAULT_CONFIG = Object.freeze({
@@ -39,6 +40,10 @@ const DEFAULT_CONFIG = Object.freeze({
     headerColor: '#c39a62',
     thoughtColor: '#a96f7c',
     dialogueColor: '#7792bd',
+    uiAccent: '#c39a62',
+    uiBackground: '#151312',
+    uiSurface: '#211e1b',
+    uiText: '#eee8dc',
 });
 
 const COPY = {
@@ -73,6 +78,7 @@ const COPY = {
         "AI appearance reader": "AI วิเคราะห์รูปลักษณ์",
         "Full Appearance": "รูปลักษณ์แบบเต็ม",
         "Key Features": "เฉพาะลักษณะสำคัญ",
+        "Adult Full Appearance (18+)": "รูปลักษณ์ผู้ใหญ่แบบเต็ม (18+)",
         "Reference image": "รูปภาพอ้างอิง",
         "Use active portrait": "ใช้ภาพหลักปัจจุบัน",
         "Analyze image": "วิเคราะห์รูปภาพ",
@@ -81,6 +87,17 @@ const COPY = {
         "Choose a reference image or add a portrait first.": "เลือกรูปภาพอ้างอิงหรือเพิ่มรูปตัวละครก่อน",
         "Vision uses SillyTavern's configured multimodal caption model.": "ระบบวิเคราะห์รูปใช้โมเดล Multimodal Caption ที่ตั้งค่าไว้ใน SillyTavern",
         "Accent": "สีประจำตัว",
+        "Theme mode": "โหมดสีประจำตัว",
+        "Automatic from portrait": "อัตโนมัติจากรูปภาพ",
+        "Custom NPC colors": "กำหนดสี NPC เอง",
+        "Header accent": "สีส่วนหัว",
+        "Thought accent": "สีความคิด",
+        "Dialogue accent": "สีบทสนทนา",
+        "AI help": "ให้ AI ช่วย",
+        "Generating…": "กำลังสร้าง…",
+        "Adult-only profile": "โปรไฟล์สำหรับผู้ใหญ่เท่านั้น",
+        "I confirm this fictional NPC is 18 or older": "ฉันยืนยันว่า NPC สมมตินี้มีอายุ 18 ปีขึ้นไป",
+        "Adult appearance / intimate anatomy": "รูปลักษณ์ผู้ใหญ่ / กายวิภาคส่วนลับ",
         "Save NPC": "บันทึก NPC",
         "Cancel": "ยกเลิก",
         "Portrait forms": "ชุดภาพ / ร่าง",
@@ -125,6 +142,7 @@ let dbPromise = null;
 let renderTimer = null;
 const portraitUrls = new Map();
 const previewUrls = new Set();
+const paletteJobs = new Set();
 
 const clone = value => globalThis.structuredClone ? structuredClone(value) : JSON.parse(JSON.stringify(value));
 const uid = prefix => `${prefix || 'cl'}-${globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(16).slice(2)}`}`;
@@ -141,6 +159,39 @@ const slug = value => cleanText(value, 'default', 80).toLowerCase().normalize('N
 
 function tr(value) {
     return COPY[getConfig().language]?.[value] || value;
+}
+
+function hslToHex(hue, saturation, lightness) {
+    const h = ((Number(hue) % 360) + 360) % 360;
+    const s = clamp(saturation, 60, 0, 100) / 100;
+    const l = clamp(lightness, 60, 0, 100) / 100;
+    const chroma = (1 - Math.abs(2 * l - 1)) * s;
+    const x = chroma * (1 - Math.abs((h / 60) % 2 - 1));
+    const m = l - chroma / 2;
+    const [r, g, b] = h < 60 ? [chroma, x, 0] : h < 120 ? [x, chroma, 0] : h < 180 ? [0, chroma, x]
+        : h < 240 ? [0, x, chroma] : h < 300 ? [x, 0, chroma] : [chroma, 0, x];
+    return `#${[r, g, b].map(value => Math.round((value + m) * 255).toString(16).padStart(2, '0')).join('')}`;
+}
+
+function namePalette(name) {
+    let hash = 0;
+    for (const character of String(name || 'Unknown')) hash = ((hash << 5) - hash + character.codePointAt(0)) | 0;
+    const hue = Math.abs(hash) % 360;
+    return { header: hslToHex(hue, 68, 65), thought: hslToHex(hue - 28, 48, 68), dialogue: hslToHex(hue + 24, 58, 68) };
+}
+
+function normalizePalette(value, fallback) {
+    const base = fallback || namePalette('Unknown');
+    return {
+        header: validColor(value?.header, base.header),
+        thought: validColor(value?.thought, base.thought),
+        dialogue: validColor(value?.dialogue, base.dialogue),
+    };
+}
+
+function npcPalette(npc) {
+    const fallback = namePalette(npc?.name);
+    return npc?.themeMode === 'custom' ? normalizePalette(npc.customPalette, fallback) : normalizePalette(npc?.autoPalette, fallback);
 }
 
 function notify(type, message) {
@@ -172,6 +223,10 @@ function getConfig() {
     config.headerColor = validColor(config.headerColor, DEFAULT_CONFIG.headerColor);
     config.thoughtColor = validColor(config.thoughtColor, DEFAULT_CONFIG.thoughtColor);
     config.dialogueColor = validColor(config.dialogueColor, DEFAULT_CONFIG.dialogueColor);
+    config.uiAccent = validColor(config.uiAccent, DEFAULT_CONFIG.uiAccent);
+    config.uiBackground = validColor(config.uiBackground, DEFAULT_CONFIG.uiBackground);
+    config.uiSurface = validColor(config.uiSurface, DEFAULT_CONFIG.uiSurface);
+    config.uiText = validColor(config.uiText, DEFAULT_CONFIG.uiText);
     config.showWand = Boolean(config.showWand);
     config.injectPrompt = Boolean(config.injectPrompt);
     config.autoDiscover = Boolean(config.autoDiscover);
@@ -237,8 +292,13 @@ function normalizeNpc(value) {
         abilities: cleanText(value.abilities, '', 3000),
         speechStyle: cleanText(value.speechStyle, '', 2000),
         currentState: cleanText(value.currentState, '', 2000),
+        adultProfile: Boolean(value.adultProfile),
+        adultAppearance: cleanText(value.adultAppearance, '', 4000),
         notes: cleanText(value.notes, '', 2000),
-        accent: validColor(value.accent, DEFAULT_CONFIG.headerColor),
+        themeMode: value.themeMode === 'custom' ? 'custom' : 'auto',
+        autoPalette: value.autoPalette ? normalizePalette(value.autoPalette, namePalette(value.name)) : null,
+        customPalette: normalizePalette(value.customPalette || { header: value.accent }, namePalette(value.name)),
+        accent: validColor(value.accent, namePalette(value.name).header),
         forms,
         activeFormId: active,
         createdAt: cleanText(value.createdAt, new Date().toISOString(), 80),
@@ -356,6 +416,51 @@ function loadImage(file) {
     });
 }
 
+function rgbToHsl(red, green, blue) {
+    const r = red / 255; const g = green / 255; const b = blue / 255;
+    const max = Math.max(r, g, b); const min = Math.min(r, g, b);
+    const lightness = (max + min) / 2;
+    if (max === min) return { h: 0, s: 0, l: lightness };
+    const delta = max - min;
+    const saturation = lightness > .5 ? delta / (2 - max - min) : delta / (max + min);
+    let hue = max === r ? (g - b) / delta + (g < b ? 6 : 0) : max === g ? (b - r) / delta + 2 : (r - g) / delta + 4;
+    hue *= 60;
+    return { h: hue, s: saturation, l: lightness };
+}
+
+async function paletteFromImage(blob, name = '') {
+    try {
+        const image = await loadImage(blob);
+        const canvas = document.createElement('canvas');
+        canvas.width = 72; canvas.height = 72;
+        const context = canvas.getContext('2d', { willReadFrequently: true });
+        context.drawImage(image, 0, 0, canvas.width, canvas.height);
+        const pixels = context.getImageData(0, 0, canvas.width, canvas.height).data;
+        const bins = Array.from({ length: 24 }, () => ({ weight: 0, hue: 0, saturation: 0, lightness: 0 }));
+        for (let index = 0; index < pixels.length; index += 16) {
+            if (pixels[index + 3] < 140) continue;
+            const color = rgbToHsl(pixels[index], pixels[index + 1], pixels[index + 2]);
+            if (color.s < .14 || color.l < .08 || color.l > .94) continue;
+            const bin = bins[Math.floor(color.h / 15) % bins.length];
+            const weight = color.s * (.45 + Math.min(color.l, 1 - color.l));
+            bin.weight += weight; bin.hue += color.h * weight; bin.saturation += color.s * weight; bin.lightness += color.l * weight;
+        }
+        const ranked = bins.map((bin, index) => ({ ...bin, index })).filter(bin => bin.weight > 0).sort((a, b) => b.weight - a.weight);
+        if (!ranked.length) return namePalette(name);
+        const chosen = [];
+        for (const bin of ranked) {
+            if (chosen.every(item => Math.min(Math.abs(item.index - bin.index), 24 - Math.abs(item.index - bin.index)) > 2)) chosen.push(bin);
+            if (chosen.length === 3) break;
+        }
+        while (chosen.length < 3) chosen.push({ ...chosen[0], hue: chosen[0].hue + chosen.length * 24 * chosen[0].weight });
+        const color = (bin, offset = 0) => hslToHex(bin.hue / bin.weight + offset, clamp(bin.saturation / bin.weight * 100, 60, 46, 78), clamp(bin.lightness / bin.weight * 100, 65, 58, 74));
+        return { header: color(chosen[0]), thought: color(chosen[1], -8), dialogue: color(chosen[2], 8) };
+    } catch (error) {
+        console.warn("[Character Life's] Could not extract portrait colors.", error);
+        return namePalette(name);
+    }
+}
+
 async function preparePortrait(file) {
     if (!(file instanceof File) || !file.type.startsWith('image/')) throw new Error('Choose an image file.');
     if (file.size > 20 * 1024 * 1024) throw new Error('Image is larger than 20 MB.');
@@ -395,6 +500,15 @@ function configureDocument() {
     root.style.setProperty('--cl-thought-color', config.thoughtColor);
     root.style.setProperty('--cl-dialogue-color', config.dialogueColor);
     root.style.setProperty('--cl-portrait-size', `${config.portraitSize}px`);
+    root.style.setProperty('--cl-ui-accent', config.uiAccent);
+    root.style.setProperty('--cl-ui-background', config.uiBackground);
+    root.style.setProperty('--cl-ui-surface', config.uiSurface);
+    root.style.setProperty('--cl-ui-text', config.uiText);
+    const manager = document.querySelector('.cl-manager');
+    if (manager) {
+        manager.dataset.clShape = config.portraitShape;
+        manager.dataset.clDesign = config.design;
+    }
     document.querySelectorAll('.mes_text.character-life-rendered').forEach(element => {
         element.dataset.clDesign = config.design;
         element.dataset.clPosition = config.position;
@@ -451,6 +565,7 @@ function transformSpeakerMarkup(source) {
         (_match, name, color, subtitle) => headerBlock(name, '', color, subtitle));
     output = output.replace(/\[SAY\|(?:(?!#)([^|\]]*)\|)?(#[0-9a-f]{3,6})\|([\s\S]*?)\]/gi,
         (_match, name, color, content) => dialogueBlock(name || 'Unknown', content, '', color, ++dialogueNumber));
+    output = output.replace(/(<\/section>)(?:\s|<br\s*\/?>)*(?=<section class="cl-chat-block)/gi, '$1');
     return output;
 }
 
@@ -493,6 +608,7 @@ async function applyNpcUpdates(updates) {
             resolved = { npc, scope: 'chat' };
         }
         if (!resolved || resolved.npc[update.field] === update.value) continue;
+        if (update.field === 'adultAppearance' && !resolved.npc.adultProfile) continue;
         resolved.npc[update.field] = update.value;
         resolved.npc.updatedAt = new Date().toISOString();
         changedScopes.add(resolved.scope);
@@ -512,6 +628,22 @@ async function ensureUnknownNpc(name) {
     await saveLibrary('chat', npcs);
 }
 
+async function ensurePortraitPalette(npc, scope) {
+    const key = `${scope}:${npc.id}`;
+    if (npc.themeMode !== 'auto' || npc.autoPalette || paletteJobs.has(key)) return;
+    const form = chooseForm(npc, '');
+    if (!form?.portraitId) return;
+    paletteJobs.add(key);
+    try {
+        const blob = await portraitGet(form.portraitId);
+        if (!blob) return;
+        npc.autoPalette = await paletteFromImage(blob, npc.name);
+        await saveLibrary(scope, getLibrary(scope).map(entry => entry.id === npc.id ? npc : entry));
+    } finally {
+        paletteJobs.delete(key);
+    }
+}
+
 function chooseForm(npc, requested) {
     if (!npc?.forms?.length) return null;
     const wanted = cleanText(requested, '', 100).toLocaleLowerCase();
@@ -527,7 +659,11 @@ async function hydrateChat(root) {
         if (!resolved) { unknowns.add(block.dataset.clName); continue; }
         const { npc, scope } = resolved;
         block.dataset.clScope = scope;
+        const palette = npcPalette(npc);
         const header = block.classList.contains('cl-chat-header');
+        if (block.classList.contains('cl-chat-thought')) block.style.setProperty('--cl-local-thought', palette.thought);
+        if (block.classList.contains('cl-chat-dialogue')) block.style.setProperty('--cl-local-dialogue', palette.dialogue);
+        void ensurePortraitPalette(npc, scope);
         if (!header) continue;
         const identity = block.querySelector('.cl-chat-identity');
         const title = identity?.querySelector('strong');
@@ -536,7 +672,7 @@ async function hydrateChat(root) {
         if (title) title.textContent = npc.name;
         if (role && npc.role) role.textContent = npc.role;
         if (affiliation) affiliation.textContent = npc.affiliation || '';
-        block.style.setProperty('--cl-local-header', npc.accent || getConfig().headerColor);
+        block.style.setProperty('--cl-local-header', palette.header);
         const form = chooseForm(npc, block.dataset.clForm);
         const image = block.querySelector('.cl-chat-portrait img');
         const portrait = block.querySelector('.cl-chat-portrait');
@@ -609,6 +745,7 @@ function buildRegistryPrompt() {
             ['personality', npc.personality], ['relationship', npc.relationship], ['background', npc.background],
             ['goals', npc.goals], ['abilities', npc.abilities], ['speech style', npc.speechStyle],
             ['current state', npc.currentState], ['notes', npc.notes], ['portrait forms', forms],
+            ['adult appearance', npc.adultProfile ? npc.adultAppearance : ''],
         ].filter(([, value]) => value).map(([label, value]) => `${label}: ${promptValue(value)}`);
         const record = `- ${npc.name}${fields.length ? ` | ${fields.join(' | ')}` : ''}`;
         if (length + record.length > 18000) break;
@@ -647,7 +784,7 @@ function buildManager() {
     overlay.setAttribute('aria-hidden', 'true');
     overlay.innerHTML = `<button class="cl-manager-backdrop" type="button" data-action="close" aria-label="Close"></button>
         <section class="cl-manager" role="dialog" aria-modal="true" aria-labelledby="character-life-title">
-            <header class="cl-manager-header"><div class="cl-brand-mark"><i class="fa-solid fa-feather-pointed"></i></div>
+            <header class="cl-manager-header"><button type="button" class="cl-manager-back" data-action="back" aria-label="Back to NPC list"><i class="fa-solid fa-arrow-left"></i></button><div class="cl-brand-mark"><i class="fa-solid fa-feather-pointed"></i></div>
                 <div><small>CHRONICLE REGISTRY</small><h2 id="character-life-title">Character Life's</h2></div>
                 <button type="button" class="menu_button menu_button_icon" data-action="close" aria-label="Close"><i class="fa-solid fa-xmark"></i></button></header>
             <div class="cl-manager-toolbar"><div class="cl-scope-tabs" role="tablist">
@@ -690,7 +827,7 @@ function renderScopeTabs() {
 
 function npcAvatar(npc, extraClass = '', interactive = false) {
     const active = chooseForm(npc, '');
-    return `<span class="cl-library-avatar ${extraClass}" data-portrait-id="${escapeHtml(active?.portraitId || '')}" data-x="${active?.x ?? 50}" data-y="${active?.y ?? 18}" data-zoom="${active?.zoom ?? 1}"${interactive ? ' data-crop-stage tabindex="0"' : ''} style="--npc-accent:${escapeHtml(npc.accent)}"><span>${escapeHtml(npc.name.charAt(0).toUpperCase())}</span><img alt="" hidden></span>`;
+    return `<span class="cl-library-avatar ${extraClass}" data-portrait-id="${escapeHtml(active?.portraitId || '')}" data-x="${active?.x ?? 50}" data-y="${active?.y ?? 18}" data-zoom="${active?.zoom ?? 1}"${interactive ? ' data-crop-stage tabindex="0"' : ''} style="--npc-accent:${escapeHtml(npcPalette(npc).header)}"><span>${escapeHtml(npc.name.charAt(0).toUpperCase())}</span><img alt="" hidden></span>`;
 }
 
 async function hydrateLibraryPortraits(root) {
@@ -717,6 +854,7 @@ function renderNpcList() {
         ${npcAvatar(npc)}<span><strong>${escapeHtml(npc.name)}</strong><small>${escapeHtml(npc.role || npc.affiliation || `${npc.forms.length} portrait forms`)}</small></span><i class="fa-solid fa-chevron-right"></i></button>`).join('')
         : `<div class="cl-empty-state"><i class="fa-solid fa-address-book"></i><strong>${escapeHtml(tr('No NPCs in this scope.'))}</strong><button type="button" data-action="new">${escapeHtml(tr('Create NPC'))}</button></div>`;
     void hydrateLibraryPortraits(list);
+    npcs.forEach(npc => void ensurePortraitPalette(npc, activeScope));
 }
 
 function scopeOptions(selected) {
@@ -746,35 +884,52 @@ function renderNewPortraitPreviews(input) {
     bindCropStages(container);
 }
 
+function aiFieldTitle(label, field) {
+    return `<span class="cl-field-title"><span>${escapeHtml(tr(label))}</span><button type="button" data-action="ai-field" data-ai-field="${escapeHtml(field)}" title="${escapeHtml(tr('AI help'))}"><i class="fa-solid fa-wand-magic-sparkles"></i><em>${escapeHtml(tr('AI help'))}</em></button></span>`;
+}
+
+function isExplicitAdultAge(value) {
+    const text = cleanText(value, '', 100).toLowerCase();
+    if (/\b(child|minor|teen(?:ager)?|underage|เด็ก|เยาวชน)\b/i.test(text)) return false;
+    const ages = (text.match(/\d+(?:\.\d+)?/g) || []).map(Number).filter(Number.isFinite);
+    return ages.length > 0 && ages.every(age => age >= 18);
+}
+
 function editorForm(npc = null) {
     const value = npc || normalizeNpc({ name: 'New NPC', accent: getConfig().headerColor });
+    const palette = npcPalette(value);
     const portraitOptions = value.forms.map(form => `<option value="${escapeHtml(form.id)}"${form.id === value.activeFormId ? ' selected' : ''}>${escapeHtml(form.name)}</option>`).join('');
     return `<section class="cl-editor"><div class="cl-detail-heading"><div><small>${escapeHtml(npc ? tr('Edit NPC') : tr('Create NPC'))}</small><h3>${escapeHtml(npc?.name || tr('Create NPC'))}</h3></div></div>
         <form data-form="npc" class="cl-editor-form"><input type="hidden" name="id" value="${escapeHtml(npc?.id || '')}">
             <section class="cl-editor-section wide"><header><i class="fa-solid fa-fingerprint"></i><span>${escapeHtml(tr('Identity'))}</span></header><div class="cl-editor-grid">
                 <label><span>${escapeHtml(tr('Scope'))}</span><select name="scope">${scopeOptions(activeScope)}</select></label>
-                <label><span>${escapeHtml(tr('Name'))}</span><input name="name" required maxlength="120" value="${escapeHtml(npc?.name || '')}"></label>
-                <label><span>${escapeHtml(tr('Aliases'))}</span><input name="aliases" maxlength="500" value="${escapeHtml((npc?.aliases || []).join(', '))}" placeholder="Roxy, Roxy-sensei"></label>
-                <label><span>${escapeHtml(tr('Pronouns'))}</span><input name="pronouns" maxlength="100" value="${escapeHtml(value.pronouns)}" placeholder="she / her"></label>
-                <label><span>${escapeHtml(tr('Age / apparent age'))}</span><input name="age" maxlength="100" value="${escapeHtml(value.age)}" placeholder="Adult; appears early twenties"></label>
-                <label><span>${escapeHtml(tr('Species / race'))}</span><input name="species" maxlength="120" value="${escapeHtml(value.species)}" placeholder="Migurd demon"></label>
-                <label><span>${escapeHtml(tr('Role / title'))}</span><input name="role" maxlength="160" value="${escapeHtml(value.role)}" placeholder="Water King"></label>
-                <label><span>${escapeHtml(tr('Affiliation'))}</span><input name="affiliation" maxlength="160" value="${escapeHtml(value.affiliation)}" placeholder="Ranoa University of Magic"></label>
-                <label><span>${escapeHtml(tr('Accent'))}</span><input name="accent" type="color" value="${escapeHtml(value.accent || getConfig().headerColor)}"></label>
+                <label>${aiFieldTitle('Name', 'name')}<input name="name" required maxlength="120" value="${escapeHtml(npc?.name || '')}" placeholder="NPC display name"></label>
+                <label>${aiFieldTitle('Aliases', 'aliases')}<input name="aliases" maxlength="500" value="${escapeHtml((npc?.aliases || []).join(', '))}" placeholder="Nicknames or alternate identities"></label>
+                <label>${aiFieldTitle('Pronouns', 'pronouns')}<input name="pronouns" maxlength="100" value="${escapeHtml(value.pronouns)}" placeholder="Pronouns used in narration"></label>
+                <label>${aiFieldTitle('Age / apparent age', 'age')}<input name="age" maxlength="100" value="${escapeHtml(value.age)}" placeholder="Actual and apparent age"></label>
+                <label>${aiFieldTitle('Species / race', 'species')}<input name="species" maxlength="120" value="${escapeHtml(value.species)}" placeholder="Human, spirit, android, custom species…"></label>
+                <label>${aiFieldTitle('Role / title', 'role')}<input name="role" maxlength="160" value="${escapeHtml(value.role)}" placeholder="Occupation, rank, or narrative role"></label>
+                <label>${aiFieldTitle('Affiliation', 'affiliation')}<input name="affiliation" maxlength="160" value="${escapeHtml(value.affiliation)}" placeholder="Faction, organization, household, or none"></label>
+                <label><span>${escapeHtml(tr('Theme mode'))}</span><select name="themeMode"><option value="auto"${value.themeMode !== 'custom' ? ' selected' : ''}>${escapeHtml(tr('Automatic from portrait'))}</option><option value="custom"${value.themeMode === 'custom' ? ' selected' : ''}>${escapeHtml(tr('Custom NPC colors'))}</option></select></label>
+                <label><span>${escapeHtml(tr('Header accent'))}</span><input name="headerAccent" type="color" value="${escapeHtml(palette.header)}"></label>
+                <label><span>${escapeHtml(tr('Thought accent'))}</span><input name="thoughtAccent" type="color" value="${escapeHtml(palette.thought)}"></label>
+                <label><span>${escapeHtml(tr('Dialogue accent'))}</span><input name="dialogueAccent" type="color" value="${escapeHtml(palette.dialogue)}"></label>
             </div></section>
             <section class="cl-editor-section wide"><header><i class="fa-solid fa-book-open"></i><span>${escapeHtml(tr('Character record'))}</span></header><div class="cl-editor-grid">
-                <label class="wide"><span>${escapeHtml(tr('Appearance'))}</span><textarea name="appearance" rows="5" maxlength="4000">${escapeHtml(value.appearance)}</textarea></label>
-                <label class="wide"><span>${escapeHtml(tr('Personality'))}</span><textarea name="personality" rows="4" maxlength="3000">${escapeHtml(value.personality)}</textarea></label>
-                <label class="wide"><span>${escapeHtml(tr('Relationship'))}</span><textarea name="relationship" rows="3" maxlength="3000" placeholder="Relationship with the user and important characters">${escapeHtml(value.relationship)}</textarea></label>
-                <label class="wide"><span>${escapeHtml(tr('Background / history'))}</span><textarea name="background" rows="4" maxlength="4000">${escapeHtml(value.background)}</textarea></label>
-                <label class="wide"><span>${escapeHtml(tr('Goals / motivations'))}</span><textarea name="goals" rows="3" maxlength="2500">${escapeHtml(value.goals)}</textarea></label>
-                <label class="wide"><span>${escapeHtml(tr('Abilities / combat style'))}</span><textarea name="abilities" rows="3" maxlength="3000">${escapeHtml(value.abilities)}</textarea></label>
-                <label class="wide"><span>${escapeHtml(tr('Speech style'))}</span><textarea name="speechStyle" rows="3" maxlength="2000">${escapeHtml(value.speechStyle)}</textarea></label>
-                <label class="wide"><span>${escapeHtml(tr('Current state'))}</span><textarea name="currentState" rows="3" maxlength="2000" placeholder="Current location, condition, allegiance, or active situation">${escapeHtml(value.currentState)}</textarea></label>
-                <label class="wide"><span>${escapeHtml(tr('Notes'))}</span><textarea name="notes" rows="3" maxlength="2000">${escapeHtml(value.notes)}</textarea></label>
+                <label class="wide">${aiFieldTitle('Appearance', 'appearance')}<textarea name="appearance" rows="5" maxlength="4000">${escapeHtml(value.appearance)}</textarea></label>
+                <label class="wide">${aiFieldTitle('Personality', 'personality')}<textarea name="personality" rows="4" maxlength="3000">${escapeHtml(value.personality)}</textarea></label>
+                <label class="wide">${aiFieldTitle('Relationship', 'relationship')}<textarea name="relationship" rows="3" maxlength="3000" placeholder="Relationship with the user and important characters">${escapeHtml(value.relationship)}</textarea></label>
+                <label class="wide">${aiFieldTitle('Background / history', 'background')}<textarea name="background" rows="4" maxlength="4000">${escapeHtml(value.background)}</textarea></label>
+                <label class="wide">${aiFieldTitle('Goals / motivations', 'goals')}<textarea name="goals" rows="3" maxlength="2500">${escapeHtml(value.goals)}</textarea></label>
+                <label class="wide">${aiFieldTitle('Abilities / combat style', 'abilities')}<textarea name="abilities" rows="3" maxlength="3000">${escapeHtml(value.abilities)}</textarea></label>
+                <label class="wide">${aiFieldTitle('Speech style', 'speechStyle')}<textarea name="speechStyle" rows="3" maxlength="2000">${escapeHtml(value.speechStyle)}</textarea></label>
+                <label class="wide">${aiFieldTitle('Current state', 'currentState')}<textarea name="currentState" rows="3" maxlength="2000" placeholder="Current location, condition, allegiance, or active situation">${escapeHtml(value.currentState)}</textarea></label>
+                <label class="wide">${aiFieldTitle('Notes', 'notes')}<textarea name="notes" rows="3" maxlength="2000">${escapeHtml(value.notes)}</textarea></label>
             </div></section>
+            <section class="cl-adult-panel wide"><label class="cl-adult-toggle"><input type="checkbox" name="adultProfile"${value.adultProfile ? ' checked' : ''}><span>${escapeHtml(tr('I confirm this fictional NPC is 18 or older'))}</span></label><div data-adult-fields${value.adultProfile ? '' : ' hidden'}>
+                <label>${aiFieldTitle('Adult appearance / intimate anatomy', 'adultAppearance')}<textarea name="adultAppearance" rows="4" maxlength="4000" placeholder="Optional adult-only physical profile">${escapeHtml(value.adultAppearance)}</textarea></label></div></section>
             <section class="cl-vision-panel wide" data-vision-panel><div class="cl-vision-heading"><i class="fa-solid fa-wand-magic-sparkles"></i><div><strong>${escapeHtml(tr('AI appearance reader'))}</strong><small>${escapeHtml(tr("Vision uses SillyTavern's configured multimodal caption model."))}</small></div></div>
-                <div class="cl-vision-controls"><label><span>Mode</span><select name="visionMode"><option value="full">${escapeHtml(tr('Full Appearance'))}</option><option value="key">${escapeHtml(tr('Key Features'))}</option></select></label>
+                <div class="cl-vision-controls"><label><span>Mode</span><select name="visionMode"><option value="full">${escapeHtml(tr('Full Appearance'))}</option><option value="key">${escapeHtml(tr('Key Features'))}</option><option value="adult">${escapeHtml(tr('Adult Full Appearance (18+)'))}</option></select></label>
                 ${portraitOptions ? `<label><span>${escapeHtml(tr('Use active portrait'))}</span><select name="visionFormId">${portraitOptions}</select></label>` : ''}
                 <label class="cl-vision-file"><span>${escapeHtml(tr('Reference image'))}</span><input name="visionImage" type="file" accept="image/*"></label>
                 <button type="button" class="cl-primary" data-action="analyze-appearance"><i class="fa-solid fa-eye"></i>${escapeHtml(tr('Analyze image'))}</button></div><p data-vision-status></p></section>
@@ -803,6 +958,7 @@ function npcRecordView(npc) {
         [tr('Appearance'), npc.appearance], [tr('Personality'), npc.personality], [tr('Relationship'), npc.relationship],
         [tr('Background / history'), npc.background], [tr('Goals / motivations'), npc.goals],
         [tr('Abilities / combat style'), npc.abilities], [tr('Speech style'), npc.speechStyle], [tr('Current state'), npc.currentState],
+        [tr('Adult appearance / intimate anatomy'), npc.adultProfile ? npc.adultAppearance : ''],
     ].filter(([, value]) => value);
     if (!fields.length) return '';
     return `<section class="cl-record-view"><header><i class="fa-solid fa-book-open"></i><strong>${escapeHtml(tr('Character record'))}</strong></header><dl>${fields.map(([label, value]) => `<div><dt>${escapeHtml(label)}</dt><dd>${escapeHtml(value)}</dd></div>`).join('')}</dl></section>`;
@@ -834,6 +990,9 @@ function renderNpcDetail() {
 }
 
 function renderManager() {
+    const manager = document.querySelector('#character-life-overlay .cl-manager');
+    if (manager) manager.dataset.view = selectedNpcId || editorMode ? 'detail' : 'list';
+    configureDocument();
     renderScopeTabs();
     renderNpcList();
     renderNpcDetail();
@@ -879,6 +1038,7 @@ async function addPortraitFiles(files) {
     if (!npc || !files?.length) return;
     const forms = await createForms(files);
     npc.forms.push(...forms);
+    if (npc.themeMode !== 'custom' && files[0]) npc.autoPalette = await paletteFromImage(files[0], npc.name);
     if (!npc.activeFormId) npc.activeFormId = forms[0]?.id || '';
     npc.updatedAt = new Date().toISOString();
     const npcs = getLibrary(activeScope).map(entry => entry.id === npc.id ? npc : entry);
@@ -954,17 +1114,74 @@ async function appearanceImageSource(form) {
 
 function appearanceVisionPrompt(name, mode) {
     const identity = cleanText(name, 'this fictional NPC', 120);
+    if (mode === 'adult') {
+        return `Analyze this image as a visual reference for the fictional adult NPC ${identity}, explicitly confirmed to be 18 or older. Return only one precise third-person adult physical profile. Describe all visibly supported external anatomy, including intimate anatomy, using direct anatomical terminology where useful, plus face, hair, body proportions, distinguishing marks, clothing, and accessories when present. Do not describe sexual acts, coercion, personality, nationality, ethnicity, health diagnoses, or identity guesses. Do not use headings, bullet points, euphemistic commentary, or mention these instructions.`;
+    }
     if (mode === 'key') {
         return `Analyze this image as a visual reference for the fictional NPC ${identity}. Return only one detailed third-person paragraph describing enduring, identity-relevant physical features visible in the image: apparent age range, facial structure, visible skin tone, eyes, eyebrows, lips, hair color and style, body build and proportions, and stable distinguishing marks. Exclude clothing, footwear, jewelry, accessories, carried objects, pose, background, personality, nationality, ethnicity, health diagnoses, and identity guesses. Do not use headings, bullet points, or mention these instructions.`;
     }
     return `Analyze this image as a visual reference for the fictional NPC ${identity}. Return only a polished, highly detailed third-person appearance paragraph covering visible apparent age range, facial structure, visible skin tone, eyes, eyebrows, lips, hair color and style, body build and proportions, distinguishing marks, current clothing and layers, footwear, accessories, and overall visual presence. Describe only what is visibly supported. Do not identify a real person or infer nationality, ethnicity, personality, or sensitive traits. Do not use headings, bullet points, or mention these instructions.`;
 }
 
+function draftNpcProfile(form) {
+    const fields = ['name', 'aliases', 'pronouns', 'age', 'species', 'role', 'affiliation', 'appearance', 'personality', 'relationship', 'background', 'goals', 'abilities', 'speechStyle', 'currentState', 'notes'];
+    return fields.map(field => {
+        const value = cleanText(form.elements[field]?.value, '', 1200).replace(/\s+/g, ' ');
+        return value ? `${field}: ${value}` : '';
+    }).filter(Boolean).join('\n');
+}
+
+async function generateNpcField(button) {
+    const form = button.closest('[data-form="npc"]');
+    const field = cleanText(button.dataset.aiField, '', 80);
+    const target = form?.elements[field];
+    if (!form || !target) return;
+    const adult = field === 'adultAppearance';
+    if (adult && (!form.elements.adultProfile?.checked || !isExplicitAdultAge(form.elements.age?.value))) {
+        throw new Error('Enable the adult-only profile and set a clearly stated numeric age of 18 or older first.');
+    }
+    const descriptions = {
+        name: 'a fitting display name', aliases: 'useful aliases, nicknames, or alternate identities', pronouns: 'narrative pronouns', age: 'actual and apparent age',
+        species: 'species or race', role: 'occupation, title, rank, and narrative role', affiliation: 'faction, organization, household, or allegiance',
+        appearance: 'a detailed persistent physical appearance without inventing temporary clothing unless supported', personality: 'a nuanced personality including virtues, flaws, habits, boundaries, and emotional tendencies',
+        relationship: 'the current relationship with the user and other important characters, including trust, tension, affection, obligations, and boundaries',
+        background: 'a coherent background and personal history', goals: 'short-term and long-term goals, needs, fears, and motivations',
+        abilities: 'skills, powers, limitations, equipment familiarity, and combat or professional style', speechStyle: 'voice, vocabulary, cadence, mannerisms, honorifics, and recurring speech habits',
+        currentState: 'current location, condition, allegiance, responsibilities, and active situation', notes: 'other durable roleplay facts that do not belong in another field',
+        adultAppearance: 'an explicit adult-only physical and intimate anatomy profile using precise terminology where useful',
+    };
+    const current = cleanText(target.value, '', 4000);
+    const generator = SillyTavern.getContext().generateQuietPrompt;
+    if (typeof generator !== 'function') throw new Error('This SillyTavern build does not expose quiet AI generation to extensions.');
+    const adultInstruction = adult ? 'This is an adult fictional character explicitly confirmed to be 18 or older. Explicit sexual anatomy may be described directly. Do not include sexual acts, coercion, or any minor-coded traits.' : 'Do not add explicit sexual anatomy to this non-adult-profile field.';
+    const prompt = `CHARACTER LIFE NPC FIELD ASSISTANT\nWrite ${descriptions[field] || field} for the NPC draft below. Use established facts from the current SillyTavern conversation and the draft first. You may creatively complete missing details only when they do not contradict known lore. ${adultInstruction}\nReturn only the finished field value, without a heading, label, markdown, quotation marks, commentary, or Character Life tags.\n\nNPC DRAFT:\n${draftNpcProfile(form) || '(empty draft)'}\n\nCURRENT FIELD VALUE:\n${current || '(empty)'}`;
+    button.disabled = true;
+    button.classList.add('is-working');
+    const original = button.querySelector('em')?.textContent;
+    if (button.querySelector('em')) button.querySelector('em').textContent = tr('Generating…');
+    try {
+        const result = cleanText(await generator(prompt), '', Number(target.maxLength) || 4000)
+            .replace(/^```(?:\w+)?\s*|\s*```$/g, '').trim();
+        if (!result) throw new Error('The AI returned an empty field.');
+        target.value = result;
+        target.dispatchEvent(new Event('input', { bubbles: true }));
+        target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    } finally {
+        button.disabled = false;
+        button.classList.remove('is-working');
+        if (button.querySelector('em')) button.querySelector('em').textContent = original || tr('AI help');
+    }
+}
+
 async function analyzeAppearance(button) {
     const form = button.closest('[data-form="npc"]');
     if (!form) return;
     const status = form.querySelector('[data-vision-status]');
-    const appearance = form.elements.appearance;
+    const mode = form.elements.visionMode?.value;
+    if (mode === 'adult' && (!form.elements.adultProfile?.checked || !isExplicitAdultAge(form.elements.age?.value))) {
+        throw new Error('Adult image analysis requires the adult-only profile and a clearly stated numeric age of 18 or older.');
+    }
+    const appearance = mode === 'adult' ? form.elements.adultAppearance : form.elements.appearance;
     const source = await appearanceImageSource(form);
     if (!source) throw new Error(tr('Choose a reference image or add a portrait first.'));
     button.disabled = true;
@@ -972,7 +1189,7 @@ async function analyzeAppearance(button) {
     if (status) status.textContent = tr('Analyzing image…');
     try {
         const { getMultimodalCaption } = await import('/scripts/extensions/shared.js');
-        const result = cleanText(await getMultimodalCaption(source, appearanceVisionPrompt(form.elements.name?.value, form.elements.visionMode?.value)), '', 4000);
+        const result = cleanText(await getMultimodalCaption(source, appearanceVisionPrompt(form.elements.name?.value, mode)), '', 4000);
         if (!result) throw new Error('The vision model returned an empty description.');
         appearance.value = result;
         appearance.dispatchEvent(new Event('input', { bubbles: true }));
@@ -1045,15 +1262,17 @@ async function onManagerClick(event) {
     if (!button) return;
     const action = button.dataset.action;
     if (action === 'close') closeManager();
+    else if (action === 'back') { selectedNpcId = ''; editorMode = ''; renderManager(); }
     else if (action === 'new') { selectedNpcId = ''; editorMode = 'new'; renderManager(); }
     else if (action === 'select') { selectedNpcId = button.dataset.id; editorMode = ''; renderManager(); }
     else if (action === 'edit') { editorMode = 'edit'; renderNpcDetail(); }
-    else if (action === 'cancel') { editorMode = ''; renderNpcDetail(); }
+    else if (action === 'cancel') { editorMode = ''; renderManager(); }
     else if (action === 'delete-npc') await deleteNpc();
     else if (action === 'activate-form') await changeActiveForm(button.dataset.formId);
     else if (action === 'delete-form') await deleteForm(button.dataset.formId);
     else if (action === 'copy-npc') await copyNpcTo(document.querySelector('[data-copy-scope]')?.value || activeScope);
     else if (action === 'reset-crop') setCropFrame(button.closest('[data-crop-host]')?.querySelector('[data-crop-stage]'), 50, 18, 1);
+    else if (action === 'ai-field') await generateNpcField(button);
     else if (action === 'analyze-appearance') await analyzeAppearance(button);
     else if (action === 'export') await exportBackup();
     else if (action === 'import') document.querySelector('[data-backup-input]')?.click();
@@ -1066,12 +1285,15 @@ async function onManagerSubmit(event) {
         const data = new FormData(form);
         const targetScope = data.get('scope');
         const existing = cleanText(data.get('id')) ? currentNpc() : null;
+        const adultProfile = data.has('adultProfile');
+        if (adultProfile && !isExplicitAdultAge(data.get('age'))) throw new Error('Adult-only profiles require a clearly stated numeric age of 18 or older.');
         const npc = normalizeNpc({
             ...(existing || {}), id: existing?.id || uid('npc'), name: data.get('name'), aliases: String(data.get('aliases') || '').split(','),
             role: data.get('role'), affiliation: data.get('affiliation'), pronouns: data.get('pronouns'), age: data.get('age'), species: data.get('species'),
             appearance: data.get('appearance'), personality: data.get('personality'), relationship: data.get('relationship'), background: data.get('background'),
             goals: data.get('goals'), abilities: data.get('abilities'), speechStyle: data.get('speechStyle'), currentState: data.get('currentState'),
-            notes: data.get('notes'), accent: data.get('accent'),
+            adultProfile, adultAppearance: adultProfile ? data.get('adultAppearance') : '', notes: data.get('notes'),
+            themeMode: data.get('themeMode'), customPalette: { header: data.get('headerAccent'), thought: data.get('thoughtAccent'), dialogue: data.get('dialogueAccent') },
             createdAt: existing?.createdAt || new Date().toISOString(), updatedAt: new Date().toISOString(), forms: existing?.forms || [], activeFormId: existing?.activeFormId || '',
         });
         const files = form.querySelector('[name="portraits"]')?.files;
@@ -1084,6 +1306,7 @@ async function onManagerSubmit(event) {
             const created = await createForms(files, '', framing);
             npc.forms.push(...created);
             npc.activeFormId ||= created[0]?.id || '';
+            if (npc.themeMode !== 'custom') npc.autoPalette = await paletteFromImage(files[0], npc.name);
         }
         if (existing && targetScope !== activeScope) {
             await saveLibrary(activeScope, getLibrary(activeScope).filter(entry => entry.id !== existing.id));
@@ -1219,7 +1442,10 @@ function onManagerInput(event) {
 async function onManagerChange(event) {
     const scope = event.target.closest('[data-scope]');
     if (scope) return;
-    if (event.target.matches('[name="portraits"]')) {
+    if (event.target.matches('[name="adultProfile"]')) {
+        const panel = event.target.closest('[data-form="npc"]')?.querySelector('[data-adult-fields]');
+        if (panel) panel.hidden = !event.target.checked;
+    } else if (event.target.matches('[name="portraits"]')) {
         renderNewPortraitPreviews(event.target);
     } else if (event.target.matches('[data-add-portraits]')) {
         await addPortraitFiles(event.target.files);
@@ -1312,6 +1538,10 @@ async function addSettingsDrawer() {
     });
     bindSetting('character-life-missing', 'missingPortrait', configureDocument);
     bindSetting('character-life-language', 'language', () => { if (document.getElementById('character-life-overlay')?.classList.contains('is-open')) renderManager(); });
+    bindSetting('character-life-ui-accent', 'uiAccent', configureDocument);
+    bindSetting('character-life-ui-background', 'uiBackground', configureDocument);
+    bindSetting('character-life-ui-surface', 'uiSurface', configureDocument);
+    bindSetting('character-life-ui-text', 'uiText', configureDocument);
     bindSetting('character-life-header-color', 'headerColor', configureDocument);
     bindSetting('character-life-thought-color', 'thoughtColor', configureDocument);
     bindSetting('character-life-dialogue-color', 'dialogueColor', configureDocument);
