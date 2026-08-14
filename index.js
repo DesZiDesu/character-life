@@ -6,7 +6,7 @@ const CHAT_KEY = 'character_life_npcs';
 const PROMPT_KEY = 'character_life_speaker_protocol';
 const DB_NAME = 'character-life-portraits';
 const DB_STORE = 'portraits';
-const VERSION = '1.3.0';
+const VERSION = '1.3.1';
 
 const NPC_PROFILE_FIELDS = Object.freeze([
     'pronouns', 'age', 'species', 'appearance', 'personality', 'relationship',
@@ -78,7 +78,7 @@ const COPY = {
         "AI appearance reader": "AI วิเคราะห์รูปลักษณ์",
         "Full Appearance": "รูปลักษณ์แบบเต็ม",
         "Key Features": "เฉพาะลักษณะสำคัญ",
-        "Adult Full Appearance (18+)": "รูปลักษณ์ผู้ใหญ่แบบเต็ม (18+)",
+        "Adult Full Appearance": "รูปลักษณ์ผู้ใหญ่แบบเต็ม",
         "Reference image": "รูปภาพอ้างอิง",
         "Use active portrait": "ใช้ภาพหลักปัจจุบัน",
         "Analyze image": "วิเคราะห์รูปภาพ",
@@ -96,7 +96,7 @@ const COPY = {
         "AI help": "ให้ AI ช่วย",
         "Generating…": "กำลังสร้าง…",
         "Adult-only profile": "โปรไฟล์สำหรับผู้ใหญ่เท่านั้น",
-        "I confirm this fictional NPC is 18 or older": "ฉันยืนยันว่า NPC สมมตินี้มีอายุ 18 ปีขึ้นไป",
+        "I confirm this fictional NPC is an adult": "ฉันยืนยันว่า NPC สมมตินี้เป็นผู้ใหญ่",
         "Adult appearance / intimate anatomy": "รูปลักษณ์ผู้ใหญ่ / กายวิภาคส่วนลับ",
         "Save NPC": "บันทึก NPC",
         "Cancel": "ยกเลิก",
@@ -888,11 +888,16 @@ function aiFieldTitle(label, field) {
     return `<span class="cl-field-title"><span>${escapeHtml(tr(label))}</span><button type="button" data-action="ai-field" data-ai-field="${escapeHtml(field)}" title="${escapeHtml(tr('AI help'))}"><i class="fa-solid fa-wand-magic-sparkles"></i><em>${escapeHtml(tr('AI help'))}</em></button></span>`;
 }
 
-function isExplicitAdultAge(value) {
+function explicitlyIdentifiesMinor(value) {
     const text = cleanText(value, '', 100).toLowerCase();
-    if (/\b(child|minor|teen(?:ager)?|underage|เด็ก|เยาวชน)\b/i.test(text)) return false;
+    if (!text) return false;
+    if (/\b(child|minor|underage)\b|เด็ก|เยาวชน/i.test(text)) return true;
     const ages = (text.match(/\d+(?:\.\d+)?/g) || []).map(Number).filter(Number.isFinite);
-    return ages.length > 0 && ages.every(age => age >= 18);
+    return ages.some(age => age >= 0 && age < 18);
+}
+
+function adultProfileAllowed(form) {
+    return Boolean(form?.elements?.adultProfile?.checked) && !explicitlyIdentifiesMinor(form.elements.age?.value);
 }
 
 function editorForm(npc = null) {
@@ -926,10 +931,10 @@ function editorForm(npc = null) {
                 <label class="wide">${aiFieldTitle('Current state', 'currentState')}<textarea name="currentState" rows="3" maxlength="2000" placeholder="Current location, condition, allegiance, or active situation">${escapeHtml(value.currentState)}</textarea></label>
                 <label class="wide">${aiFieldTitle('Notes', 'notes')}<textarea name="notes" rows="3" maxlength="2000">${escapeHtml(value.notes)}</textarea></label>
             </div></section>
-            <section class="cl-adult-panel wide"><label class="cl-adult-toggle"><input type="checkbox" name="adultProfile"${value.adultProfile ? ' checked' : ''}><span>${escapeHtml(tr('I confirm this fictional NPC is 18 or older'))}</span></label><div data-adult-fields${value.adultProfile ? '' : ' hidden'}>
+            <section class="cl-adult-panel wide"><label class="cl-adult-toggle"><input type="checkbox" name="adultProfile"${value.adultProfile ? ' checked' : ''}><span>${escapeHtml(tr('I confirm this fictional NPC is an adult'))}</span></label><div data-adult-fields${value.adultProfile ? '' : ' hidden'}>
                 <label>${aiFieldTitle('Adult appearance / intimate anatomy', 'adultAppearance')}<textarea name="adultAppearance" rows="4" maxlength="4000" placeholder="Optional adult-only physical profile">${escapeHtml(value.adultAppearance)}</textarea></label></div></section>
             <section class="cl-vision-panel wide" data-vision-panel><div class="cl-vision-heading"><i class="fa-solid fa-wand-magic-sparkles"></i><div><strong>${escapeHtml(tr('AI appearance reader'))}</strong><small>${escapeHtml(tr("Vision uses SillyTavern's configured multimodal caption model."))}</small></div></div>
-                <div class="cl-vision-controls"><label><span>Mode</span><select name="visionMode"><option value="full">${escapeHtml(tr('Full Appearance'))}</option><option value="key">${escapeHtml(tr('Key Features'))}</option><option value="adult">${escapeHtml(tr('Adult Full Appearance (18+)'))}</option></select></label>
+                <div class="cl-vision-controls"><label><span>Mode</span><select name="visionMode"><option value="full">${escapeHtml(tr('Full Appearance'))}</option><option value="key">${escapeHtml(tr('Key Features'))}</option><option value="adult">${escapeHtml(tr('Adult Full Appearance'))}</option></select></label>
                 ${portraitOptions ? `<label><span>${escapeHtml(tr('Use active portrait'))}</span><select name="visionFormId">${portraitOptions}</select></label>` : ''}
                 <label class="cl-vision-file"><span>${escapeHtml(tr('Reference image'))}</span><input name="visionImage" type="file" accept="image/*"></label>
                 <button type="button" class="cl-primary" data-action="analyze-appearance"><i class="fa-solid fa-eye"></i>${escapeHtml(tr('Analyze image'))}</button></div><p data-vision-status></p></section>
@@ -1115,7 +1120,7 @@ async function appearanceImageSource(form) {
 function appearanceVisionPrompt(name, mode) {
     const identity = cleanText(name, 'this fictional NPC', 120);
     if (mode === 'adult') {
-        return `Analyze this image as a visual reference for the fictional adult NPC ${identity}, explicitly confirmed to be 18 or older. Return only one precise third-person adult physical profile. Describe all visibly supported external anatomy, including intimate anatomy, using direct anatomical terminology where useful, plus face, hair, body proportions, distinguishing marks, clothing, and accessories when present. Do not describe sexual acts, coercion, personality, nationality, ethnicity, health diagnoses, or identity guesses. Do not use headings, bullet points, euphemistic commentary, or mention these instructions.`;
+        return `Analyze this image as a visual reference for the fictional adult NPC ${identity}, explicitly confirmed to be an adult. Return only one precise third-person adult physical profile. Describe all visibly supported external anatomy, including intimate anatomy, using direct anatomical terminology where useful, plus face, hair, body proportions, distinguishing marks, clothing, and accessories when present. Do not describe sexual acts, coercion, personality, nationality, ethnicity, health diagnoses, or identity guesses. Do not use headings, bullet points, euphemistic commentary, or mention these instructions.`;
     }
     if (mode === 'key') {
         return `Analyze this image as a visual reference for the fictional NPC ${identity}. Return only one detailed third-person paragraph describing enduring, identity-relevant physical features visible in the image: apparent age range, facial structure, visible skin tone, eyes, eyebrows, lips, hair color and style, body build and proportions, and stable distinguishing marks. Exclude clothing, footwear, jewelry, accessories, carried objects, pose, background, personality, nationality, ethnicity, health diagnoses, and identity guesses. Do not use headings, bullet points, or mention these instructions.`;
@@ -1137,8 +1142,8 @@ async function generateNpcField(button) {
     const target = form?.elements[field];
     if (!form || !target) return;
     const adult = field === 'adultAppearance';
-    if (adult && (!form.elements.adultProfile?.checked || !isExplicitAdultAge(form.elements.age?.value))) {
-        throw new Error('Enable the adult-only profile and set a clearly stated numeric age of 18 or older first.');
+    if (adult && !adultProfileAllowed(form)) {
+        throw new Error('Confirm this fictional NPC is an adult. Adult mode cannot be used when the profile identifies the NPC as a minor.');
     }
     const descriptions = {
         name: 'a fitting display name', aliases: 'useful aliases, nicknames, or alternate identities', pronouns: 'narrative pronouns', age: 'actual and apparent age',
@@ -1153,7 +1158,7 @@ async function generateNpcField(button) {
     const current = cleanText(target.value, '', 4000);
     const generator = SillyTavern.getContext().generateQuietPrompt;
     if (typeof generator !== 'function') throw new Error('This SillyTavern build does not expose quiet AI generation to extensions.');
-    const adultInstruction = adult ? 'This is an adult fictional character explicitly confirmed to be 18 or older. Explicit sexual anatomy may be described directly. Do not include sexual acts, coercion, or any minor-coded traits.' : 'Do not add explicit sexual anatomy to this non-adult-profile field.';
+    const adultInstruction = adult ? 'This is a fictional character explicitly confirmed to be an adult. Explicit sexual anatomy may be described directly. Do not include sexual acts, coercion, or any minor-coded traits.' : 'Do not add explicit sexual anatomy to this non-adult-profile field.';
     const prompt = `CHARACTER LIFE NPC FIELD ASSISTANT\nWrite ${descriptions[field] || field} for the NPC draft below. Use established facts from the current SillyTavern conversation and the draft first. You may creatively complete missing details only when they do not contradict known lore. ${adultInstruction}\nReturn only the finished field value, without a heading, label, markdown, quotation marks, commentary, or Character Life tags.\n\nNPC DRAFT:\n${draftNpcProfile(form) || '(empty draft)'}\n\nCURRENT FIELD VALUE:\n${current || '(empty)'}`;
     button.disabled = true;
     button.classList.add('is-working');
@@ -1178,8 +1183,8 @@ async function analyzeAppearance(button) {
     if (!form) return;
     const status = form.querySelector('[data-vision-status]');
     const mode = form.elements.visionMode?.value;
-    if (mode === 'adult' && (!form.elements.adultProfile?.checked || !isExplicitAdultAge(form.elements.age?.value))) {
-        throw new Error('Adult image analysis requires the adult-only profile and a clearly stated numeric age of 18 or older.');
+    if (mode === 'adult' && !adultProfileAllowed(form)) {
+        throw new Error('Confirm this fictional NPC is an adult. Adult image analysis cannot be used when the profile identifies the NPC as a minor.');
     }
     const appearance = mode === 'adult' ? form.elements.adultAppearance : form.elements.appearance;
     const source = await appearanceImageSource(form);
@@ -1286,7 +1291,7 @@ async function onManagerSubmit(event) {
         const targetScope = data.get('scope');
         const existing = cleanText(data.get('id')) ? currentNpc() : null;
         const adultProfile = data.has('adultProfile');
-        if (adultProfile && !isExplicitAdultAge(data.get('age'))) throw new Error('Adult-only profiles require a clearly stated numeric age of 18 or older.');
+        if (adultProfile && explicitlyIdentifiesMinor(data.get('age'))) throw new Error('Adult-only profiles cannot be enabled when the age field identifies the NPC as a minor.');
         const npc = normalizeNpc({
             ...(existing || {}), id: existing?.id || uid('npc'), name: data.get('name'), aliases: String(data.get('aliases') || '').split(','),
             role: data.get('role'), affiliation: data.get('affiliation'), pronouns: data.get('pronouns'), age: data.get('age'), species: data.get('species'),

@@ -17,7 +17,7 @@ Character Life's is a responsive SillyTavern extension that stores NPC identitie
 - Optional hidden profile-update tags let the active model save newly established NPC facts back into the correct library scope.
 - AI Appearance Reader uses SillyTavern's configured multimodal Image Captioning model with Full Appearance and clothing-independent Key Features modes.
 - One-tap AI assistance for every editable NPC identity and profile field through the active SillyTavern model.
-- Optional adult-only anatomy field and vision mode, gated behind explicit 18+ confirmation and a numeric adult age.
+- Optional adult-only anatomy field and vision mode, enabled by an adult-character confirmation; the age field may be left blank.
 - Wand-menu launcher, Extension Settings drawer, and responsive NPC manager.
 - Chronicle Signature and Chronicle Imperial designs, switchable in Settings.
 - Left, middle, or right speaker alignment. Thought and dialogue automatically follow the header.
@@ -82,6 +82,11 @@ When Character Life's renders the chat itself, disable overlapping Header/Monolo
 - The AI Appearance Reader sends the selected image to the multimodal provider configured under SillyTavern's Image Captioning settings. This can use that provider's API quota. The generated description is shown for review and is not saved until **Save NPC** is pressed.
 
 ## Version
+
+### 1.3.1
+
+- Removed the numeric-age requirement from adult profile and image-analysis assistance; the age field may now be left blank.
+- Adult mode now requires only an adult-character confirmation and remains unavailable when the profile explicitly identifies the NPC as a minor.
 
 ### 1.3.0
 
