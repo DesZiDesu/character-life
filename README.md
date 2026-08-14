@@ -8,6 +8,8 @@ Character Life's is a responsive SillyTavern extension that stores NPC identitie
 - Scope priority: Chat → Character → Global.
 - Multiple local portraits/forms for every NPC (outfits, transformations, ages, disguises, expressions, and more).
 - Active/default form selection plus per-image X/Y framing and zoom.
+- Direct portrait framing on PC and mobile: mouse/finger drag, touch pinch, mouse-wheel zoom, precise sliders, and reset control.
+- New portrait files display adjustable previews before the NPC is saved.
 - Images are compressed and stored locally in IndexedDB; no Catbox, GitHub image upload, or external image host is required.
 - NPC metadata remains in SillyTavern extension settings or chat metadata according to its selected scope.
 - Rich AI-readable profiles: pronouns, age, species, appearance, personality, relationships, background, goals, abilities, speech style, and current state.
@@ -75,6 +77,11 @@ When Character Life's renders the chat itself, disable overlapping Header/Monolo
 - The AI Appearance Reader sends the selected image to the multimodal provider configured under SillyTavern's Image Captioning settings. This can use that provider's API quota. The generated description is shown for review and is not saved until **Save NPC** is pressed.
 
 ## Version
+
+### 1.2.0
+
+- Added direct mouse, pointer, and touch portrait manipulation for desktop and mobile.
+- Added pinch/wheel zoom, drag positioning, framing reset, and pre-save portrait previews.
 
 ### 1.1.0
 

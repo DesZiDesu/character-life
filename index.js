@@ -6,7 +6,7 @@ const CHAT_KEY = 'character_life_npcs';
 const PROMPT_KEY = 'character_life_speaker_protocol';
 const DB_NAME = 'character-life-portraits';
 const DB_STORE = 'portraits';
-const VERSION = '1.1.0';
+const VERSION = '1.2.0';
 
 const NPC_PROFILE_FIELDS = Object.freeze([
     'pronouns', 'age', 'species', 'appearance', 'personality', 'relationship',
@@ -90,6 +90,9 @@ const COPY = {
         "Set active": "ตั้งเป็นภาพหลัก",
         "Delete": "ลบ",
         "Save framing": "บันทึกตำแหน่งภาพ",
+        "Reset framing": "รีเซ็ตตำแหน่งภาพ",
+        "Drag to reposition • Pinch or wheel to zoom": "ลากเพื่อจัดตำแหน่ง • จีบนิ้วหรือหมุนล้อเมาส์เพื่อซูม",
+        "Adjust before saving": "ปรับภาพก่อนบันทึก",
         "Horizontal": "แนวนอน",
         "Vertical": "แนวตั้ง",
         "Zoom": "ซูม",
@@ -121,6 +124,7 @@ let searchText = '';
 let dbPromise = null;
 let renderTimer = null;
 const portraitUrls = new Map();
+const previewUrls = new Set();
 
 const clone = value => globalThis.structuredClone ? structuredClone(value) : JSON.parse(JSON.stringify(value));
 const uid = prefix => `${prefix || 'cl'}-${globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(16).slice(2)}`}`;
@@ -368,7 +372,7 @@ async function preparePortrait(file) {
     return blob || file;
 }
 
-async function createForms(files, baseName = '') {
+async function createForms(files, baseName = '', framing = []) {
     const list = Array.from(files || []).slice(0, 20);
     const forms = [];
     for (let index = 0; index < list.length; index += 1) {
@@ -376,7 +380,10 @@ async function createForms(files, baseName = '') {
         const portraitId = uid('portrait');
         await portraitPut(portraitId, await preparePortrait(file));
         const filename = file.name.replace(/\.[^.]+$/, '');
-        forms.push(normalizeForm({ id: uid('form'), name: baseName && list.length === 1 ? baseName : filename || `Form ${index + 1}`, portraitId }));
+        forms.push(normalizeForm({
+            id: uid('form'), name: baseName && list.length === 1 ? baseName : filename || `Form ${index + 1}`, portraitId,
+            x: framing[index]?.x, y: framing[index]?.y, zoom: framing[index]?.zoom,
+        }));
     }
     return forms;
 }
@@ -681,9 +688,9 @@ function renderScopeTabs() {
     });
 }
 
-function npcAvatar(npc, extraClass = '') {
+function npcAvatar(npc, extraClass = '', interactive = false) {
     const active = chooseForm(npc, '');
-    return `<span class="cl-library-avatar ${extraClass}" data-portrait-id="${escapeHtml(active?.portraitId || '')}" data-x="${active?.x ?? 50}" data-y="${active?.y ?? 18}" data-zoom="${active?.zoom ?? 1}" style="--npc-accent:${escapeHtml(npc.accent)}"><span>${escapeHtml(npc.name.charAt(0).toUpperCase())}</span><img alt="" hidden></span>`;
+    return `<span class="cl-library-avatar ${extraClass}" data-portrait-id="${escapeHtml(active?.portraitId || '')}" data-x="${active?.x ?? 50}" data-y="${active?.y ?? 18}" data-zoom="${active?.zoom ?? 1}"${interactive ? ' data-crop-stage tabindex="0"' : ''} style="--npc-accent:${escapeHtml(npc.accent)}"><span>${escapeHtml(npc.name.charAt(0).toUpperCase())}</span><img alt="" hidden></span>`;
 }
 
 async function hydrateLibraryPortraits(root) {
@@ -714,6 +721,29 @@ function renderNpcList() {
 
 function scopeOptions(selected) {
     return ['global', 'character', 'chat'].map(scope => `<option value="${scope}"${scope === selected ? ' selected' : ''}${!scopeAvailable(scope) ? ' disabled' : ''}>${escapeHtml(scopeLabel(scope))}</option>`).join('');
+}
+
+function releasePreviewUrls() {
+    for (const url of previewUrls) URL.revokeObjectURL(url);
+    previewUrls.clear();
+}
+
+function newPortraitPreview(file, index) {
+    const url = URL.createObjectURL(file);
+    previewUrls.add(url);
+    return `<article class="cl-new-portrait-card" data-crop-host data-new-crop="${index}"><div class="cl-crop-preview"><span class="cl-library-avatar large cl-crop-stage" data-crop-stage tabindex="0" data-x="50" data-y="18" data-zoom="1"><img src="${escapeHtml(url)}" alt="${escapeHtml(file.name)}"></span>
+        <div><strong>${escapeHtml(file.name.replace(/\.[^.]+$/, '') || `Form ${index + 1}`)}</strong><small>${escapeHtml(tr('Drag to reposition • Pinch or wheel to zoom'))}</small><button type="button" data-action="reset-crop"><i class="fa-solid fa-crosshairs"></i>${escapeHtml(tr('Reset framing'))}</button></div></div>
+        <input type="hidden" data-crop-x value="50"><input type="hidden" data-crop-y value="18"><input type="hidden" data-crop-zoom value="1"></article>`;
+}
+
+function renderNewPortraitPreviews(input) {
+    const container = input.closest('[data-form="npc"]')?.querySelector('[data-new-portrait-previews]');
+    if (!container) return;
+    releasePreviewUrls();
+    const files = Array.from(input.files || []).slice(0, 20);
+    container.hidden = !files.length;
+    container.innerHTML = files.length ? `<div class="cl-preview-heading"><i class="fa-solid fa-crop-simple"></i><strong>${escapeHtml(tr('Adjust before saving'))}</strong></div>${files.map(newPortraitPreview).join('')}` : '';
+    bindCropStages(container);
 }
 
 function editorForm(npc = null) {
@@ -748,20 +778,21 @@ function editorForm(npc = null) {
                 ${portraitOptions ? `<label><span>${escapeHtml(tr('Use active portrait'))}</span><select name="visionFormId">${portraitOptions}</select></label>` : ''}
                 <label class="cl-vision-file"><span>${escapeHtml(tr('Reference image'))}</span><input name="visionImage" type="file" accept="image/*"></label>
                 <button type="button" class="cl-primary" data-action="analyze-appearance"><i class="fa-solid fa-eye"></i>${escapeHtml(tr('Analyze image'))}</button></div><p data-vision-status></p></section>
-            ${npc ? '' : `<label class="wide cl-file-drop"><i class="fa-solid fa-images"></i><span>${escapeHtml(tr('Add portraits'))}</span><small>${escapeHtml(tr('Portrait files stay on this device.'))}</small><input name="portraits" type="file" accept="image/*" multiple></label>`}
+            ${npc ? '' : `<label class="wide cl-file-drop"><i class="fa-solid fa-images"></i><span>${escapeHtml(tr('Add portraits'))}</span><small>${escapeHtml(tr('Portrait files stay on this device.'))}</small><input name="portraits" type="file" accept="image/*" multiple></label><section class="cl-new-portrait-previews wide" data-new-portrait-previews hidden></section>`}
             <div class="cl-form-actions wide"><button type="button" data-action="cancel">${escapeHtml(tr('Cancel'))}</button><button class="cl-primary" type="submit"><i class="fa-solid fa-check"></i>${escapeHtml(tr('Save NPC'))}</button></div>
         </form></section>`;
 }
 
 function formCard(npc, form) {
     const active = form.id === npc.activeFormId;
-    return `<article class="cl-form-card${active ? ' is-active' : ''}">${npcAvatar({ ...npc, activeFormId: form.id, forms: [form] }, 'large')}
+    return `<article class="cl-form-card${active ? ' is-active' : ''}" data-crop-host><div class="cl-crop-preview">${npcAvatar({ ...npc, activeFormId: form.id, forms: [form] }, 'large cl-crop-stage', true)}<small>${escapeHtml(tr('Drag to reposition • Pinch or wheel to zoom'))}</small></div>
         <div class="cl-form-copy"><div><strong>${escapeHtml(form.name)}</strong>${active ? `<span>${escapeHtml(tr('Active'))}</span>` : ''}</div>
         <form data-form="framing" data-form-id="${escapeHtml(form.id)}"><label class="name-row">${escapeHtml(tr('Form name'))}<input name="name" maxlength="100" value="${escapeHtml(form.name)}"></label>
             <label>${escapeHtml(tr('Horizontal'))}<input type="range" name="x" min="0" max="100" value="${form.x}"><output>${Math.round(form.x)}%</output></label>
             <label>${escapeHtml(tr('Vertical'))}<input type="range" name="y" min="0" max="100" value="${form.y}"><output>${Math.round(form.y)}%</output></label>
             <label>${escapeHtml(tr('Zoom'))}<input type="range" name="zoom" min="1" max="3" step="0.05" value="${form.zoom}"><output>${form.zoom.toFixed(2)}×</output></label>
             <div><button type="button" data-action="activate-form" data-form-id="${escapeHtml(form.id)}"><i class="fa-solid fa-star"></i>${escapeHtml(tr('Set active'))}</button>
+            <button type="button" data-action="reset-crop"><i class="fa-solid fa-crosshairs"></i>${escapeHtml(tr('Reset framing'))}</button>
             <button type="button" data-action="delete-form" data-form-id="${escapeHtml(form.id)}"><i class="fa-solid fa-trash"></i>${escapeHtml(tr('Delete'))}</button>
             <button class="cl-primary" type="submit"><i class="fa-solid fa-crop-simple"></i>${escapeHtml(tr('Save framing'))}</button></div></form></div></article>`;
 }
@@ -792,12 +823,14 @@ function detailView(npc) {
 function renderNpcDetail() {
     const detail = document.querySelector('#character-life-overlay [data-detail]');
     if (!detail) return;
+    releasePreviewUrls();
     const npc = currentNpc();
     if (editorMode === 'new') detail.innerHTML = editorForm();
     else if (editorMode === 'edit' && npc) detail.innerHTML = editorForm(npc);
     else if (npc) detail.innerHTML = detailView(npc);
     else detail.innerHTML = `<div class="cl-detail-empty"><i class="fa-solid fa-feather-pointed"></i><strong>${escapeHtml(tr('Select an NPC or create a new one.'))}</strong><p>${escapeHtml(tr('Chat overrides Character, and Character overrides Global.'))}</p></div>`;
     void hydrateLibraryPortraits(detail);
+    bindCropStages(detail);
 }
 
 function renderManager() {
@@ -824,6 +857,7 @@ function closeManager() {
     overlay?.setAttribute('aria-hidden', 'true');
     document.body.classList.remove('character-life-open');
     editorMode = '';
+    releasePreviewUrls();
 }
 
 async function deleteNpc() {
@@ -1019,6 +1053,7 @@ async function onManagerClick(event) {
     else if (action === 'activate-form') await changeActiveForm(button.dataset.formId);
     else if (action === 'delete-form') await deleteForm(button.dataset.formId);
     else if (action === 'copy-npc') await copyNpcTo(document.querySelector('[data-copy-scope]')?.value || activeScope);
+    else if (action === 'reset-crop') setCropFrame(button.closest('[data-crop-host]')?.querySelector('[data-crop-stage]'), 50, 18, 1);
     else if (action === 'analyze-appearance') await analyzeAppearance(button);
     else if (action === 'export') await exportBackup();
     else if (action === 'import') document.querySelector('[data-backup-input]')?.click();
@@ -1041,7 +1076,12 @@ async function onManagerSubmit(event) {
         });
         const files = form.querySelector('[name="portraits"]')?.files;
         if (files?.length) {
-            const created = await createForms(files);
+            const framing = Array.from(form.querySelectorAll('[data-new-crop]')).map(card => ({
+                x: Number(card.querySelector('[data-crop-x]')?.value),
+                y: Number(card.querySelector('[data-crop-y]')?.value),
+                zoom: Number(card.querySelector('[data-crop-zoom]')?.value),
+            }));
+            const created = await createForms(files, '', framing);
             npc.forms.push(...created);
             npc.activeFormId ||= created[0]?.id || '';
         }
@@ -1071,6 +1111,96 @@ async function onManagerSubmit(event) {
     }
 }
 
+function cropElements(stage) {
+    const host = stage.closest('[data-crop-host]');
+    return {
+        host,
+        x: host?.querySelector('[name="x"], [data-crop-x]'),
+        y: host?.querySelector('[name="y"], [data-crop-y]'),
+        zoom: host?.querySelector('[name="zoom"], [data-crop-zoom]'),
+    };
+}
+
+function setCropFrame(stage, x, y, zoom) {
+    if (!stage) return;
+    const values = {
+        x: clamp(x, clamp(stage.dataset.x, 50, 0, 100), 0, 100),
+        y: clamp(y, clamp(stage.dataset.y, 18, 0, 100), 0, 100),
+        zoom: clamp(zoom, clamp(stage.dataset.zoom, 1, 1, 3), 1, 3),
+    };
+    stage.dataset.x = String(values.x);
+    stage.dataset.y = String(values.y);
+    stage.dataset.zoom = String(values.zoom);
+    const image = stage.querySelector('img');
+    if (image) {
+        image.style.objectPosition = `${values.x}% ${values.y}%`;
+        image.style.transform = `scale(${values.zoom})`;
+    }
+    const controls = cropElements(stage);
+    for (const key of ['x', 'y', 'zoom']) {
+        if (!controls[key]) continue;
+        controls[key].value = String(values[key]);
+        const output = controls[key].parentElement?.querySelector('output');
+        if (output) output.textContent = key === 'zoom' ? `${values.zoom.toFixed(2)}×` : `${Math.round(values[key])}%`;
+    }
+}
+
+function bindCropStage(stage) {
+    if (stage.dataset.cropBound === 'true') return;
+    stage.dataset.cropBound = 'true';
+    const pointers = new Map();
+    let origin = null;
+    let pinchDistance = 0;
+
+    const beginOrigin = () => {
+        const points = [...pointers.values()];
+        origin = { x: clamp(stage.dataset.x, 50, 0, 100), y: clamp(stage.dataset.y, 18, 0, 100), zoom: clamp(stage.dataset.zoom, 1, 1, 3), points };
+        pinchDistance = points.length > 1 ? Math.hypot(points[0].x - points[1].x, points[0].y - points[1].y) : 0;
+    };
+    stage.addEventListener('pointerdown', event => {
+        if (event.pointerType === 'mouse' && event.button !== 0) return;
+        event.preventDefault();
+        stage.setPointerCapture?.(event.pointerId);
+        pointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
+        beginOrigin();
+        stage.classList.add('is-adjusting');
+    });
+    stage.addEventListener('pointermove', event => {
+        if (!pointers.has(event.pointerId) || !origin) return;
+        event.preventDefault();
+        pointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
+        const points = [...pointers.values()];
+        if (points.length > 1 && pinchDistance > 0) {
+            const distance = Math.hypot(points[0].x - points[1].x, points[0].y - points[1].y);
+            setCropFrame(stage, origin.x, origin.y, origin.zoom * distance / pinchDistance);
+        } else {
+            const start = origin.points[0];
+            const dx = points[0].x - start.x;
+            const dy = points[0].y - start.y;
+            setCropFrame(stage, origin.x - dx / Math.max(stage.clientWidth, 1) * 100, origin.y - dy / Math.max(stage.clientHeight, 1) * 100, origin.zoom);
+        }
+    });
+    const endPointer = event => {
+        pointers.delete(event.pointerId);
+        if (pointers.size) beginOrigin();
+        else { origin = null; stage.classList.remove('is-adjusting'); }
+    };
+    stage.addEventListener('pointerup', endPointer);
+    stage.addEventListener('pointercancel', endPointer);
+    stage.addEventListener('wheel', event => {
+        event.preventDefault();
+        setCropFrame(stage, Number(stage.dataset.x), Number(stage.dataset.y), Number(stage.dataset.zoom) - event.deltaY * 0.0015);
+    }, { passive: false });
+    stage.addEventListener('dblclick', event => {
+        event.preventDefault();
+        setCropFrame(stage, 50, 18, 1);
+    });
+}
+
+function bindCropStages(root) {
+    root?.querySelectorAll('[data-crop-stage]').forEach(bindCropStage);
+}
+
 function onManagerInput(event) {
     if (event.target.matches('[data-search]')) {
         searchText = event.target.value;
@@ -1082,21 +1212,16 @@ function onManagerInput(event) {
     const form = range.closest('form');
     const output = range.parentElement.querySelector('output');
     if (output) output.textContent = range.name === 'zoom' ? `${Number(range.value).toFixed(2)}×` : `${Math.round(Number(range.value))}%`;
-    const card = range.closest('.cl-form-card');
-    const image = card?.querySelector('.cl-library-avatar img');
-    if (image) {
-        const x = form.elements.x.value;
-        const y = form.elements.y.value;
-        const zoom = form.elements.zoom.value;
-        image.style.objectPosition = `${x}% ${y}%`;
-        image.style.transform = `scale(${zoom})`;
-    }
+    const stage = range.closest('[data-crop-host]')?.querySelector('[data-crop-stage]');
+    setCropFrame(stage, form.elements.x.value, form.elements.y.value, form.elements.zoom.value);
 }
 
 async function onManagerChange(event) {
     const scope = event.target.closest('[data-scope]');
     if (scope) return;
-    if (event.target.matches('[data-add-portraits]')) {
+    if (event.target.matches('[name="portraits"]')) {
+        renderNewPortraitPreviews(event.target);
+    } else if (event.target.matches('[data-add-portraits]')) {
         await addPortraitFiles(event.target.files);
         event.target.value = '';
     } else if (event.target.matches('[data-backup-input]') && event.target.files?.[0]) {
