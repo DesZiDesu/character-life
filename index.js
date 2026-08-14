@@ -6,7 +6,7 @@ const CHAT_KEY = 'character_life_npcs';
 const PROMPT_KEY = 'character_life_speaker_protocol';
 const DB_NAME = 'character-life-portraits';
 const DB_STORE = 'portraits';
-const VERSION = '1.3.1';
+const VERSION = '1.3.2';
 
 const NPC_PROFILE_FIELDS = Object.freeze([
     'pronouns', 'age', 'species', 'appearance', 'personality', 'relationship',
@@ -1158,7 +1158,7 @@ async function generateNpcField(button) {
     const current = cleanText(target.value, '', 4000);
     const generator = SillyTavern.getContext().generateQuietPrompt;
     if (typeof generator !== 'function') throw new Error('This SillyTavern build does not expose quiet AI generation to extensions.');
-    const adultInstruction = adult ? 'This is a fictional character explicitly confirmed to be an adult. Explicit sexual anatomy may be described directly. Do not include sexual acts, coercion, or any minor-coded traits.' : 'Do not add explicit sexual anatomy to this non-adult-profile field.';
+    const adultInstruction = adult ? 'This is a fictional character explicitly confirmed to be an adult. Explicit sexual anatomy may be described directly. Do not include sexual acts or coercion.' : 'Do not add explicit sexual anatomy to this non-adult-profile field.';
     const prompt = `CHARACTER LIFE NPC FIELD ASSISTANT\nWrite ${descriptions[field] || field} for the NPC draft below. Use established facts from the current SillyTavern conversation and the draft first. You may creatively complete missing details only when they do not contradict known lore. ${adultInstruction}\nReturn only the finished field value, without a heading, label, markdown, quotation marks, commentary, or Character Life tags.\n\nNPC DRAFT:\n${draftNpcProfile(form) || '(empty draft)'}\n\nCURRENT FIELD VALUE:\n${current || '(empty)'}`;
     button.disabled = true;
     button.classList.add('is-working');

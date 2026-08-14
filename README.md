@@ -83,6 +83,11 @@ When Character Life's renders the chat itself, disable overlapping Header/Monolo
 
 ## Version
 
+### 1.3.2
+
+- Removed body-type and appearance-based caution wording from adult AI assistance. Petite adult characters are treated like any other confirmed adult.
+- Kept only the adult-character confirmation and explicit-minor profile check before handing generation to SillyTavern's configured model/provider.
+
 ### 1.3.1
 
 - Removed the numeric-age requirement from adult profile and image-analysis assistance; the age field may now be left blank.
