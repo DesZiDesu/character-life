@@ -19,7 +19,7 @@ Character Life's is a responsive SillyTavern extension that stores NPC identitie
 - One-tap AI assistance for every editable NPC identity and profile field through the active SillyTavern model.
 - Optional adult-only anatomy field and vision mode, enabled by an adult-character confirmation; the age field may be left blank.
 - Wand-menu launcher, Extension Settings drawer, and responsive NPC manager.
-- Chronicle Signature and Chronicle Imperial designs, switchable in Settings.
+- Ten responsive chat designs with a live settings preview: Chronicle Signature, Chronicle Imperial, Clean, RPG Chronicle, Fancy, Professional, Formal, Manga Chronicle, Shadow System, and Manga Shōjo.
 - Left, middle, or right speaker alignment. Thought and dialogue automatically follow the header.
 - Adjustable portrait size, shape, missing-image behavior, and independent header/thought/dialogue colors.
 - Independent automatic NPC palettes derived from portraits, with name-based fallback and optional custom colors per NPC.
@@ -82,6 +82,12 @@ When Character Life's renders the chat itself, disable overlapping Header/Monolo
 - The AI Appearance Reader sends the selected image to the multimodal provider configured under SillyTavern's Image Captioning settings. This can use that provider's API quota. The generated description is shown for review and is not saved until **Save NPC** is pressed.
 
 ## Version
+
+### 1.4.0
+
+- Added eight approved chat presentation designs while preserving both existing Chronicle layouts.
+- Added a live thought, header, portrait, and dialogue preview beneath the design selector.
+- Kept all designs compatible with per-NPC palettes, configurable portrait frames and sizes, missing-portrait behavior, alignment controls, and mobile chat widths.
 
 ### 1.3.2
 

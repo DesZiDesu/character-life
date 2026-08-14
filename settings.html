@@ -1,7 +1,7 @@
 <div id="character-life-settings" class="character-life-settings">
     <div class="inline-drawer">
         <div class="inline-drawer-toggle inline-drawer-header interactable" tabindex="0" role="button" aria-expanded="false">
-            <b><i class="fa-solid fa-address-book" aria-hidden="true"></i> Character Life's <small>v1.3.2</small></b>
+            <b><i class="fa-solid fa-address-book" aria-hidden="true"></i> Character Life's <small>v1.4.0</small></b>
             <div class="inline-drawer-icon fa-solid fa-circle-chevron-down down" aria-hidden="true"></div>
         </div>
         <div class="inline-drawer-content">
@@ -30,7 +30,7 @@
             </label>
 
             <div class="cl-settings-grid">
-                <label><span>Design</span><select id="character-life-design"><option value="signature">Chronicle Signature</option><option value="imperial">Chronicle Imperial</option></select></label>
+                <label><span>Design</span><select id="character-life-design"><option value="signature">Chronicle Signature</option><option value="imperial">Chronicle Imperial</option><option value="clean">Clean</option><option value="rpg">RPG Chronicle</option><option value="fancy">Fancy</option><option value="professional">Professional</option><option value="formal">Formal</option><option value="manga">Manga Chronicle</option><option value="shadow">Shadow System</option><option value="shojo">Manga Shōjo</option></select></label>
                 <label><span>Header position</span><select id="character-life-position"><option value="left">Left</option><option value="center">Middle</option><option value="right">Right</option></select></label>
                 <label><span>Portrait shape</span><select id="character-life-shape"><option value="square">Square</option><option value="rounded">Rounded square</option><option value="portrait">Portrait rectangle</option><option value="circle">Circle</option><option value="hexagon">Hexagonal</option></select></label>
                 <label><span>Portrait size <output id="character-life-size-output">76 px</output></span><input id="character-life-size" type="range" min="52" max="124" step="4"></label>
@@ -44,6 +44,15 @@
                 <label><span>Unknown NPC thought fallback</span><input id="character-life-thought-color" type="color"></label>
                 <label><span>Unknown NPC dialogue fallback</span><input id="character-life-dialogue-color" type="color"></label>
             </div>
+
+            <section class="cl-design-preview-shell" aria-label="Selected chat design preview">
+                <span>Live design preview</span>
+                <div class="mes_text character-life-rendered cl-design-preview" data-cl-design="signature" data-cl-position="center" data-cl-shape="rounded" data-cl-missing="empty">
+                    <section class="cl-chat-block cl-chat-thought"><div class="cl-chat-label"><span></span><strong>Avery Vale</strong><i>•</i><em>Thought</em></div><div class="cl-chat-content">Something beyond the gate is watching us.</div></section>
+                    <section class="cl-chat-block cl-chat-header"><div class="cl-chat-wing left"><i></i><span></span></div><div class="cl-chat-header-core"><div class="cl-chat-portrait"><span class="cl-chat-initial">AV</span><b class="tl"></b><b class="br"></b></div><div class="cl-chat-identity"><small>ASTRAL ENVOY</small><strong>Avery Vale</strong><span>Vanguard Division</span></div></div><div class="cl-chat-wing right"><i></i><span></span></div></section>
+                    <section class="cl-chat-block cl-chat-dialogue"><div class="cl-chat-label"><span></span><strong>Avery Vale</strong><i>•</i><em>Dialogue #1</em></div><div class="cl-chat-content">Stay close. We enter together.</div></section>
+                </div>
+            </section>
 
             <details class="cl-tag-guide">
                 <summary><i class="fa-solid fa-code"></i> Speaker tag format</summary>

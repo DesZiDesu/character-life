@@ -26,6 +26,10 @@ body.character-life-open { overflow: hidden; }
 .cl-settings-grid label > span { color: var(--cl-muted); font-size: .88em; }
 .cl-settings-grid input:not([type="color"]), .cl-settings-grid select { width: 100%; }
 .cl-settings-grid input[type="color"] { width: 42px; height: 32px; padding: 2px; border-radius: 50%; }
+.cl-design-preview-shell { display: grid; gap: 8px; margin: 14px 0; padding: 11px; border: 1px solid var(--cl-line); background: color-mix(in srgb, var(--cl-surface) 86%, transparent); overflow: hidden; }
+.cl-design-preview-shell > span { color: var(--cl-muted); font-size: .88em; }
+.cl-design-preview { --cl-block-width: min(94%, 620px) !important; min-width: 0; padding: 6px 2px 8px; overflow: hidden; }
+.cl-design-preview .cl-chat-content { font-size: .94em; }
 .cl-tag-guide { margin-top: 12px; border-top: 1px solid var(--cl-line); padding-top: 10px; }
 .cl-tag-guide summary { cursor: pointer; }
 .cl-tag-guide pre { white-space: pre-wrap; overflow-wrap: anywhere; padding: 10px; background: color-mix(in srgb, var(--cl-surface) 84%, #000 16%); border-left: 2px solid var(--cl-header-color); }
@@ -243,6 +247,110 @@ body.character-life-open { overflow: hidden; }
 .mes_text[data-cl-design="imperial"] .cl-chat-label > span { display: none; }
 .mes_text[data-cl-design="imperial"] .cl-chat-header-core { padding: 7px 12px; border-top: 1px solid color-mix(in srgb, var(--cl-local-header) 54%, transparent); border-bottom: 1px solid color-mix(in srgb, var(--cl-local-header) 54%, transparent); background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--cl-local-header) 9%, var(--SmartThemeBlurTintColor, #17130f)), transparent); }
 
+/* Clean — quiet editorial hierarchy with deliberate negative space. */
+.mes_text[data-cl-design="clean"] .cl-chat-block { font-family: system-ui, -apple-system, sans-serif; }
+.mes_text[data-cl-design="clean"] .cl-chat-thought { padding: 10px 13px; background: color-mix(in srgb, var(--SmartThemeBlurTintColor, #17130f) 96%, var(--cl-local-thought) 4%); border: 0; border-left: 2px solid var(--cl-local-thought); }
+.mes_text[data-cl-design="clean"] .cl-chat-dialogue { padding: 11px 14px; background: color-mix(in srgb, var(--SmartThemeBlurTintColor, #17130f) 96%, var(--cl-local-dialogue) 4%); border: 0; border-bottom: 2px solid var(--cl-local-dialogue); }
+.mes_text[data-cl-design="clean"] .cl-chat-label, .mes_text[data-cl-design="clean"] .cl-chat-content { font-family: system-ui, -apple-system, sans-serif; }
+.mes_text[data-cl-design="clean"] .cl-chat-label { letter-spacing: .04em; }
+.mes_text[data-cl-design="clean"] .cl-chat-header { padding: 6px 0; }
+.mes_text[data-cl-design="clean"] .cl-chat-wing { display: none; }
+.mes_text[data-cl-design="clean"] .cl-chat-header-core { width: 100%; padding: 7px 0; border-block: 1px solid var(--cl-line); }
+.mes_text[data-cl-design="clean"] .cl-chat-portrait { border-color: color-mix(in srgb, var(--cl-local-header) 48%, var(--cl-line)); box-shadow: none; }
+.mes_text[data-cl-design="clean"] .cl-chat-portrait b { display: none; }
+.mes_text[data-cl-design="clean"] .cl-chat-identity small, .mes_text[data-cl-design="clean"] .cl-chat-identity strong, .mes_text[data-cl-design="clean"] .cl-chat-identity span { font-family: system-ui, -apple-system, sans-serif; }
+
+/* RPG Chronicle — angular quest-log construction and framed identity rail. */
+.mes_text[data-cl-design="rpg"] .cl-chat-thought, .mes_text[data-cl-design="rpg"] .cl-chat-dialogue { border: 1px solid color-mix(in srgb, currentColor 42%, var(--cl-line)); clip-path: polygon(10px 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 0 100%, 0 10px); }
+.mes_text[data-cl-design="rpg"] .cl-chat-thought { background: linear-gradient(120deg, color-mix(in srgb, var(--cl-local-thought) 13%, var(--SmartThemeBlurTintColor, #17130f)), color-mix(in srgb, var(--SmartThemeBlurTintColor, #17130f) 97%, transparent)); }
+.mes_text[data-cl-design="rpg"] .cl-chat-dialogue { background: linear-gradient(120deg, color-mix(in srgb, var(--cl-local-dialogue) 13%, var(--SmartThemeBlurTintColor, #17130f)), color-mix(in srgb, var(--SmartThemeBlurTintColor, #17130f) 97%, transparent)); border-left: 3px solid var(--cl-local-dialogue); }
+.mes_text[data-cl-design="rpg"] .cl-chat-label > span { width: 9px; height: 9px; border: 1px solid currentColor; background: transparent; transform: rotate(45deg); }
+.mes_text[data-cl-design="rpg"] .cl-chat-header { gap: 7px; }
+.mes_text[data-cl-design="rpg"] .cl-chat-header-core { padding: 7px 12px; background: linear-gradient(90deg, color-mix(in srgb, var(--cl-local-header) 15%, var(--SmartThemeBlurTintColor, #17130f)), transparent); border-block: 1px solid color-mix(in srgb, var(--cl-local-header) 45%, var(--cl-line)); clip-path: polygon(8px 0, 100% 0, calc(100% - 8px) 100%, 0 100%); }
+.mes_text[data-cl-design="rpg"] .cl-chat-portrait { box-shadow: inset 0 0 0 3px color-mix(in srgb, var(--SmartThemeBlurTintColor, #17130f) 92%, transparent), 0 0 0 1px color-mix(in srgb, var(--cl-local-header) 35%, transparent); }
+.mes_text[data-cl-design="rpg"] .cl-chat-wing i { width: 9px; height: 9px; background: color-mix(in srgb, var(--cl-local-header) 18%, transparent); }
+
+/* Fancy — centered ornamental composition with a portrait medallion. */
+.mes_text[data-cl-design="fancy"] .cl-chat-thought, .mes_text[data-cl-design="fancy"] .cl-chat-dialogue { width: min(80%, 630px); text-align: center; border-left: 0; background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--SmartThemeBlurTintColor, #17130f) 87%, currentColor 13%) 18%, color-mix(in srgb, var(--SmartThemeBlurTintColor, #17130f) 87%, currentColor 13%) 82%, transparent); }
+.mes_text[data-cl-design="fancy"] .cl-chat-thought { border-block: 1px solid color-mix(in srgb, var(--cl-local-thought) 42%, transparent); }
+.mes_text[data-cl-design="fancy"] .cl-chat-dialogue { border: 1px solid color-mix(in srgb, var(--cl-local-dialogue) 38%, var(--cl-line)); border-radius: 18px 3px 18px 3px; }
+.mes_text[data-cl-design="fancy"] .cl-chat-label { justify-content: center; }
+.mes_text[data-cl-design="fancy"] .cl-chat-label > span { width: 7px; height: 7px; border: 1px solid currentColor; background: transparent; transform: rotate(45deg); }
+.mes_text[data-cl-design="fancy"] .cl-chat-header { padding: 10px 0 7px; }
+.mes_text[data-cl-design="fancy"] .cl-chat-header-core { flex-direction: column; gap: 8px; min-width: min(70%, 420px); padding: 4px 18px 9px; text-align: center; border-bottom: 3px double color-mix(in srgb, var(--cl-local-header) 48%, var(--cl-line)); }
+.mes_text[data-cl-design="fancy"] .cl-chat-portrait { box-shadow: inset 0 0 0 4px color-mix(in srgb, var(--SmartThemeBlurTintColor, #17130f) 92%, transparent), 0 0 0 4px color-mix(in srgb, var(--cl-local-header) 12%, transparent), 0 0 20px color-mix(in srgb, var(--cl-local-header) 18%, transparent); }
+.mes_text[data-cl-design="fancy"] .cl-chat-identity { justify-items: center; }
+.mes_text[data-cl-design="fancy"] .cl-chat-wing { align-self: center; }
+
+/* Professional — information-first editorial grid for long roleplay sessions. */
+.mes_text[data-cl-design="professional"] .cl-chat-thought, .mes_text[data-cl-design="professional"] .cl-chat-dialogue { display: grid; grid-template-columns: minmax(132px, .36fr) minmax(0, 1fr); align-items: start; gap: 12px; padding: 10px 13px; background: color-mix(in srgb, var(--SmartThemeBlurTintColor, #17130f) 96%, currentColor 4%); border: 0; border-block: 1px solid var(--cl-line); }
+.mes_text[data-cl-design="professional"] .cl-chat-content { margin-top: 0; }
+.mes_text[data-cl-design="professional"] .cl-chat-label { align-self: start; }
+.mes_text[data-cl-design="professional"] .cl-chat-header { padding: 6px 0; }
+.mes_text[data-cl-design="professional"] .cl-chat-wing { display: none; }
+.mes_text[data-cl-design="professional"] .cl-chat-header-core { width: 100%; gap: 0; border: 1px solid var(--cl-line); background: color-mix(in srgb, var(--SmartThemeBlurTintColor, #17130f) 95%, var(--cl-local-header) 5%); }
+.mes_text[data-cl-design="professional"] .cl-chat-portrait { border: 0; border-right: 1px solid var(--cl-line); box-shadow: none; }
+.mes_text[data-cl-design="professional"] .cl-chat-portrait b { display: none; }
+.mes_text[data-cl-design="professional"] .cl-chat-identity { align-self: stretch; align-content: center; padding: 8px 13px; border-left: 4px solid var(--cl-local-header); }
+
+/* Formal — ceremonial rules, restrained symmetry, and diplomatic spacing. */
+.mes_text[data-cl-design="formal"] .cl-chat-thought, .mes_text[data-cl-design="formal"] .cl-chat-dialogue { width: min(82%, 640px); text-align: center; border-left: 0; background: color-mix(in srgb, var(--SmartThemeBlurTintColor, #17130f) 94%, currentColor 6%); }
+.mes_text[data-cl-design="formal"] .cl-chat-thought { border-block: 3px double color-mix(in srgb, var(--cl-local-thought) 40%, var(--cl-line)); }
+.mes_text[data-cl-design="formal"] .cl-chat-dialogue { text-align: left; border: 0; border-inline: 3px double color-mix(in srgb, var(--cl-local-dialogue) 48%, var(--cl-line)); }
+.mes_text[data-cl-design="formal"] .cl-chat-label { justify-content: center; }
+.mes_text[data-cl-design="formal"] .cl-chat-dialogue .cl-chat-label { justify-content: flex-start; }
+.mes_text[data-cl-design="formal"] .cl-chat-label > span { display: none; }
+.mes_text[data-cl-design="formal"] .cl-chat-header { padding: 8px 0; }
+.mes_text[data-cl-design="formal"] .cl-chat-header-core { padding: 7px 16px; border-block: 3px double color-mix(in srgb, var(--cl-local-header) 48%, var(--cl-line)); background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--cl-local-header) 8%, var(--SmartThemeBlurTintColor, #17130f)), transparent); }
+.mes_text[data-cl-design="formal"] .cl-chat-portrait { box-shadow: inset 0 0 0 4px color-mix(in srgb, var(--SmartThemeBlurTintColor, #17130f) 93%, transparent); }
+
+/* Manga Chronicle — high-contrast panel rhythm, screentone, and speech framing. */
+.mes_text[data-cl-design="manga"] .cl-chat-block { color: var(--SmartThemeBodyColor, #eee8dc); }
+.mes_text[data-cl-design="manga"] .cl-chat-thought, .mes_text[data-cl-design="manga"] .cl-chat-dialogue { background:
+    radial-gradient(circle, color-mix(in srgb, currentColor 13%, transparent) 0 1px, transparent 1.2px) 0 0 / 7px 7px,
+    color-mix(in srgb, var(--SmartThemeBlurTintColor, #17130f) 96%, currentColor 4%); border: 2px solid currentColor; }
+.mes_text[data-cl-design="manga"] .cl-chat-thought { width: min(80%, 620px); transform: rotate(-.35deg); box-shadow: 5px 5px 0 color-mix(in srgb, currentColor 15%, transparent); }
+.mes_text[data-cl-design="manga"] .cl-chat-dialogue { width: min(88%, 650px); border-radius: 17px 17px 3px 17px; box-shadow: -4px 4px 0 color-mix(in srgb, currentColor 12%, transparent); }
+.mes_text[data-cl-design="manga"] .cl-chat-label { display: inline-flex; padding: 2px 7px; color: var(--SmartThemeBlurTintColor, #17130f); background: var(--SmartThemeBodyColor, #eee8dc); letter-spacing: .04em; }
+.mes_text[data-cl-design="manga"] .cl-chat-label > span { display: none; }
+.mes_text[data-cl-design="manga"] .cl-chat-header { padding: 7px 0; }
+.mes_text[data-cl-design="manga"] .cl-chat-wing { display: none; }
+.mes_text[data-cl-design="manga"] .cl-chat-header-core { width: 100%; gap: 10px; }
+.mes_text[data-cl-design="manga"] .cl-chat-portrait { border: 3px solid var(--SmartThemeBodyColor, #eee8dc); box-shadow: 4px 4px 0 color-mix(in srgb, var(--SmartThemeBodyColor, #eee8dc) 18%, transparent); }
+.mes_text[data-cl-design="manga"] .cl-chat-identity { flex: 1; padding: 7px 13px; color: var(--SmartThemeBlurTintColor, #17130f); background: var(--SmartThemeBodyColor, #eee8dc); clip-path: polygon(0 0, 100% 6%, 96% 100%, 3% 91%); }
+.mes_text[data-cl-design="manga"] .cl-chat-identity small, .mes_text[data-cl-design="manga"] .cl-chat-identity strong, .mes_text[data-cl-design="manga"] .cl-chat-identity span { color: var(--SmartThemeBlurTintColor, #17130f); }
+
+/* Shadow System — layered holographic framing rather than a simple accent edge. */
+.mes_text[data-cl-design="shadow"] .cl-chat-thought, .mes_text[data-cl-design="shadow"] .cl-chat-dialogue { border: 1px solid color-mix(in srgb, currentColor 50%, var(--cl-line)); background:
+    repeating-linear-gradient(0deg, transparent 0 11px, color-mix(in srgb, currentColor 4%, transparent) 11px 12px),
+    linear-gradient(115deg, color-mix(in srgb, currentColor 14%, var(--SmartThemeBlurTintColor, #17130f)), color-mix(in srgb, var(--SmartThemeBlurTintColor, #17130f) 97%, transparent)); clip-path: polygon(10px 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 10px 100%, 0 calc(100% - 10px)); }
+.mes_text[data-cl-design="shadow"] .cl-chat-thought { width: min(78%, 620px); text-align: center; border-block-color: color-mix(in srgb, var(--cl-local-thought) 58%, transparent); }
+.mes_text[data-cl-design="shadow"] .cl-chat-dialogue { width: min(88%, 650px); box-shadow: inset 4px 0 0 var(--cl-local-dialogue), 0 0 18px color-mix(in srgb, var(--cl-local-dialogue) 8%, transparent); }
+.mes_text[data-cl-design="shadow"] .cl-chat-label { justify-content: center; text-transform: uppercase; letter-spacing: .1em; }
+.mes_text[data-cl-design="shadow"] .cl-chat-label > span { width: 22px; height: 1px; transform: none; background: linear-gradient(90deg, transparent, currentColor); }
+.mes_text[data-cl-design="shadow"] .cl-chat-header { padding: 7px 0; }
+.mes_text[data-cl-design="shadow"] .cl-chat-header-core { padding: 6px 12px; background: linear-gradient(90deg, color-mix(in srgb, var(--cl-local-header) 15%, transparent), transparent); border-block: 1px solid color-mix(in srgb, var(--cl-local-header) 48%, transparent); clip-path: polygon(9px 0, calc(100% - 9px) 0, 100% 50%, calc(100% - 9px) 100%, 9px 100%, 0 50%); }
+.mes_text[data-cl-design="shadow"] .cl-chat-portrait { box-shadow: inset 0 0 0 4px color-mix(in srgb, var(--SmartThemeBlurTintColor, #17130f) 90%, transparent), 0 0 20px color-mix(in srgb, var(--cl-local-header) 24%, transparent); }
+.mes_text[data-cl-design="shadow"] .cl-chat-portrait::before { content: ""; position: absolute; inset: 6px; z-index: 3; pointer-events: none; border: 1px solid color-mix(in srgb, var(--cl-local-header) 45%, transparent); border-radius: 50%; border-inline-color: transparent; animation: clPortraitOrbit 8s linear infinite; }
+.mes_text[data-cl-design="shadow"] .cl-chat-wing span { box-shadow: 0 0 8px color-mix(in srgb, currentColor 55%, transparent); }
+
+/* Manga Shōjo — luminous medallion, soft ornaments, and romantic panel geometry. */
+.mes_text[data-cl-design="shojo"] .cl-chat-thought, .mes_text[data-cl-design="shojo"] .cl-chat-dialogue { width: min(82%, 640px); text-align: center; border-left: 0; background:
+    radial-gradient(circle at 12% 24%, color-mix(in srgb, currentColor 15%, transparent) 0 4px, transparent 5px),
+    radial-gradient(circle at 88% 70%, color-mix(in srgb, currentColor 11%, transparent) 0 6px, transparent 7px),
+    linear-gradient(90deg, transparent, color-mix(in srgb, var(--SmartThemeBlurTintColor, #17130f) 87%, currentColor 13%), transparent); }
+.mes_text[data-cl-design="shojo"] .cl-chat-thought { border-block: 1px solid color-mix(in srgb, var(--cl-local-thought) 38%, transparent); }
+.mes_text[data-cl-design="shojo"] .cl-chat-dialogue { border: 1px solid color-mix(in srgb, var(--cl-local-dialogue) 42%, var(--cl-line)); border-radius: 20px 4px 20px 4px; }
+.mes_text[data-cl-design="shojo"] .cl-chat-label { justify-content: center; }
+.mes_text[data-cl-design="shojo"] .cl-chat-label::before, .mes_text[data-cl-design="shojo"] .cl-chat-label::after { content: "✦"; color: currentColor; opacity: .72; }
+.mes_text[data-cl-design="shojo"] .cl-chat-label > span { display: none; }
+.mes_text[data-cl-design="shojo"] .cl-chat-header { padding: 10px 0 7px; }
+.mes_text[data-cl-design="shojo"] .cl-chat-header-core { flex-direction: column; gap: 8px; padding: 4px 18px 9px; text-align: center; border-bottom: 3px double color-mix(in srgb, var(--cl-local-header) 42%, var(--cl-line)); }
+.mes_text[data-cl-design="shojo"] .cl-chat-portrait { box-shadow: inset 0 0 0 4px color-mix(in srgb, var(--SmartThemeBlurTintColor, #17130f) 92%, transparent), 0 0 0 5px color-mix(in srgb, var(--cl-local-header) 10%, transparent), 0 0 24px color-mix(in srgb, var(--cl-local-header) 18%, transparent); }
+.mes_text[data-cl-design="shojo"] .cl-chat-identity { justify-items: center; }
+
+@keyframes clPortraitOrbit { to { transform: rotate(360deg); } }
+
 @media (max-width: 760px) {
     .character-life-settings .cl-settings-grid { grid-template-columns: 1fr; }
     .character-life-overlay { padding: 0; }
@@ -285,6 +393,12 @@ body.character-life-open { overflow: hidden; }
     .cl-copy-panel label { flex: 1; }
     .mes_text.character-life-rendered { --cl-block-width: 94%; }
     .mes_text[data-cl-design="imperial"] .cl-chat-thought, .mes_text[data-cl-design="imperial"] .cl-chat-dialogue { width: 94%; }
+    .mes_text[data-cl-design="fancy"] .cl-chat-thought, .mes_text[data-cl-design="fancy"] .cl-chat-dialogue,
+    .mes_text[data-cl-design="formal"] .cl-chat-thought, .mes_text[data-cl-design="formal"] .cl-chat-dialogue,
+    .mes_text[data-cl-design="manga"] .cl-chat-thought, .mes_text[data-cl-design="manga"] .cl-chat-dialogue,
+    .mes_text[data-cl-design="shadow"] .cl-chat-thought, .mes_text[data-cl-design="shadow"] .cl-chat-dialogue,
+    .mes_text[data-cl-design="shojo"] .cl-chat-thought, .mes_text[data-cl-design="shojo"] .cl-chat-dialogue { width: 94%; }
+    .mes_text[data-cl-design="professional"] .cl-chat-thought, .mes_text[data-cl-design="professional"] .cl-chat-dialogue { grid-template-columns: 1fr; gap: 5px; }
 }
 
 @media (max-width: 420px) {
@@ -314,4 +428,5 @@ body.character-life-open { overflow: hidden; }
 
 @media (prefers-reduced-motion: reduce) {
     .character-life-overlay { transition: none; }
+    .mes_text[data-cl-design="shadow"] .cl-chat-portrait::before { animation: none; }
 }

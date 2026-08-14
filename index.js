@@ -6,7 +6,11 @@ const CHAT_KEY = 'character_life_npcs';
 const PROMPT_KEY = 'character_life_speaker_protocol';
 const DB_NAME = 'character-life-portraits';
 const DB_STORE = 'portraits';
-const VERSION = '1.3.2';
+const VERSION = '1.4.0';
+
+const CHAT_DESIGNS = Object.freeze([
+    'signature', 'imperial', 'clean', 'rpg', 'fancy', 'professional', 'formal', 'manga', 'shadow', 'shojo',
+]);
 
 const NPC_PROFILE_FIELDS = Object.freeze([
     'pronouns', 'age', 'species', 'appearance', 'personality', 'relationship',
@@ -214,7 +218,7 @@ function rootSettings() {
 
 function getConfig() {
     const config = rootSettings().config;
-    if (!['signature', 'imperial'].includes(config.design)) config.design = DEFAULT_CONFIG.design;
+    if (!CHAT_DESIGNS.includes(config.design)) config.design = DEFAULT_CONFIG.design;
     if (!['left', 'center', 'right'].includes(config.position)) config.position = DEFAULT_CONFIG.position;
     if (!['square', 'rounded', 'portrait', 'circle', 'hexagon'].includes(config.portraitShape)) config.portraitShape = DEFAULT_CONFIG.portraitShape;
     if (!['empty', 'hidden'].includes(config.missingPortrait)) config.missingPortrait = DEFAULT_CONFIG.missingPortrait;
@@ -1554,6 +1558,7 @@ async function addSettingsDrawer() {
     document.getElementById('character-life-new')?.addEventListener('click', () => openManager({ newNpc: true }));
     const output = document.getElementById('character-life-size-output');
     if (output) output.textContent = `${getConfig().portraitSize} px`;
+    configureDocument();
 }
 
 function bindChatEvents() {
