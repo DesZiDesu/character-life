@@ -331,7 +331,8 @@ body.character-life-open { overflow: hidden; }
 .mes_text[data-cl-design="shadow"] .cl-chat-header { padding: 7px 0; }
 .mes_text[data-cl-design="shadow"] .cl-chat-header-core { padding: 6px 12px; background: linear-gradient(90deg, color-mix(in srgb, var(--cl-local-header) 15%, transparent), transparent); border-block: 1px solid color-mix(in srgb, var(--cl-local-header) 48%, transparent); clip-path: polygon(9px 0, calc(100% - 9px) 0, 100% 50%, calc(100% - 9px) 100%, 9px 100%, 0 50%); }
 .mes_text[data-cl-design="shadow"] .cl-chat-portrait { box-shadow: inset 0 0 0 4px color-mix(in srgb, var(--SmartThemeBlurTintColor, #17130f) 90%, transparent), 0 0 20px color-mix(in srgb, var(--cl-local-header) 24%, transparent); }
-.mes_text[data-cl-design="shadow"] .cl-chat-portrait::before { content: ""; position: absolute; inset: 6px; z-index: 3; pointer-events: none; border: 1px solid color-mix(in srgb, var(--cl-local-header) 45%, transparent); border-radius: 50%; border-inline-color: transparent; animation: clPortraitOrbit 8s linear infinite; }
+.mes_text[data-cl-design="shadow"] .cl-chat-portrait::before { content: ""; position: absolute; inset: 6px; z-index: 3; pointer-events: none; border: 1px solid color-mix(in srgb, var(--cl-local-header) 45%, transparent); border-radius: inherit; clip-path: inherit; }
+.mes_text[data-cl-design="shadow"][data-cl-shape="circle"] .cl-chat-portrait::before { border-inline-color: transparent; animation: clPortraitOrbit 8s linear infinite; }
 .mes_text[data-cl-design="shadow"] .cl-chat-wing span { box-shadow: 0 0 8px color-mix(in srgb, currentColor 55%, transparent); }
 
 /* Manga Shōjo — luminous medallion, soft ornaments, and romantic panel geometry. */

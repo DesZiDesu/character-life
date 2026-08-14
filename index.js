@@ -6,7 +6,7 @@ const CHAT_KEY = 'character_life_npcs';
 const PROMPT_KEY = 'character_life_speaker_protocol';
 const DB_NAME = 'character-life-portraits';
 const DB_STORE = 'portraits';
-const VERSION = '1.4.0';
+const VERSION = '1.4.1';
 
 const CHAT_DESIGNS = Object.freeze([
     'signature', 'imperial', 'clean', 'rpg', 'fancy', 'professional', 'formal', 'manga', 'shadow', 'shojo',

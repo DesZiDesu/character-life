@@ -83,6 +83,10 @@ When Character Life's renders the chat itself, disable overlapping Header/Monolo
 
 ## Version
 
+### 1.4.1
+
+- Made Shadow System portrait ornamentation inherit the selected square, rounded, portrait, circle, or hexagonal frame instead of forcing a circular overlay.
+
 ### 1.4.0
 
 - Added eight approved chat presentation designs while preserving both existing Chronicle layouts.
