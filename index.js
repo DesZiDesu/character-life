@@ -6,11 +6,13 @@ const CHAT_KEY = 'character_life_npcs';
 const PROMPT_KEY = 'character_life_speaker_protocol';
 const DB_NAME = 'character-life-portraits';
 const DB_STORE = 'portraits';
-const VERSION = '1.4.1';
+const VERSION = '1.5.0';
 
-const CHAT_DESIGNS = Object.freeze([
-    'signature', 'imperial', 'clean', 'rpg', 'fancy', 'professional', 'formal', 'manga', 'shadow', 'shojo',
-]);
+const BUILTIN_CHAT_DESIGNS = Object.freeze(['signature', 'imperial', 'clean']);
+const CUSTOM_DESIGN_PREFIX = 'custom:';
+const CUSTOM_STYLE_ID = 'character-life-custom-style';
+const CUSTOM_PREVIEW_STYLE_ID = 'character-life-custom-preview-style';
+const CUSTOM_CSS_LIMIT = 12000;
 
 const NPC_PROFILE_FIELDS = Object.freeze([
     'pronouns', 'age', 'species', 'appearance', 'personality', 'relationship',
@@ -203,11 +205,39 @@ function notify(type, message) {
     else console[type === 'error' ? 'error' : 'info'](`[Character Life's] ${message}`);
 }
 
+function customDesignId(value) {
+    const design = cleanText(value, '', 180);
+    return design.startsWith(CUSTOM_DESIGN_PREFIX) ? design.slice(CUSTOM_DESIGN_PREFIX.length) : '';
+}
+
+function normalizeCustomDesign(value, forceNewId = false) {
+    if (!value || typeof value !== 'object') return null;
+    const rawId = forceNewId ? '' : cleanText(value.id, '', 120).toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/^-+|-+$/g, '');
+    const now = new Date().toISOString();
+    return {
+        id: rawId || uid('design').toLowerCase().replace(/[^a-z0-9-]/g, '-'),
+        name: cleanText(value.name, 'Custom design', 80) || 'Custom design',
+        base: BUILTIN_CHAT_DESIGNS.includes(value.base) ? value.base : DEFAULT_CONFIG.design,
+        headerCss: typeof value.headerCss === 'string' ? value.headerCss.slice(0, CUSTOM_CSS_LIMIT) : '',
+        thoughtCss: typeof value.thoughtCss === 'string' ? value.thoughtCss.slice(0, CUSTOM_CSS_LIMIT) : '',
+        dialogueCss: typeof value.dialogueCss === 'string' ? value.dialogueCss.slice(0, CUSTOM_CSS_LIMIT) : '',
+        createdAt: cleanText(value.createdAt, now, 80) || now,
+        updatedAt: cleanText(value.updatedAt, now, 80) || now,
+    };
+}
+
+function findCustomDesign(value, settings = rootSettings()) {
+    const id = customDesignId(value) || cleanText(value, '', 120);
+    return settings.customDesigns.find(preset => preset.id === id) || null;
+}
+
 function rootSettings() {
     const context = SillyTavern.getContext();
-    context.extensionSettings[SETTINGS_KEY] ||= { config: clone(DEFAULT_CONFIG), globalNpcs: [], characterNpcs: {} };
+    context.extensionSettings[SETTINGS_KEY] ||= { config: clone(DEFAULT_CONFIG), customDesigns: [], globalNpcs: [], characterNpcs: {} };
     const root = context.extensionSettings[SETTINGS_KEY];
     root.config ||= clone(DEFAULT_CONFIG);
+    root.customDesigns = Array.isArray(root.customDesigns) ? root.customDesigns.map(value => normalizeCustomDesign(value)).filter(Boolean) : [];
+    root.customDesigns = root.customDesigns.filter((preset, index, list) => list.findIndex(item => item.id === preset.id) === index);
     root.globalNpcs = Array.isArray(root.globalNpcs) ? root.globalNpcs : [];
     root.characterNpcs = root.characterNpcs && typeof root.characterNpcs === 'object' ? root.characterNpcs : {};
     for (const [key, value] of Object.entries(DEFAULT_CONFIG)) {
@@ -217,8 +247,9 @@ function rootSettings() {
 }
 
 function getConfig() {
-    const config = rootSettings().config;
-    if (!CHAT_DESIGNS.includes(config.design)) config.design = DEFAULT_CONFIG.design;
+    const settings = rootSettings();
+    const config = settings.config;
+    if (!BUILTIN_CHAT_DESIGNS.includes(config.design) && !findCustomDesign(config.design, settings)) config.design = DEFAULT_CONFIG.design;
     if (!['left', 'center', 'right'].includes(config.position)) config.position = DEFAULT_CONFIG.position;
     if (!['square', 'rounded', 'portrait', 'circle', 'hexagon'].includes(config.portraitShape)) config.portraitShape = DEFAULT_CONFIG.portraitShape;
     if (!['empty', 'hidden'].includes(config.missingPortrait)) config.missingPortrait = DEFAULT_CONFIG.missingPortrait;
@@ -497,8 +528,125 @@ async function createForms(files, baseName = '', framing = []) {
     return forms;
 }
 
+function validateCustomCssSource(value) {
+    const source = typeof value === 'string' ? value.slice(0, CUSTOM_CSS_LIMIT).trim() : '';
+    if (!source) return '';
+    if (/[<>\0]/.test(source) || /@(?:import|namespace|charset|supports|media|layer|container|keyframes)\b/i.test(source)
+        || /(?:expression\s*\(|javascript\s*:|-moz-binding\s*:)/i.test(source)) {
+        throw new Error('Custom CSS contains an unsupported or unsafe construct. Use declarations or flat scoped rules only.');
+    }
+    return source;
+}
+
+function compileComponentCss(value, scope) {
+    const source = validateCustomCssSource(value);
+    if (!source) return '';
+    const uncommented = source.replace(/\/\*[\s\S]*?\*\//g, '').trim();
+    if (!uncommented.includes('{') && !uncommented.includes('}')) return `${scope}{${source}}`;
+    if ((uncommented.match(/{/g) || []).length !== (uncommented.match(/}/g) || []).length) throw new Error('Custom CSS has unmatched braces.');
+
+    const rules = [];
+    const pattern = /([^{}]+)\{([^{}]*)\}/g;
+    let cursor = 0;
+    let match;
+    while ((match = pattern.exec(uncommented))) {
+        if (uncommented.slice(cursor, match.index).trim()) throw new Error('Nested CSS rules are not supported.');
+        const declarations = match[2].trim();
+        if (!declarations) { cursor = pattern.lastIndex; continue; }
+        const selectors = match[1].split(',').map(raw => raw.trim()).filter(Boolean).map(selector => {
+            if (selector.startsWith('@') || selector.includes(':global(') || /&\s*[+~]/.test(selector)) {
+                throw new Error('Custom selectors must stay inside their Header, Monologue, or Dialogue block.');
+            }
+            const ampersands = (selector.match(/&/g) || []).length;
+            if (ampersands > 1 || (ampersands === 1 && !selector.startsWith('&'))) throw new Error('Use & only once, at the start of a selector.');
+            return selector.startsWith('&') ? `${scope}${selector.slice(1)}` : `${scope} ${selector}`;
+        });
+        if (!selectors.length) throw new Error('A custom CSS rule is missing its selector.');
+        rules.push(`${selectors.join(',')} {${declarations}}`);
+        cursor = pattern.lastIndex;
+    }
+    if (!rules.length || uncommented.slice(cursor).trim()) throw new Error('Custom CSS must use declarations or flat selector rules.');
+    return rules.join('\n');
+}
+
+function customDesignCss(preset, rootScope) {
+    if (!preset) return '';
+    return [
+        compileComponentCss(preset.headerCss, `${rootScope} .cl-chat-header`),
+        compileComponentCss(preset.thoughtCss, `${rootScope} .cl-chat-thought`),
+        compileComponentCss(preset.dialogueCss, `${rootScope} .cl-chat-dialogue`),
+    ].filter(Boolean).join('\n');
+}
+
+function writeCustomStyle(id, css) {
+    let style = document.getElementById(id);
+    if (!css) { style?.remove(); return; }
+    if (!style) {
+        style = document.createElement('style');
+        style.id = id;
+    }
+    style.textContent = css;
+    document.head.append(style);
+}
+
+function activeDesignState() {
+    const config = getConfig();
+    const preset = findCustomDesign(config.design);
+    return { base: preset?.base || config.design, preset };
+}
+
+function applyDesignDataset(element, state) {
+    element.dataset.clDesign = state.base;
+    if (state.preset) {
+        element.dataset.clCustom = 'true';
+        element.dataset.clPreset = state.preset.id;
+    } else {
+        delete element.dataset.clCustom;
+        delete element.dataset.clPreset;
+    }
+}
+
+function applyActiveCustomStyle(state) {
+    if (!state.preset) { writeCustomStyle(CUSTOM_STYLE_ID, ''); return; }
+    try {
+        const scope = `.mes_text.character-life-rendered[data-cl-preset="${state.preset.id}"]`;
+        writeCustomStyle(CUSTOM_STYLE_ID, customDesignCss(state.preset, scope));
+    } catch (error) {
+        writeCustomStyle(CUSTOM_STYLE_ID, '');
+        console.warn(`[Character Life's] Ignored invalid custom preset CSS: ${error.message}`);
+    }
+}
+
+function refreshCustomDesignPreview() {
+    const studio = document.getElementById('character-life-css-studio');
+    const preview = document.querySelector('.cl-design-preview');
+    if (!studio || !preview || studio.dataset.preview !== 'draft') {
+        writeCustomStyle(CUSTOM_PREVIEW_STYLE_ID, '');
+        return;
+    }
+    const preset = normalizeCustomDesign({
+        id: 'preview',
+        name: document.getElementById('character-life-preset-name')?.value,
+        base: document.getElementById('character-life-preset-base')?.value,
+        headerCss: document.getElementById('character-life-header-css')?.value,
+        thoughtCss: document.getElementById('character-life-thought-css')?.value,
+        dialogueCss: document.getElementById('character-life-dialogue-css')?.value,
+    });
+    const status = document.getElementById('character-life-css-status');
+    applyDesignDataset(preview, { base: preset.base, preset });
+    preview.dataset.clPreset = 'preview';
+    try {
+        writeCustomStyle(CUSTOM_PREVIEW_STYLE_ID, customDesignCss(preset, '.cl-design-preview[data-cl-preset="preview"]'));
+        if (status) { status.textContent = 'Live preview ready.'; status.dataset.state = 'ok'; }
+    } catch (error) {
+        writeCustomStyle(CUSTOM_PREVIEW_STYLE_ID, '');
+        if (status) { status.textContent = error.message; status.dataset.state = 'error'; }
+    }
+}
+
 function configureDocument() {
     const config = getConfig();
+    const designState = activeDesignState();
     const root = document.documentElement;
     root.style.setProperty('--cl-header-color', config.headerColor);
     root.style.setProperty('--cl-thought-color', config.thoughtColor);
@@ -511,14 +659,16 @@ function configureDocument() {
     const manager = document.querySelector('.cl-manager');
     if (manager) {
         manager.dataset.clShape = config.portraitShape;
-        manager.dataset.clDesign = config.design;
+        manager.dataset.clDesign = designState.base;
     }
     document.querySelectorAll('.mes_text.character-life-rendered').forEach(element => {
-        element.dataset.clDesign = config.design;
+        applyDesignDataset(element, designState);
         element.dataset.clPosition = config.position;
         element.dataset.clShape = config.portraitShape;
         element.dataset.clMissing = config.missingPortrait;
     });
+    applyActiveCustomStyle(designState);
+    refreshCustomDesignPreview();
 }
 
 function stripMarkup(value) {
@@ -542,7 +692,7 @@ function headerBlock(name, form, color, subtitle = '') {
     const speaker = stripMarkup(name) || 'Unknown';
     return `<section class="cl-chat-block cl-chat-header" data-cl-name="${escapeHtml(speaker)}" data-cl-form="${escapeHtml(stripMarkup(form))}" style="--cl-local-header:${colorStyle(color, '--cl-header-color')}">
         <div class="cl-chat-wing left"><i></i><span></span></div><div class="cl-chat-header-core"><div class="cl-chat-portrait"><span class="cl-chat-initial">${escapeHtml(speaker.charAt(0).toUpperCase())}</span><img alt="" hidden><b class="tl"></b><b class="br"></b></div>
-        <div class="cl-chat-identity"><small>${escapeHtml(stripMarkup(subtitle) || 'CHRONICLE RECORD')}</small><strong>${escapeHtml(speaker)}</strong><span></span></div></div><div class="cl-chat-wing right"><i></i><span></span></div></section>`;
+        <div class="cl-chat-identity"><small>${escapeHtml(stripMarkup(subtitle))}</small><strong>${escapeHtml(speaker)}</strong><span></span></div></div><div class="cl-chat-wing right"><i></i><span></span></div></section>`;
 }
 
 function dialogueBlock(name, content, form, color, number) {
@@ -607,7 +757,7 @@ async function applyNpcUpdates(updates) {
     for (const update of updates.slice(0, 24)) {
         let resolved = findNpcInLibraries(update.name, libraries);
         if (!resolved && getConfig().autoDiscover && hasChat()) {
-            const npc = normalizeNpc({ name: update.name, role: 'Discovered in chat', accent: getConfig().headerColor });
+            const npc = normalizeNpc({ name: update.name, accent: getConfig().headerColor });
             libraries.get('chat').push(npc);
             resolved = { npc, scope: 'chat' };
         }
@@ -628,7 +778,7 @@ async function ensureUnknownNpc(name) {
     if (!getConfig().autoDiscover || !hasChat() || resolveNpc(name)) return;
     const npcs = getLibrary('chat');
     if (npcs.some(npc => npc.name.toLocaleLowerCase() === name.toLocaleLowerCase())) return;
-    npcs.push(normalizeNpc({ name, role: 'Discovered in chat', accent: getConfig().headerColor }));
+    npcs.push(normalizeNpc({ name, accent: getConfig().headerColor }));
     await saveLibrary('chat', npcs);
 }
 
@@ -674,7 +824,7 @@ async function hydrateChat(root) {
         const role = identity?.querySelector('small');
         const affiliation = identity?.querySelector('span');
         if (title) title.textContent = npc.name;
-        if (role && npc.role) role.textContent = npc.role;
+        if (role) role.textContent = npc.role || '';
         if (affiliation) affiliation.textContent = npc.affiliation || '';
         block.style.setProperty('--cl-local-header', palette.header);
         const form = chooseForm(npc, block.dataset.clForm);
@@ -1231,7 +1381,7 @@ async function exportBackup() {
         const blob = await portraitGet(id);
         if (blob) portraits[id] = await blobToDataUrl(blob);
     }
-    const backup = { format: 'character-life-backup', version: 1, exportedAt: new Date().toISOString(), config: root.config, libraries, portraits };
+    const backup = { format: 'character-life-backup', version: 1, exportedAt: new Date().toISOString(), config: root.config, customDesigns: root.customDesigns, libraries, portraits };
     const blob = new Blob([JSON.stringify(backup)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const anchor = document.createElement('a');
@@ -1248,6 +1398,7 @@ async function importBackup(file) {
     for (const [id, dataUrl] of Object.entries(backup.portraits || {})) await portraitPut(id, dataUrlToBlob(dataUrl));
     const root = rootSettings();
     root.config = { ...clone(DEFAULT_CONFIG), ...(backup.config && typeof backup.config === 'object' ? backup.config : {}) };
+    root.customDesigns = Array.isArray(backup.customDesigns) ? backup.customDesigns.map(value => normalizeCustomDesign(value)).filter(Boolean) : root.customDesigns;
     root.globalNpcs = (backup.libraries.global || []).map(normalizeNpc).filter(Boolean);
     root.characterNpcs[characterKey()] = (backup.libraries.character || []).map(normalizeNpc).filter(Boolean);
     if (hasChat()) {
@@ -1527,6 +1678,175 @@ function bindSetting(id, key, callback) {
     element.addEventListener(element.type === 'range' || element.type === 'color' ? 'input' : 'change', update);
 }
 
+function populateDesignSelect(selected = getConfig().design) {
+    const select = document.getElementById('character-life-design');
+    if (!(select instanceof HTMLSelectElement)) return;
+    const labels = { signature: 'Chronicle Signature', imperial: 'Chronicle Imperial', clean: 'Clean' };
+    select.replaceChildren();
+    const builtins = document.createElement('optgroup');
+    builtins.label = 'Built-in designs';
+    for (const value of BUILTIN_CHAT_DESIGNS) {
+        const option = document.createElement('option');
+        option.value = value;
+        option.textContent = labels[value];
+        builtins.append(option);
+    }
+    select.append(builtins);
+    const presets = rootSettings().customDesigns;
+    if (presets.length) {
+        const custom = document.createElement('optgroup');
+        custom.label = 'My presets';
+        for (const preset of presets) {
+            const option = document.createElement('option');
+            option.value = `${CUSTOM_DESIGN_PREFIX}${preset.id}`;
+            option.textContent = preset.name;
+            custom.append(option);
+        }
+        select.append(custom);
+    }
+    select.value = [...select.options].some(option => option.value === selected) ? selected : DEFAULT_CONFIG.design;
+}
+
+function customDesignEditorValue(existing = null, forceNewId = false) {
+    const studio = document.getElementById('character-life-css-studio');
+    return normalizeCustomDesign({
+        id: forceNewId ? '' : studio?.dataset.presetId,
+        name: document.getElementById('character-life-preset-name')?.value,
+        base: document.getElementById('character-life-preset-base')?.value,
+        headerCss: document.getElementById('character-life-header-css')?.value,
+        thoughtCss: document.getElementById('character-life-thought-css')?.value,
+        dialogueCss: document.getElementById('character-life-dialogue-css')?.value,
+        createdAt: existing?.createdAt,
+        updatedAt: new Date().toISOString(),
+    }, forceNewId);
+}
+
+function loadCustomDesignEditor(preset = null, base = DEFAULT_CONFIG.design) {
+    const studio = document.getElementById('character-life-css-studio');
+    if (!studio) return;
+    studio.dataset.presetId = preset?.id || '';
+    studio.dataset.preview = preset ? 'draft' : 'idle';
+    const values = {
+        'character-life-preset-name': preset?.name || '',
+        'character-life-preset-base': preset?.base || (BUILTIN_CHAT_DESIGNS.includes(base) ? base : DEFAULT_CONFIG.design),
+        'character-life-header-css': preset?.headerCss || '',
+        'character-life-thought-css': preset?.thoughtCss || '',
+        'character-life-dialogue-css': preset?.dialogueCss || '',
+    };
+    for (const [id, value] of Object.entries(values)) {
+        const element = document.getElementById(id);
+        if (element) element.value = value;
+    }
+    const remove = document.getElementById('character-life-preset-delete');
+    if (remove) remove.disabled = !preset;
+    const status = document.getElementById('character-life-css-status');
+    if (status) {
+        status.textContent = preset ? `Editing saved preset: ${preset.name}` : 'Create a preset or select one from the Design menu.';
+        status.dataset.state = '';
+    }
+    configureDocument();
+}
+
+function markCustomDesignDraft() {
+    const studio = document.getElementById('character-life-css-studio');
+    if (!studio) return;
+    studio.dataset.preview = 'draft';
+    refreshCustomDesignPreview();
+}
+
+function saveCustomDesignPreset() {
+    const studio = document.getElementById('character-life-css-studio');
+    if (!studio) return;
+    try {
+        const settings = rootSettings();
+        const existing = settings.customDesigns.find(preset => preset.id === studio.dataset.presetId) || null;
+        const preset = customDesignEditorValue(existing, !existing);
+        customDesignCss(preset, '.character-life-css-validation');
+        const index = settings.customDesigns.findIndex(value => value.id === preset.id);
+        if (index >= 0) settings.customDesigns[index] = preset;
+        else settings.customDesigns.push(preset);
+        settings.config.design = `${CUSTOM_DESIGN_PREFIX}${preset.id}`;
+        SillyTavern.getContext().saveSettingsDebounced();
+        populateDesignSelect(settings.config.design);
+        loadCustomDesignEditor(preset);
+        notify('success', `Design preset saved and activated: ${preset.name}`);
+    } catch (error) {
+        notify('error', error.message);
+    }
+}
+
+function deleteCustomDesignPreset() {
+    const studio = document.getElementById('character-life-css-studio');
+    const preset = studio ? findCustomDesign(studio.dataset.presetId) : null;
+    if (!preset || !confirm(`Delete the design preset “${preset.name}”?`)) return;
+    const settings = rootSettings();
+    settings.customDesigns = settings.customDesigns.filter(value => value.id !== preset.id);
+    if (customDesignId(settings.config.design) === preset.id) settings.config.design = preset.base;
+    SillyTavern.getContext().saveSettingsDebounced();
+    populateDesignSelect(settings.config.design);
+    loadCustomDesignEditor(null, settings.config.design);
+    notify('success', `Design preset deleted: ${preset.name}`);
+}
+
+function exportCustomDesignPreset() {
+    try {
+        const studio = document.getElementById('character-life-css-studio');
+        const existing = studio ? findCustomDesign(studio.dataset.presetId) : null;
+        const preset = customDesignEditorValue(existing, !existing);
+        customDesignCss(preset, '.character-life-css-validation');
+        const file = {
+            format: 'character-life-design',
+            version: 1,
+            extensionVersion: VERSION,
+            exportedAt: new Date().toISOString(),
+            preset,
+        };
+        const blob = new Blob([JSON.stringify(file, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const anchor = document.createElement('a');
+        anchor.href = url;
+        anchor.download = `character-life-design-${slug(preset.name)}.json`;
+        anchor.click();
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+    } catch (error) {
+        notify('error', error.message);
+    }
+}
+
+async function importCustomDesignPreset(file) {
+    if (!file || file.size > 1024 * 1024) throw new Error('Design preset must be a JSON file smaller than 1 MB.');
+    const data = JSON.parse(await file.text());
+    if (data?.format !== 'character-life-design' || !data.preset) throw new Error('Invalid Character Life design preset.');
+    const preset = normalizeCustomDesign(data.preset, true);
+    if (!preset) throw new Error('Invalid Character Life design preset.');
+    customDesignCss(preset, '.character-life-css-validation');
+    const settings = rootSettings();
+    settings.customDesigns.push(preset);
+    settings.config.design = `${CUSTOM_DESIGN_PREFIX}${preset.id}`;
+    SillyTavern.getContext().saveSettingsDebounced();
+    populateDesignSelect(settings.config.design);
+    loadCustomDesignEditor(preset);
+    notify('success', `Design preset imported and activated: ${preset.name}`);
+}
+
+function bindCustomDesignStudio() {
+    const studio = document.getElementById('character-life-css-studio');
+    if (!studio) return;
+    studio.querySelectorAll('input[type="text"], select, textarea').forEach(element => element.addEventListener('input', markCustomDesignDraft));
+    document.getElementById('character-life-preset-new')?.addEventListener('click', () => {
+        loadCustomDesignEditor(null, activeDesignState().base);
+        studio.dataset.preview = 'draft';
+        refreshCustomDesignPreview();
+    });
+    document.getElementById('character-life-preset-save')?.addEventListener('click', saveCustomDesignPreset);
+    document.getElementById('character-life-preset-delete')?.addEventListener('click', deleteCustomDesignPreset);
+    document.getElementById('character-life-preset-export')?.addEventListener('click', exportCustomDesignPreset);
+    document.getElementById('character-life-preset-import')?.addEventListener('change', async event => {
+        try { await importCustomDesignPreset(event.target.files?.[0]); } catch (error) { notify('error', error.message); }
+        event.target.value = '';
+    });
+}
+
 async function addSettingsDrawer() {
     if (document.getElementById('character-life-settings')) return;
     const context = SillyTavern.getContext();
@@ -1537,7 +1857,11 @@ async function addSettingsDrawer() {
     bindSetting('character-life-inject', 'injectPrompt', updatePrompt);
     bindSetting('character-life-discover', 'autoDiscover');
     bindSetting('character-life-profile-updates', 'autoProfileUpdates', updatePrompt);
-    bindSetting('character-life-design', 'design', configureDocument);
+    populateDesignSelect();
+    bindSetting('character-life-design', 'design', () => {
+        const preset = findCustomDesign(getConfig().design);
+        loadCustomDesignEditor(preset, activeDesignState().base);
+    });
     bindSetting('character-life-position', 'position', configureDocument);
     bindSetting('character-life-shape', 'portraitShape', configureDocument);
     bindSetting('character-life-size', 'portraitSize', () => {
@@ -1556,6 +1880,9 @@ async function addSettingsDrawer() {
     bindSetting('character-life-dialogue-color', 'dialogueColor', configureDocument);
     document.getElementById('character-life-open')?.addEventListener('click', () => openManager());
     document.getElementById('character-life-new')?.addEventListener('click', () => openManager({ newNpc: true }));
+    bindCustomDesignStudio();
+    const activePreset = findCustomDesign(getConfig().design);
+    loadCustomDesignEditor(activePreset, activeDesignState().base);
     const output = document.getElementById('character-life-size-output');
     if (output) output.textContent = `${getConfig().portraitSize} px`;
     configureDocument();

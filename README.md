@@ -19,7 +19,9 @@ Character Life's is a responsive SillyTavern extension that stores NPC identitie
 - One-tap AI assistance for every editable NPC identity and profile field through the active SillyTavern model.
 - Optional adult-only anatomy field and vision mode, enabled by an adult-character confirmation; the age field may be left blank.
 - Wand-menu launcher, Extension Settings drawer, and responsive NPC manager.
-- Ten responsive chat designs with a live settings preview: Chronicle Signature, Chronicle Imperial, Clean, RPG Chronicle, Fancy, Professional, Formal, Manga Chronicle, Shadow System, and Manga Shōjo.
+- Three focused responsive base designs with a live settings preview: Chronicle Signature, Chronicle Imperial, and Clean.
+- Custom Design Studio with independent Header, Monologue, and Dialogue CSS, reusable local presets, live validation, activation, deletion, and JSON import/export.
+- Chat presentation and extension UI inherit the active SillyTavern/user font instead of loading a separate typeface.
 - Left, middle, or right speaker alignment. Thought and dialogue automatically follow the header.
 - Adjustable portrait size, shape, missing-image behavior, and independent header/thought/dialogue colors.
 - Independent automatic NPC palettes derived from portraits, with name-based fallback and optional custom colors per NPC.
@@ -82,6 +84,15 @@ When Character Life's renders the chat itself, disable overlapping Header/Monolo
 - The AI Appearance Reader sends the selected image to the multimodal provider configured under SillyTavern's Image Captioning settings. This can use that provider's API quota. The generated description is shown for review and is not saved until **Save NPC** is pressed.
 
 ## Version
+
+### 1.5.0
+
+- Reduced the built-in design list to Chronicle Signature, Chronicle Imperial, and Clean.
+- Added a scoped Custom Design Studio for separate Header, Monologue, and Dialogue CSS with live preview.
+- Added reusable named design presets with save-and-use, delete, and standalone JSON import/export controls.
+- Added custom presets to full Character Life backup exports and restores.
+- Removed the forced external font import so chat panels and extension UI inherit the user's active SillyTavern font.
+- Removed the “CHRONICLE RECORD” fallback; NPCs without a role/title now leave that line empty and collapse it from the header.
 
 ### 1.4.1
 

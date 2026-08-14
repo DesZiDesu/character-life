@@ -1,7 +1,7 @@
 <div id="character-life-settings" class="character-life-settings">
     <div class="inline-drawer">
         <div class="inline-drawer-toggle inline-drawer-header interactable" tabindex="0" role="button" aria-expanded="false">
-            <b><i class="fa-solid fa-address-book" aria-hidden="true"></i> Character Life's <small>v1.4.1</small></b>
+            <b><i class="fa-solid fa-address-book" aria-hidden="true"></i> Character Life's <small>v1.5.0</small></b>
             <div class="inline-drawer-icon fa-solid fa-circle-chevron-down down" aria-hidden="true"></div>
         </div>
         <div class="inline-drawer-content">
@@ -30,7 +30,7 @@
             </label>
 
             <div class="cl-settings-grid">
-                <label><span>Design</span><select id="character-life-design"><option value="signature">Chronicle Signature</option><option value="imperial">Chronicle Imperial</option><option value="clean">Clean</option><option value="rpg">RPG Chronicle</option><option value="fancy">Fancy</option><option value="professional">Professional</option><option value="formal">Formal</option><option value="manga">Manga Chronicle</option><option value="shadow">Shadow System</option><option value="shojo">Manga Shōjo</option></select></label>
+                <label><span>Design</span><select id="character-life-design"><option value="signature">Chronicle Signature</option><option value="imperial">Chronicle Imperial</option><option value="clean">Clean</option></select></label>
                 <label><span>Header position</span><select id="character-life-position"><option value="left">Left</option><option value="center">Middle</option><option value="right">Right</option></select></label>
                 <label><span>Portrait shape</span><select id="character-life-shape"><option value="square">Square</option><option value="rounded">Rounded square</option><option value="portrait">Portrait rectangle</option><option value="circle">Circle</option><option value="hexagon">Hexagonal</option></select></label>
                 <label><span>Portrait size <output id="character-life-size-output">76 px</output></span><input id="character-life-size" type="range" min="52" max="124" step="4"></label>
@@ -53,6 +53,33 @@
                     <section class="cl-chat-block cl-chat-dialogue"><div class="cl-chat-label"><span></span><strong>Avery Vale</strong><i>•</i><em>Dialogue #1</em></div><div class="cl-chat-content">Stay close. We enter together.</div></section>
                 </div>
             </section>
+
+            <details id="character-life-css-studio" class="cl-css-studio">
+                <summary><i class="fa-solid fa-pen-ruler"></i> Custom design studio</summary>
+                <p>Create a reusable design from Signature, Imperial, or Clean. CSS is automatically limited to Character Life's Header, Monologue, or Dialogue component.</p>
+
+                <div class="cl-css-preset-grid">
+                    <label><span>Preset name</span><input id="character-life-preset-name" type="text" maxlength="80" placeholder="My Chronicle"></label>
+                    <label><span>Base design</span><select id="character-life-preset-base"><option value="signature">Chronicle Signature</option><option value="imperial">Chronicle Imperial</option><option value="clean">Clean</option></select></label>
+                </div>
+
+                <div class="cl-css-actions">
+                    <button id="character-life-preset-new" class="menu_button" type="button"><i class="fa-solid fa-plus"></i> New</button>
+                    <button id="character-life-preset-save" class="menu_button" type="button"><i class="fa-solid fa-bookmark"></i> Save &amp; use preset</button>
+                    <button id="character-life-preset-delete" class="menu_button" type="button" disabled><i class="fa-solid fa-trash"></i> Delete</button>
+                    <button id="character-life-preset-export" class="menu_button" type="button"><i class="fa-solid fa-file-export"></i> Export JSON</button>
+                    <label class="menu_button cl-css-import"><i class="fa-solid fa-file-import"></i> Import JSON<input id="character-life-preset-import" type="file" accept="application/json,.json"></label>
+                </div>
+
+                <div class="cl-css-editors">
+                    <label><span>Header CSS</span><textarea id="character-life-header-css" rows="7" spellcheck="false" placeholder="padding: 8px 0;\n\n&amp; .cl-chat-header-core { border-bottom: 1px solid currentColor; }"></textarea></label>
+                    <label><span>Monologue CSS</span><textarea id="character-life-thought-css" rows="7" spellcheck="false" placeholder="background: transparent;\nborder-left: 2px solid currentColor;"></textarea></label>
+                    <label><span>Dialogue CSS</span><textarea id="character-life-dialogue-css" rows="7" spellcheck="false" placeholder="border-radius: 12px;\n\n&amp; .cl-chat-content { line-height: 1.65; }"></textarea></label>
+                </div>
+
+                <p class="cl-css-help"><code>&amp;</code> means the selected component. Plain declarations style its outer block; flat rules can style children such as <code>.cl-chat-header-core</code>, <code>.cl-chat-portrait</code>, <code>.cl-chat-label</code>, and <code>.cl-chat-content</code>. The preview updates while you type.</p>
+                <output id="character-life-css-status" class="cl-css-status" aria-live="polite">Create a preset or select one from the Design menu.</output>
+            </details>
 
             <details class="cl-tag-guide">
                 <summary><i class="fa-solid fa-code"></i> Speaker tag format</summary>
