@@ -10,6 +10,9 @@ Character Life's is a responsive SillyTavern extension that stores NPC identitie
 - Active/default form selection plus per-image X/Y framing and zoom.
 - Images are compressed and stored locally in IndexedDB; no Catbox, GitHub image upload, or external image host is required.
 - NPC metadata remains in SillyTavern extension settings or chat metadata according to its selected scope.
+- Rich AI-readable profiles: pronouns, age, species, appearance, personality, relationships, background, goals, abilities, speech style, and current state.
+- Optional hidden profile-update tags let the active model save newly established NPC facts back into the correct library scope.
+- AI Appearance Reader uses SillyTavern's configured multimodal Image Captioning model with Full Appearance and clothing-independent Key Features modes.
 - Wand-menu launcher, Extension Settings drawer, and responsive NPC manager.
 - Chronicle Signature and Chronicle Imperial designs, switchable in Settings.
 - Left, middle, or right speaker alignment. Thought and dialogue automatically follow the header.
@@ -42,6 +45,16 @@ Open **Character Life's** from the Wand menu beside the chat input or from **Ext
 
 The portrait form is optional. If it is omitted, the NPC's active form is used. Dialogue numbering is created by the extension and does not need to be written by the model.
 
+One header can contain several dialogue blocks from the same speaker with ordinary narration between them. A new header is needed when the active speaker changes.
+
+When automatic profile updates are enabled, the model may append hidden updates such as:
+
+```text
+[CL_NPC_UPDATE|Roxy|relationship]She now trusts the user with restricted research notes.[/CL_NPC_UPDATE]
+```
+
+Character Life's removes this tag from the visible reply and saves the supported field to the resolved NPC scope. Updates are limited to facts established in the conversation or saved profile.
+
 Existing Chronicle formats are also recognized:
 
 ```text
@@ -59,8 +72,16 @@ When Character Life's renders the chat itself, disable overlapping Header/Monolo
 - Character NPC metadata is keyed to the current character or group.
 - Chat NPC metadata is saved only in the current chat.
 - Portrait bytes stay on the current browser/device. Use **Export backup** to move them to another device.
+- The AI Appearance Reader sends the selected image to the multimodal provider configured under SillyTavern's Image Captioning settings. This can use that provider's API quota. The generated description is shown for review and is not saved until **Save NPC** is pressed.
 
 ## Version
+
+### 1.1.0
+
+- Added detailed AI-readable NPC records and searchable profile fields.
+- Added automatic chat-derived NPC profile updates with a settings toggle and hidden update protocol.
+- Added two-mode multimodal appearance analysis for uploaded references or existing local portraits.
+- Expanded the speaker prompt to explicitly support multiple dialogue blocks and narration under one header.
 
 ### 1.0.0
 
