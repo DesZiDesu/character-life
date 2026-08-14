@@ -1,0 +1,13 @@
+{
+    "display_name": "Character Life's",
+    "loading_order": 12,
+    "requires": [],
+    "optional": [],
+    "dependencies": [],
+    "js": "index.js",
+    "css": "style.css",
+    "author": "DesZiDesu",
+    "version": "1.0.0",
+    "homePage": "https://github.com/DesZiDesu/character-life",
+    "auto_update": true
+}
