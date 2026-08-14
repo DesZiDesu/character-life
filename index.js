@@ -138,9 +138,10 @@ function characterKey() {
     const group = context.groupId ?? context.group?.id;
     if (group !== undefined && group !== null && group !== '') return `group:${group}`;
     const characterId = context.characterId ?? context.character?.id;
-    const avatar = cleanText(context.character?.avatar || '', '', 180);
-    const name = cleanText(context.name2 || context.character?.name || 'unknown', 'unknown', 180);
-    return `character:${characterId ?? avatar ?? name}:${avatar || name}`;
+    const character = context.character || (Array.isArray(context.characters) ? context.characters[characterId] : null);
+    const avatar = cleanText(character?.avatar || '', '', 180);
+    const name = cleanText(context.name2 || character?.name || 'unknown', 'unknown', 180);
+    return `character:${avatar || characterId || name}`;
 }
 
 function hasChat() {
