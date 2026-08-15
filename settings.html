@@ -1,7 +1,7 @@
 <div id="character-life-settings" class="character-life-settings">
     <div class="inline-drawer">
         <div class="inline-drawer-toggle inline-drawer-header interactable" tabindex="0" role="button" aria-expanded="false">
-            <b><i class="fa-solid fa-address-book" aria-hidden="true"></i> Character Life's <small>v1.7.1</small></b>
+            <b><i class="fa-solid fa-address-book" aria-hidden="true"></i> Character Life's <small>v1.7.2</small></b>
             <div class="inline-drawer-icon fa-solid fa-circle-chevron-down down" aria-hidden="true"></div>
         </div>
         <div class="inline-drawer-content">
@@ -28,9 +28,13 @@
                 <input id="character-life-profile-updates" type="checkbox">
                 <span>Let the AI update NPC profiles from facts established in chat</span>
             </label>
+            <label class="checkbox_label" for="character-life-unified-colors">
+                <input id="character-life-unified-colors" type="checkbox">
+                <span>Use one NPC color for Header, Monologue, and Dialogue (default)</span>
+            </label>
 
             <div class="cl-settings-grid">
-                <label><span>Design</span><select id="character-life-design"><option value="signature">Chronicle Signature</option><option value="imperial">Chronicle Imperial</option><option value="clean">Clean</option><option value="manga-light">Manga Light</option><option value="manga-noir">Manga Noir</option></select></label>
+                <label><span>Design</span><select id="character-life-design"><option value="signature">Chronicle Signature</option><option value="imperial">Chronicle Imperial</option><option value="clean">Clean</option><option value="manga-light">Manga Light</option><option value="manga-noir">Manga Noir</option><option value="tactical-vector">Tactical Vector</option><option value="arcane-regalia">Arcane Regalia</option></select></label>
                 <label><span>Header position</span><select id="character-life-position"><option value="left">Left</option><option value="center">Middle</option><option value="right">Right</option></select></label>
                 <label><span>Portrait shape</span><select id="character-life-shape"><option value="square">Square</option><option value="rounded">Rounded square</option><option value="portrait">Portrait rectangle</option><option value="circle">Circle</option><option value="hexagon">Hexagonal</option></select></label>
                 <label><span>Portrait size <output id="character-life-size-output">76 px</output></span><input id="character-life-size" type="range" min="52" max="124" step="4"></label>
@@ -58,11 +62,11 @@
 
             <details id="character-life-css-studio" class="cl-css-studio">
                 <summary><i class="fa-solid fa-pen-ruler"></i> Independent Theme Creator</summary>
-                <p>Create a complete Header, Monologue, and Dialogue theme from a neutral blank canvas. New v1.7.1 themes do not use a built-in theme as their visual foundation.</p>
+                <p>Create a complete Header, Monologue, and Dialogue theme from a neutral blank canvas. New v1.7.2 themes do not use a built-in theme as their visual foundation.</p>
 
                 <div class="cl-css-preset-grid">
                     <label><span>Theme name</span><input id="character-life-preset-name" type="text" maxlength="80" placeholder="My custom theme"></label>
-                    <label hidden aria-hidden="true"><span>Internal compatibility renderer</span><select id="character-life-preset-base"><option value="signature">Chronicle Signature</option><option value="imperial">Chronicle Imperial</option><option value="clean">Clean</option><option value="manga-light">Manga Light</option><option value="manga-noir">Manga Noir</option></select></label>
+                    <label hidden aria-hidden="true"><span>Internal compatibility renderer</span><select id="character-life-preset-base"><option value="signature">Chronicle Signature</option><option value="imperial">Chronicle Imperial</option><option value="clean">Clean</option><option value="manga-light">Manga Light</option><option value="manga-noir">Manga Noir</option><option value="tactical-vector">Tactical Vector</option><option value="arcane-regalia">Arcane Regalia</option></select></label>
                 </div>
 
                 <div class="cl-css-actions">
@@ -79,7 +83,7 @@
                     <label><span>Dialogue CSS</span><textarea id="character-life-dialogue-css" rows="7" spellcheck="false" placeholder="&amp; { border-radius: 12px; }\n.cl-chat-content { line-height: 1.65; }"></textarea></label>
                 </div>
 
-                <p class="cl-css-help"><code>&amp;</code> means the selected component. New v1.7.1 themes first neutralize Character Life's built-in visual styling, then your scoped Header, Monologue, and Dialogue CSS defines the complete appearance. Flat rules can style children such as <code>.cl-chat-header-core</code>, <code>.cl-chat-portrait</code>, <code>.cl-chat-label</code>, and <code>.cl-chat-content</code>.</p>
+                <p class="cl-css-help"><code>&amp;</code> means the selected component. New v1.7.2 themes first neutralize Character Life's built-in visual styling, then your scoped Header, Monologue, and Dialogue CSS defines the complete appearance. Flat rules can style children such as <code>.cl-chat-header-core</code>, <code>.cl-chat-portrait</code>, <code>.cl-chat-label</code>, and <code>.cl-chat-content</code>.</p>
                 <output id="character-life-css-status" class="cl-css-status" aria-live="polite">Press New blank theme to start from an independent canvas.</output>
             </details>
 
