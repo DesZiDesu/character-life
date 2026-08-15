@@ -43,17 +43,11 @@ function replaceNode(node, tagName) {
 }
 
 function syncBadges() {
-    syncQueued = false;
-
-    // Older layers target this exact <small> selector and can force v1.8.1/v1.8.2.
-    // Replace it with a span so those historical selectors no longer own the badge.
     const legacyMain = document.querySelector('#character-life-settings .inline-drawer-header small');
     if (legacyMain) replaceNode(legacyMain, 'span');
     const main = document.querySelector(`#character-life-settings .inline-drawer-header .${VERSION_CLASS}`);
     if (main && main.textContent !== `v${EXTENSION_VERSION}`) main.textContent = `v${EXTENSION_VERSION}`;
 
-    // The v1.8.2 director targets the Skill Storage heading's direct <span>.
-    // Replace only that version node with <small>; normal setting labels are untouched.
     const legacySkill = document.querySelector('#character-life-skill-settings .cl-skill-settings-heading > span');
     if (legacySkill) replaceNode(legacySkill, 'small');
     const skill = document.querySelector(`#character-life-skill-settings .cl-skill-settings-heading > .${VERSION_CLASS}`);
@@ -62,15 +56,10 @@ function syncBadges() {
     document.documentElement.dataset.characterLifeVersion = EXTENSION_VERSION;
 }
 
-function queueSync() {
-    if (syncQueued) return;
-    syncQueued = true;
-    queueMicrotask(syncBadges);
-}
-
 function patchPublicApi(name) {
     const api = globalThis[name];
     if (!api || typeof api !== 'object') return;
+    if (api.version === EXTENSION_VERSION && api.extensionVersion === EXTENSION_VERSION) return;
     try {
         globalThis[name] = Object.freeze({ ...api, version: EXTENSION_VERSION, extensionVersion: EXTENSION_VERSION });
     } catch (error) {
@@ -93,6 +82,18 @@ function syncPublicVersions() {
     }
 }
 
+function runSync() {
+    syncQueued = false;
+    syncPublicVersions();
+    syncBadges();
+}
+
+function queueSync() {
+    if (syncQueued) return;
+    syncQueued = true;
+    queueMicrotask(runSync);
+}
+
 function bindContextEvents() {
     const context = globalThis.SillyTavern?.getContext?.();
     const source = context?.eventSource;
@@ -109,8 +110,7 @@ function bindContextEvents() {
 
 function init() {
     ensureStyle();
-    syncPublicVersions();
-    syncBadges();
+    runSync();
     bindContextEvents();
 
     // Observe only added/removed UI nodes. Version text mutations are ignored,
@@ -120,11 +120,10 @@ function init() {
     });
     observer.observe(document.body, { childList: true, subtree: true });
 
+    // Capture + microtask means older click handlers may run first, then v1.8.6
+    // reasserts the public version after they finish their compatibility work.
     document.addEventListener('click', queueSync, true);
-    globalThis.addEventListener('character-life:skills-ready', () => {
-        syncPublicVersions();
-        queueSync();
-    });
+    globalThis.addEventListener('character-life:skills-ready', queueSync);
 
     console.info(`[Character Life's] v${EXTENSION_VERSION} version synchronization active.`);
 }
