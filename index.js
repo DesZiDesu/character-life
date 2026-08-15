@@ -8,7 +8,7 @@ const DB_NAME = 'character-life-portraits';
 const DB_STORE = 'portraits';
 const VERSION = '1.6.1';
 
-const BUILTIN_CHAT_DESIGNS = Object.freeze(['signature', 'imperial', 'clean', 'manga-light', 'manga-noir']);
+const BUILTIN_CHAT_DESIGNS = Object.freeze(['signature', 'imperial', 'clean', 'manga-light', 'manga-noir', 'tactical-vector', 'arcane-regalia']);
 const CUSTOM_DESIGN_PREFIX = 'custom:';
 const CUSTOM_STYLE_ID = 'character-life-custom-style';
 const CUSTOM_PREVIEW_STYLE_ID = 'character-life-custom-preview-style';
@@ -1701,7 +1701,7 @@ function bindSetting(id, key, callback) {
 function populateDesignSelect(selected = getConfig().design) {
     const select = document.getElementById('character-life-design');
     if (!(select instanceof HTMLSelectElement)) return;
-    const labels = { signature: 'Chronicle Signature', imperial: 'Chronicle Imperial', clean: 'Clean', 'manga-light': 'Manga Light', 'manga-noir': 'Manga Noir' };
+    const labels = { signature: 'Chronicle Signature', imperial: 'Chronicle Imperial', clean: 'Clean', 'manga-light': 'Manga Light', 'manga-noir': 'Manga Noir', 'tactical-vector': 'Tactical Vector', 'arcane-regalia': 'Arcane Regalia' };
     select.replaceChildren();
     const builtins = document.createElement('optgroup');
     builtins.label = 'Built-in designs';
