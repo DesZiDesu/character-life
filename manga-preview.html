@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="th">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+    <title>Character Life's — Manga Designs</title>
+    <link rel="stylesheet" href="./style.css">
+    <style>
+        :root { color-scheme: dark; --SmartThemeBodyColor:#eeeae2; --SmartThemeBlurTintColor:#121214; --cl-portrait-size:72px; --cl-chat-font-size:88%; --cl-chat-block-gap:4px; --cl-chat-content-gap:5px; --cl-chat-pad-y:9px; --cl-chat-pad-x:13px; --cl-chat-header-pad:7px; --cl-chat-header-gap:10px; --cl-chat-header-extra:14px; }
+        * { box-sizing:border-box; }
+        body { margin:0; min-height:100vh; padding:clamp(14px,4vw,42px); color:#eeeae2; background:#101012; font-family:system-ui,-apple-system,"Noto Sans Thai",sans-serif; }
+        .preview-wrap { width:min(1050px,100%); margin:auto; }
+        .preview-head { display:flex; align-items:end; justify-content:space-between; gap:18px; padding-bottom:18px; border-bottom:1px solid #353539; }
+        .preview-head small { color:#aaa9ae; letter-spacing:.14em; text-transform:uppercase; }
+        .preview-head h1 { margin:4px 0 0; font-size:clamp(1.25rem,4vw,2rem); font-weight:650; }
+        .preview-controls { display:grid; grid-template-columns:repeat(4,minmax(120px,1fr)); gap:10px; margin:18px 0 24px; padding:13px; border:1px solid #353539; background:#18181b; }
+        .preview-controls label { display:grid; gap:6px; color:#aaa9ae; font-size:.78rem; }
+        .preview-controls select,.preview-controls input { width:100%; min-height:34px; color:#f4f1e9; background:#242428; border:1px solid #44444a; }
+        .preview-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:clamp(18px,3vw,30px); }
+        .preview-card { min-width:0; padding:clamp(12px,2vw,20px); border:1px solid #343438; background:#151517; overflow:hidden; }
+        .preview-card > header { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:12px; color:#aaa9ae; font-size:.78rem; letter-spacing:.1em; text-transform:uppercase; }
+        .preview-card > header b { color:#f4f1e9; font-size:.92rem; }
+        .preview-card .mes_text { width:100%; }
+        .preview-card .cl-chat-content { overflow-wrap:anywhere; }
+        .preview-note { margin:18px 0 0; color:#8f8e94; font-size:.78rem; line-height:1.55; }
+        @media (max-width:760px) { body{padding:12px}.preview-head{align-items:start;flex-direction:column}.preview-controls{grid-template-columns:1fr 1fr}.preview-grid{grid-template-columns:1fr}.preview-card{padding:11px} }
+        @media (max-width:420px) { .preview-controls{grid-template-columns:1fr}.preview-card{margin-inline:-2px} }
+    </style>
+</head>
+<body>
+<main class="preview-wrap">
+    <header class="preview-head"><div><small>Character Life's v1.6.0</small><h1>Manga Light / Manga Noir</h1></div><small>Actual extension components</small></header>
+    <section class="preview-controls" aria-label="Preview controls">
+        <label>Alignment<select id="align"><option value="left">Left</option><option value="center" selected>Middle</option><option value="right">Right</option></select></label>
+        <label>Portrait shape<select id="shape"><option value="square">Square</option><option value="rounded" selected>Rounded</option><option value="portrait">Portrait</option><option value="circle">Circle</option><option value="hexagon">Hexagon</option></select></label>
+        <label>Text size <output id="font-out">88%</output><input id="font" type="range" min="70" max="120" value="88" step="2"></label>
+        <label>Panel spacing <output id="space-out">86%</output><input id="space" type="range" min="70" max="120" value="86" step="2"></label>
+    </section>
+    <section class="preview-grid">
+        <article class="preview-card"><header><b>Manga Light</b><span>Paper / black ink</span></header>
+            <div class="mes_text character-life-rendered" data-cl-design="manga-light" data-cl-position="center" data-cl-shape="rounded" data-cl-missing="empty">
+                <section class="cl-chat-block cl-chat-thought" style="--cl-local-thought:#83d8c5"><div class="cl-chat-label"><span></span><strong>Sylphiette</strong><i>•</i><em>Thought</em></div><div class="cl-chat-content">เขาดูเงียบจังเลยนะ... เมื่อคืนคงจะเหนื่อยมากแน่ ๆ อยากให้เขาได้นอนพักต่ออีกสักหน่อย</div></section>
+                <section class="cl-chat-block cl-chat-header" style="--cl-local-header:#83d8c5"><div class="cl-chat-wing left"><i></i><span></span></div><div class="cl-chat-header-core"><div class="cl-chat-portrait"><span class="cl-chat-initial">S</span><b class="tl"></b><b class="br"></b></div><div class="cl-chat-identity"><small class="cl-chat-role">Silent Fitz</small><i class="cl-chat-rule"></i><strong class="cl-chat-name">Sylphiette Greyrat</strong><div class="cl-chat-meta"><span class="cl-chat-affiliation">Ranoa University</span><span class="cl-chat-gender">Woman</span><span class="cl-chat-age">Age 23</span></div></div></div><div class="cl-chat-wing right"><i></i><span></span></div></section>
+                <section class="cl-chat-block cl-chat-dialogue" style="--cl-local-dialogue:#83d8c5"><div class="cl-chat-label"><span></span><strong>Sylphiette</strong><i>•</i><em>Dialogue #1</em></div><div class="cl-chat-content">ฉันตื่นมาเตรียมตัวน่ะสิ วันนี้มีเรื่องต้องจัดการที่มหาวิทยาลัยนิดหน่อย... แล้วก็อยากตื่นมาทำมื้อเช้าให้เธอด้วย</div></section>
+            </div>
+        </article>
+        <article class="preview-card"><header><b>Manga Noir</b><span>Reversed ink / ruled caption</span></header>
+            <div class="mes_text character-life-rendered" data-cl-design="manga-noir" data-cl-position="center" data-cl-shape="rounded" data-cl-missing="empty">
+                <section class="cl-chat-block cl-chat-thought" style="--cl-local-thought:#a987dc"><div class="cl-chat-label"><span></span><strong>Kaede</strong><i>•</i><em>Thought</em></div><div class="cl-chat-content">เสียงฝีเท้าหยุดอยู่หลังประตูพอดี หากเป็นพวกเขาจริง ๆ เราเหลือเวลาไม่มากแล้ว</div></section>
+                <section class="cl-chat-block cl-chat-header" style="--cl-local-header:#a987dc"><div class="cl-chat-wing left"><i></i><span></span></div><div class="cl-chat-header-core"><div class="cl-chat-portrait"><span class="cl-chat-initial">K</span><b class="tl"></b><b class="br"></b></div><div class="cl-chat-identity"><small class="cl-chat-role">Investigator</small><i class="cl-chat-rule"></i><strong class="cl-chat-name">Kaede Mori</strong><div class="cl-chat-meta"><span class="cl-chat-affiliation">Special Affairs</span><span class="cl-chat-gender">Woman</span><span class="cl-chat-age">Age 28</span></div></div></div><div class="cl-chat-wing right"><i></i><span></span></div></section>
+                <section class="cl-chat-block cl-chat-dialogue" style="--cl-local-dialogue:#a987dc"><div class="cl-chat-label"><span></span><strong>Kaede</strong><i>•</i><em>Dialogue #1</em></div><div class="cl-chat-content">ปิดไฟแล้วอยู่ใกล้ฉันไว้ ไม่ว่าจะได้ยินอะไร อย่าเปิดประตูจนกว่าฉันจะบอก</div></section>
+            </div>
+        </article>
+    </section>
+    <p class="preview-note">ตัวอย่างนี้ใช้ component และ stylesheet เดียวกับ extension จริง ปรับ alignment, รูปทรง portrait, ขนาดตัวอักษร และ spacing ด้านบนเพื่อทดสอบ desktop/mobile ได้ทันที</p>
+</main>
+<script>
+    const previews=[...document.querySelectorAll('.character-life-rendered')];
+    const root=document.documentElement;
+    const setSpacing=value=>{const scale=value/100;root.style.setProperty('--cl-chat-block-gap',`${Math.max(2,Math.round(5*scale))}px`);root.style.setProperty('--cl-chat-content-gap',`${Math.max(3,Math.round(6*scale))}px`);root.style.setProperty('--cl-chat-pad-y',`${Math.max(7,Math.round(11*scale))}px`);root.style.setProperty('--cl-chat-pad-x',`${Math.max(9,Math.round(15*scale))}px`);root.style.setProperty('--cl-chat-header-pad',`${Math.max(5,Math.round(8*scale))}px`);root.style.setProperty('--cl-chat-header-gap',`${Math.max(7,Math.round(12*scale))}px`);root.style.setProperty('--cl-chat-header-extra',`${Math.max(10,Math.round(16*scale))}px`)};
+    document.getElementById('align').onchange=e=>previews.forEach(node=>node.dataset.clPosition=e.target.value);
+    document.getElementById('shape').onchange=e=>previews.forEach(node=>node.dataset.clShape=e.target.value);
+    document.getElementById('font').oninput=e=>{root.style.setProperty('--cl-chat-font-size',`${e.target.value}%`);document.getElementById('font-out').textContent=`${e.target.value}%`};
+    document.getElementById('space').oninput=e=>{setSpacing(Number(e.target.value));document.getElementById('space-out').textContent=`${e.target.value}%`};
+    setSpacing(86);
+</script>
+</body>
+</html>

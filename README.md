@@ -13,17 +13,17 @@ Character Life's is a responsive SillyTavern extension that stores NPC identitie
 - Crop previews mirror the configured chat portrait shape, including portrait and hexagonal frames.
 - Images are compressed and stored locally in IndexedDB; no Catbox, GitHub image upload, or external image host is required.
 - NPC metadata remains in SillyTavern extension settings or chat metadata according to its selected scope.
-- Rich AI-readable profiles: pronouns, age, species, appearance, personality, relationships, background, goals, abilities, speech style, and current state.
+- Rich AI-readable profiles: pronouns, gender, age, species, appearance, personality, relationships, background, goals, abilities, speech style, and current state.
 - Optional hidden profile-update tags let the active model save newly established NPC facts back into the correct library scope.
 - AI Appearance Reader uses SillyTavern's configured multimodal Image Captioning model with Full Appearance and clothing-independent Key Features modes.
 - One-tap AI assistance for every editable NPC identity and profile field through the active SillyTavern model.
 - Optional adult-only anatomy field and vision mode, enabled by an adult-character confirmation; the age field may be left blank.
 - Wand-menu launcher, Extension Settings drawer, and responsive NPC manager.
-- Three focused responsive base designs with a live settings preview: Chronicle Signature, Chronicle Imperial, and Clean.
+- Five focused responsive base designs with a live settings preview: Chronicle Signature, Chronicle Imperial, Clean, Manga Light, and Manga Noir.
 - Custom Design Studio with independent Header, Monologue, and Dialogue CSS, reusable local presets, live validation, activation, deletion, and JSON import/export.
 - Chat presentation and extension UI inherit the active SillyTavern/user font instead of loading a separate typeface.
 - Left, middle, or right speaker alignment. Thought and dialogue automatically follow the header.
-- Adjustable portrait size, shape, missing-image behavior, and independent header/thought/dialogue colors.
+- Adjustable portrait size, shape, missing-image behavior, chat UI text scale, panel spacing, and independent header/thought/dialogue colors.
 - Independent automatic NPC palettes derived from portraits, with name-based fallback and optional custom colors per NPC.
 - Editable manager accent, background, surface, and text colors.
 - English and Thai interface.
@@ -84,6 +84,15 @@ When Character Life's renders the chat itself, disable overlapping Header/Monolo
 - The AI Appearance Reader sends the selected image to the multimodal provider configured under SillyTavern's Image Captioning settings. This can use that provider's API quota. The generated description is shown for review and is not saved until **Save NPC** is pressed.
 
 ## Version
+
+### 1.6.0
+
+- Added Manga Light and Manga Noir as genuinely distinct responsive Header, Monologue, and Dialogue systems.
+- Added the manga editorial header hierarchy: title, decorative rule, name, affiliation, gender, and age; empty values collapse without stray separators.
+- Added an optional Gender field to NPC profiles, AI field assistance, registry prompts, and hidden profile updates.
+- Added global Chat UI text-size and panel-spacing controls, with more compact mobile-friendly defaults for every built-in and custom design.
+- Kept every portrait shape, size, left/middle/right rail position, and hidden-frame behavior compatible with both manga designs.
+- Removed the NPC manager's fallback title when no role/title is saved.
 
 ### 1.5.1
 

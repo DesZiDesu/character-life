@@ -7,6 +7,14 @@
     --cl-ui-surface: #211e1b;
     --cl-ui-text: #eee8dc;
     --cl-portrait-size: 76px;
+    --cl-chat-font-size: 88%;
+    --cl-chat-block-gap: 4px;
+    --cl-chat-content-gap: 5px;
+    --cl-chat-pad-y: 9px;
+    --cl-chat-pad-x: 13px;
+    --cl-chat-header-pad: 7px;
+    --cl-chat-header-gap: 10px;
+    --cl-chat-header-extra: 14px;
     --cl-ink: var(--SmartThemeBodyColor, #eee8dc);
     --cl-muted: color-mix(in srgb, var(--cl-ink) 62%, transparent);
     --cl-surface: color-mix(in srgb, var(--SmartThemeBlurTintColor, #151312) 94%, transparent);
@@ -213,7 +221,7 @@ body.character-life-open { overflow: hidden; }
 
 /* Main SillyTavern chat presentation */
 .mes_text.character-life-rendered { --cl-block-width: 100%; --cl-content-rail: min(100%, 760px); }
-.mes_text.character-life-rendered .cl-chat-block { position: relative; width: var(--cl-block-width); box-sizing: border-box; margin-top: 5px; margin-bottom: 5px; color: var(--SmartThemeBodyColor, #eee8dc); }
+.mes_text.character-life-rendered .cl-chat-block { position: relative; width: var(--cl-block-width); box-sizing: border-box; margin-top: var(--cl-chat-block-gap); margin-bottom: var(--cl-chat-block-gap); color: var(--SmartThemeBodyColor, #eee8dc); font-size: var(--cl-chat-font-size); }
 .mes_text.character-life-rendered .cl-chat-thought + .cl-chat-header { margin-top: 1px; }
 .mes_text.character-life-rendered .cl-chat-header + .cl-chat-dialogue { margin-top: -2px; }
 .mes_text.character-life-rendered .cl-chat-header { margin-bottom: 0; }
@@ -228,19 +236,19 @@ body.character-life-open { overflow: hidden; }
 .cl-chat-label strong { font-weight: 500; }
 .cl-chat-label i { font-family: inherit; font-style: normal; opacity: .55; }
 .cl-chat-label em { font-style: normal; }
-.cl-chat-content { margin-top: 6px; font-family: inherit; }
+.cl-chat-content { margin-top: var(--cl-chat-content-gap); font-family: inherit; }
 .cl-chat-content > :first-child { margin-top: 0; }
 .cl-chat-content > :last-child { margin-bottom: 0; }
 
-.cl-chat-thought { --cl-local-thought: var(--cl-thought-color); padding: 11px 14px; background: linear-gradient(105deg, color-mix(in srgb, var(--SmartThemeBlurTintColor, #17130f) 90%, var(--cl-local-thought) 10%), color-mix(in srgb, var(--SmartThemeBlurTintColor, #17130f) 97%, transparent)); border-top: 1px solid color-mix(in srgb, var(--cl-local-thought) 34%, transparent); border-bottom: 1px solid color-mix(in srgb, var(--cl-local-thought) 20%, transparent); border-left: 2px solid var(--cl-local-thought); }
+.cl-chat-thought { --cl-local-thought: var(--cl-thought-color); padding: var(--cl-chat-pad-y) var(--cl-chat-pad-x); background: linear-gradient(105deg, color-mix(in srgb, var(--SmartThemeBlurTintColor, #17130f) 90%, var(--cl-local-thought) 10%), color-mix(in srgb, var(--SmartThemeBlurTintColor, #17130f) 97%, transparent)); border-top: 1px solid color-mix(in srgb, var(--cl-local-thought) 34%, transparent); border-bottom: 1px solid color-mix(in srgb, var(--cl-local-thought) 20%, transparent); border-left: 2px solid var(--cl-local-thought); }
 .cl-chat-thought .cl-chat-label > span { width: 7px; height: 7px; background: currentColor; transform: rotate(45deg); }
 .cl-chat-thought .cl-chat-content { font-style: italic; }
-.cl-chat-dialogue { --cl-local-dialogue: var(--cl-dialogue-color); padding: 11px 15px 12px; background: linear-gradient(100deg, color-mix(in srgb, var(--SmartThemeBlurTintColor, #17130f) 91%, var(--cl-local-dialogue) 9%), color-mix(in srgb, var(--SmartThemeBlurTintColor, #17130f) 98%, transparent)); border-top: 1px solid color-mix(in srgb, var(--cl-local-dialogue) 32%, transparent); border-bottom: 1px solid color-mix(in srgb, var(--cl-local-dialogue) 18%, transparent); border-left: 3px solid var(--cl-local-dialogue); }
+.cl-chat-dialogue { --cl-local-dialogue: var(--cl-dialogue-color); padding: var(--cl-chat-pad-y) var(--cl-chat-pad-x) calc(var(--cl-chat-pad-y) + 1px); background: linear-gradient(100deg, color-mix(in srgb, var(--SmartThemeBlurTintColor, #17130f) 91%, var(--cl-local-dialogue) 9%), color-mix(in srgb, var(--SmartThemeBlurTintColor, #17130f) 98%, transparent)); border-top: 1px solid color-mix(in srgb, var(--cl-local-dialogue) 32%, transparent); border-bottom: 1px solid color-mix(in srgb, var(--cl-local-dialogue) 18%, transparent); border-left: 3px solid var(--cl-local-dialogue); }
 .cl-chat-dialogue .cl-chat-label { color: var(--cl-local-dialogue); }
 .cl-chat-dialogue .cl-chat-label > span { width: 18px; height: 1px; background: currentColor; }
 
-.cl-chat-header { --cl-local-header: var(--cl-header-color); display: flex; align-items: center; justify-content: center; gap: 10px; min-height: calc(var(--cl-portrait-size) + 16px); padding: 8px 0; }
-.cl-chat-header-core { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.cl-chat-header { --cl-local-header: var(--cl-header-color); display: flex; align-items: center; justify-content: center; gap: var(--cl-chat-header-gap); min-height: calc(var(--cl-portrait-size) + var(--cl-chat-header-extra)); padding: var(--cl-chat-header-pad) 0; }
+.cl-chat-header-core { display: flex; align-items: center; gap: var(--cl-chat-header-gap); min-width: 0; }
 .mes_text.character-life-rendered[data-cl-position="left"] .cl-chat-header { justify-content: flex-start; }
 .mes_text.character-life-rendered[data-cl-position="center"] .cl-chat-header { justify-content: center; }
 .mes_text.character-life-rendered[data-cl-position="right"] .cl-chat-header { justify-content: flex-end; }
@@ -265,7 +273,10 @@ body.character-life-open { overflow: hidden; }
 .cl-chat-identity small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--cl-local-header); font-family: inherit; letter-spacing: .11em; }
 .cl-chat-identity small:empty { display: none; }
 .cl-chat-identity strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: color-mix(in srgb, var(--SmartThemeBodyColor, #eee8dc) 84%, var(--cl-local-header) 16%); font-family: inherit; font-weight: 500; letter-spacing: .04em; }
-.cl-chat-identity span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--cl-muted); font-family: inherit; }
+.cl-chat-rule { display: none; }
+.cl-chat-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 0 7px; min-width: 0; }
+.cl-chat-meta span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--cl-muted); font-family: inherit; }
+.cl-chat-meta span:empty, .cl-chat-meta .cl-chat-gender, .cl-chat-meta .cl-chat-age { display: none; }
 .cl-chat-wing { display: flex; align-items: center; flex: 1; min-width: 12px; color: var(--cl-local-header); }
 .cl-chat-wing span { width: 100%; height: 1px; background: linear-gradient(90deg, transparent, currentColor); }
 .cl-chat-wing.right span { background: linear-gradient(90deg, currentColor, transparent); }
@@ -277,20 +288,90 @@ body.character-life-open { overflow: hidden; }
 .mes_text[data-cl-design="imperial"] .cl-chat-dialogue { border-bottom: 2px solid var(--cl-local-dialogue); }
 .mes_text[data-cl-design="imperial"] .cl-chat-label { justify-content: center; }
 .mes_text[data-cl-design="imperial"] .cl-chat-label > span { display: none; }
-.mes_text[data-cl-design="imperial"] .cl-chat-header-core { padding: 7px 12px; border-top: 1px solid color-mix(in srgb, var(--cl-local-header) 54%, transparent); border-bottom: 1px solid color-mix(in srgb, var(--cl-local-header) 54%, transparent); background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--cl-local-header) 9%, var(--SmartThemeBlurTintColor, #17130f)), transparent); }
+.mes_text[data-cl-design="imperial"] .cl-chat-header-core { padding: var(--cl-chat-header-pad) var(--cl-chat-pad-x); border-top: 1px solid color-mix(in srgb, var(--cl-local-header) 54%, transparent); border-bottom: 1px solid color-mix(in srgb, var(--cl-local-header) 54%, transparent); background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--cl-local-header) 9%, var(--SmartThemeBlurTintColor, #17130f)), transparent); }
 
 /* Clean — quiet editorial hierarchy with deliberate negative space. */
 .mes_text[data-cl-design="clean"] .cl-chat-block { font-family: inherit; }
-.mes_text[data-cl-design="clean"] .cl-chat-thought { padding: 10px 13px; background: color-mix(in srgb, var(--SmartThemeBlurTintColor, #17130f) 96%, var(--cl-local-thought) 4%); border: 0; border-left: 2px solid var(--cl-local-thought); }
-.mes_text[data-cl-design="clean"] .cl-chat-dialogue { padding: 11px 14px; background: color-mix(in srgb, var(--SmartThemeBlurTintColor, #17130f) 96%, var(--cl-local-dialogue) 4%); border: 0; border-bottom: 2px solid var(--cl-local-dialogue); }
+.mes_text[data-cl-design="clean"] .cl-chat-thought { padding: var(--cl-chat-pad-y) var(--cl-chat-pad-x); background: color-mix(in srgb, var(--SmartThemeBlurTintColor, #17130f) 96%, var(--cl-local-thought) 4%); border: 0; border-left: 2px solid var(--cl-local-thought); }
+.mes_text[data-cl-design="clean"] .cl-chat-dialogue { padding: var(--cl-chat-pad-y) var(--cl-chat-pad-x); background: color-mix(in srgb, var(--SmartThemeBlurTintColor, #17130f) 96%, var(--cl-local-dialogue) 4%); border: 0; border-bottom: 2px solid var(--cl-local-dialogue); }
 .mes_text[data-cl-design="clean"] .cl-chat-label, .mes_text[data-cl-design="clean"] .cl-chat-content { font-family: inherit; }
 .mes_text[data-cl-design="clean"] .cl-chat-label { letter-spacing: .04em; }
-.mes_text[data-cl-design="clean"] .cl-chat-header { padding: 6px 0; }
+.mes_text[data-cl-design="clean"] .cl-chat-header { padding: var(--cl-chat-header-pad) 0; }
 .mes_text[data-cl-design="clean"] .cl-chat-wing { display: none; }
 .mes_text[data-cl-design="clean"] .cl-chat-header-core { width: 100%; padding: 7px 0; border-block: 1px solid var(--cl-line); }
 .mes_text[data-cl-design="clean"] .cl-chat-portrait { border-color: color-mix(in srgb, var(--cl-local-header) 48%, var(--cl-line)); box-shadow: none; }
 .mes_text[data-cl-design="clean"] .cl-chat-portrait b { display: none; }
 .mes_text[data-cl-design="clean"] .cl-chat-identity small, .mes_text[data-cl-design="clean"] .cl-chat-identity strong, .mes_text[data-cl-design="clean"] .cl-chat-identity span { font-family: inherit; }
+
+/* Manga Light / Manga Noir — full-width editorial panels with restrained print details. */
+.mes_text[data-cl-design^="manga-"] .cl-chat-block { isolation: isolate; }
+.mes_text[data-cl-design^="manga-"] .cl-chat-wing { display: none; }
+.mes_text[data-cl-design^="manga-"] .cl-chat-header { min-height: calc(var(--cl-portrait-size) + var(--cl-chat-header-extra)); padding: var(--cl-chat-header-pad) var(--cl-chat-pad-x); }
+.mes_text[data-cl-design^="manga-"] .cl-chat-header-core { width: var(--cl-content-rail); max-width: 100%; display: flex; align-items: stretch; gap: var(--cl-chat-header-gap); }
+.mes_text[data-cl-design^="manga-"] .cl-chat-portrait { align-self: center; border-width: 2px; box-shadow: none; }
+.mes_text[data-cl-design^="manga-"] .cl-chat-portrait b { display: none; }
+.mes_text[data-cl-design^="manga-"] .cl-chat-identity { flex: 1 1 auto; align-content: center; gap: 4px; }
+.mes_text[data-cl-design^="manga-"] .cl-chat-role { font-size: .72em; font-weight: 700; letter-spacing: .18em; text-transform: uppercase; }
+.mes_text[data-cl-design^="manga-"] .cl-chat-rule { display: block; width: 100%; height: 1px; margin: 1px 0; }
+.mes_text[data-cl-design^="manga-"] .cl-chat-name { font-size: 1.16em; font-weight: 700; letter-spacing: .035em; }
+.mes_text[data-cl-design^="manga-"] .cl-chat-meta { gap: 2px 7px; font-size: .7em; line-height: 1.35; letter-spacing: .09em; text-transform: uppercase; }
+.mes_text[data-cl-design^="manga-"] .cl-chat-meta .cl-chat-gender,
+.mes_text[data-cl-design^="manga-"] .cl-chat-meta .cl-chat-age { display: inline; }
+.mes_text[data-cl-design^="manga-"] .cl-chat-meta span:not(:empty) ~ span:not(:empty)::before { content: "—"; margin-right: 7px; opacity: .62; }
+.mes_text[data-cl-design^="manga-"] :is(.cl-chat-thought, .cl-chat-dialogue) { padding: var(--cl-chat-pad-y) var(--cl-chat-pad-x); border-radius: 0; }
+.mes_text[data-cl-design^="manga-"] .cl-chat-label { gap: 7px; font-size: .75em; line-height: 1.3; letter-spacing: .12em; text-transform: uppercase; }
+.mes_text[data-cl-design^="manga-"] .cl-chat-label strong { font-weight: 750; }
+.mes_text[data-cl-design^="manga-"] .cl-chat-label > span { flex: 0 0 auto; }
+.mes_text[data-cl-design^="manga-"] .cl-chat-content { font-size: 1em; line-height: 1.62; }
+.mes_text[data-cl-design^="manga-"] .cl-chat-thought .cl-chat-content { font-style: italic; }
+
+/* Manga Light — white paper, black ink, offset print registration. */
+.mes_text[data-cl-design="manga-light"] .cl-chat-header { color: #151515; background:
+    linear-gradient(90deg, color-mix(in srgb, var(--cl-local-header) 9%, transparent), transparent 18%),
+    #f7f6f1; border: 1px solid #171717; box-shadow: 3px 3px 0 #171717; }
+.mes_text[data-cl-design="manga-light"] .cl-chat-header::before { content: ""; position: absolute; left: 0; top: 0; width: 8px; height: 100%; background: var(--cl-local-header); }
+.mes_text[data-cl-design="manga-light"] .cl-chat-portrait { color: #151515; background: #fff; border-color: #171717; box-shadow: 3px 3px 0 color-mix(in srgb, var(--cl-local-header) 72%, #171717); }
+.mes_text[data-cl-design="manga-light"] .cl-chat-role { color: #151515; }
+.mes_text[data-cl-design="manga-light"] .cl-chat-rule { background: linear-gradient(90deg, var(--cl-local-header) 0 54px, #171717 54px 100%); }
+.mes_text[data-cl-design="manga-light"] .cl-chat-name { color: #0d0d0d; }
+.mes_text[data-cl-design="manga-light"] .cl-chat-meta span { color: #454545; }
+.mes_text[data-cl-design="manga-light"] .cl-chat-thought { color: #171717; background:
+    linear-gradient(135deg, color-mix(in srgb, var(--cl-local-thought) 8%, transparent), transparent 34%),
+    #fbfaf6; border: 1px solid #171717; border-left: 6px double #171717; box-shadow: inset 0 0 0 2px #fbfaf6, 3px 3px 0 color-mix(in srgb, #171717 22%, transparent); }
+.mes_text[data-cl-design="manga-light"] .cl-chat-thought::after { content: ""; position: absolute; right: 9px; top: 9px; width: 7px; height: 7px; background: var(--cl-local-thought); transform: rotate(45deg); }
+.mes_text[data-cl-design="manga-light"] .cl-chat-thought .cl-chat-label { color: #171717; padding-bottom: 6px; border-bottom: 1px solid #b8b5ad; }
+.mes_text[data-cl-design="manga-light"] .cl-chat-thought .cl-chat-label > span { width: 7px; height: 7px; background: var(--cl-local-thought); }
+.mes_text[data-cl-design="manga-light"] .cl-chat-dialogue { color: #111; background:
+    linear-gradient(90deg, color-mix(in srgb, var(--cl-local-dialogue) 7%, transparent), transparent 24%),
+    #fff; border: 2px solid #111; box-shadow: 4px 4px 0 #111; }
+.mes_text[data-cl-design="manga-light"] .cl-chat-dialogue::before { content: ""; position: absolute; left: -2px; top: -2px; width: 26px; height: 6px; background: var(--cl-local-dialogue); }
+.mes_text[data-cl-design="manga-light"] .cl-chat-dialogue .cl-chat-label { color: #111; }
+.mes_text[data-cl-design="manga-light"] .cl-chat-dialogue .cl-chat-label > span { width: 16px; height: 2px; background: var(--cl-local-dialogue); }
+
+/* Manga Noir — reversed ink panel with right-side portrait and ruled captions. */
+.mes_text[data-cl-design="manga-noir"] .cl-chat-header { color: #f6f6f3; background:
+    repeating-linear-gradient(135deg, rgba(255,255,255,.025) 0 1px, transparent 1px 5px),
+    #0b0b0c; border-block: 2px solid #f2f2ef; box-shadow: inset 0 -1px 0 #363638; }
+.mes_text[data-cl-design="manga-noir"] .cl-chat-header::after { content: ""; position: absolute; left: var(--cl-chat-pad-x); right: var(--cl-chat-pad-x); bottom: 5px; height: 1px; background: var(--cl-local-header); opacity: .82; }
+.mes_text[data-cl-design="manga-noir"] .cl-chat-portrait { order: 2; color: #fff; background: #111; border-color: #f4f4f1; box-shadow: -4px 4px 0 color-mix(in srgb, var(--cl-local-header) 72%, #fff); }
+.mes_text[data-cl-design="manga-noir"] .cl-chat-identity { order: 1; text-align: right; justify-items: end; }
+.mes_text[data-cl-design="manga-noir"] .cl-chat-role { color: #f5f5f2; }
+.mes_text[data-cl-design="manga-noir"] .cl-chat-rule { background: linear-gradient(90deg, #f5f5f2 0 calc(100% - 54px), var(--cl-local-header) calc(100% - 54px)); }
+.mes_text[data-cl-design="manga-noir"] .cl-chat-name { color: #fff; }
+.mes_text[data-cl-design="manga-noir"] .cl-chat-meta { justify-content: flex-end; }
+.mes_text[data-cl-design="manga-noir"] .cl-chat-meta span { color: #bdbdbd; }
+.mes_text[data-cl-design="manga-noir"] .cl-chat-thought { color: #f4f4f1; background:
+    radial-gradient(circle at 92% 18%, color-mix(in srgb, var(--cl-local-thought) 18%, transparent), transparent 26%),
+    #111113; border: 1px solid #f0f0ed; border-right: 6px double #f0f0ed; box-shadow: -3px 3px 0 color-mix(in srgb, #fff 20%, transparent); }
+.mes_text[data-cl-design="manga-noir"] .cl-chat-thought::before { content: ""; position: absolute; left: 8px; top: 8px; bottom: 8px; width: 2px; background: var(--cl-local-thought); }
+.mes_text[data-cl-design="manga-noir"] .cl-chat-thought .cl-chat-label { color: #f4f4f1; padding-bottom: 6px; border-bottom: 1px dashed #656568; }
+.mes_text[data-cl-design="manga-noir"] .cl-chat-thought .cl-chat-label > span { width: 7px; height: 7px; background: var(--cl-local-thought); }
+.mes_text[data-cl-design="manga-noir"] .cl-chat-dialogue { color: #fff; background:
+    linear-gradient(115deg, color-mix(in srgb, var(--cl-local-dialogue) 12%, transparent), transparent 36%),
+    #09090a; border: 2px solid #f3f3f0; box-shadow: 4px 4px 0 color-mix(in srgb, #fff 24%, transparent); }
+.mes_text[data-cl-design="manga-noir"] .cl-chat-dialogue::after { content: ""; position: absolute; right: -2px; bottom: -2px; width: 30px; height: 6px; background: var(--cl-local-dialogue); }
+.mes_text[data-cl-design="manga-noir"] .cl-chat-dialogue .cl-chat-label { color: #f5f5f2; }
+.mes_text[data-cl-design="manga-noir"] .cl-chat-dialogue .cl-chat-label > span { width: 16px; height: 2px; background: var(--cl-local-dialogue); }
 @media (max-width: 760px) {
     .character-life-settings .cl-settings-grid { grid-template-columns: 1fr; }
     .character-life-settings .cl-css-preset-grid, .character-life-settings .cl-css-editors { grid-template-columns: 1fr; }
@@ -335,6 +416,12 @@ body.character-life-open { overflow: hidden; }
     .cl-copy-panel { align-items: stretch; }
     .cl-copy-panel label { flex: 1; }
     .mes_text.character-life-rendered { --cl-block-width: 100%; --cl-content-rail: 100%; }
+    .mes_text.character-life-rendered:is([data-cl-design="signature"], [data-cl-design="imperial"], [data-cl-design="clean"]) .cl-chat-label { font-size: .9em; }
+    .mes_text.character-life-rendered:is([data-cl-design="signature"], [data-cl-design="imperial"], [data-cl-design="clean"]) .cl-chat-identity { font-size: .94em; }
+    .mes_text[data-cl-design^="manga-"] .cl-chat-header { padding-inline: max(10px, var(--cl-chat-pad-x)); }
+    .mes_text[data-cl-design^="manga-"] .cl-chat-meta { font-size: .67em; }
+    .mes_text[data-cl-design="manga-light"] :is(.cl-chat-header, .cl-chat-dialogue) { box-shadow: 2px 2px 0 #171717; }
+    .mes_text[data-cl-design="manga-noir"] :is(.cl-chat-thought, .cl-chat-dialogue) { box-shadow: 2px 2px 0 color-mix(in srgb, #fff 22%, transparent); }
 }
 
 @media (max-width: 420px) {
@@ -357,7 +444,11 @@ body.character-life-open { overflow: hidden; }
     .cl-chat-wing { display: none; }
     .cl-chat-header-core { width: auto; max-width: 100%; }
     .cl-chat-identity { flex: 1; }
-    .cl-chat-identity span { display: none; }
+    .mes_text.character-life-rendered:not([data-cl-design^="manga-"]) .cl-chat-meta { display: none; }
+    .mes_text[data-cl-design^="manga-"] .cl-chat-role { font-size: .68em; letter-spacing: .13em; }
+    .mes_text[data-cl-design^="manga-"] .cl-chat-name { font-size: 1.08em; }
+    .mes_text[data-cl-design^="manga-"] .cl-chat-meta { gap: 1px 5px; letter-spacing: .055em; }
+    .mes_text[data-cl-design^="manga-"] .cl-chat-meta span:not(:empty) ~ span:not(:empty)::before { margin-right: 5px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
