@@ -4,10 +4,10 @@
     "requires": [],
     "optional": [],
     "dependencies": [],
-    "js": "design-studio.js",
+    "js": "theme-studio-v171.js",
     "css": "style.css",
     "author": "DesZiDesu",
-    "version": "1.7.0",
+    "version": "1.7.1",
     "homePage": "https://github.com/DesZiDesu/character-life",
     "auto_update": true
 }
