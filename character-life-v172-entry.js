@@ -1,12 +1,13 @@
 /* global SillyTavern */
 
-// Character Life v1.8.4 compatibility entry:
+// Character Life v1.8.5 compatibility entry:
 // 1) load the recovered Character Life core first;
 // 2) add the explicit settings-save hook used by safe transfer/media layers;
 // 3) load each optional layer behind its own catch so one failure cannot block the core;
 // 4) apply Skill Storage and the v1.8.2 NPC identity/profile director;
 // 5) apply v1.8.3 native notifications + bulk NPC movement;
-// 6) apply v1.8.4 sparse NPC facts + one-call full profile builder last.
+// 6) apply v1.8.4 sparse NPC facts + one-call full profile builder;
+// 7) v1.8.5 fixes the per-chat Skill Indicator master switch so OFF persists correctly.
 import './theme-studio-v171.js';
 
 try {
