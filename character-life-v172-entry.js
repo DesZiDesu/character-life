@@ -1,14 +1,8 @@
 /* global SillyTavern */
 
-// Character Life v1.8.6 compatibility entry:
-// 1) load the recovered Character Life core first;
-// 2) add the explicit settings-save hook used by safe transfer/media layers;
-// 3) load each optional layer behind its own catch so one failure cannot block the core;
-// 4) apply Skill Storage and the v1.8.2 NPC identity/profile director;
-// 5) apply v1.8.3 native notifications + bulk NPC movement;
-// 6) apply v1.8.4 sparse NPC facts + one-call full profile builder;
-// 7) v1.8.5 fixes the per-chat Skill Indicator master switch so OFF persists correctly;
-// 8) v1.8.6 synchronizes the installed extension version after all historical feature layers.
+// Character Life v1.9.0 compatibility entry:
+// Historical modules remain isolated for safe upgrades; v1.9 adds one cross-chat
+// continuity layer and one authoritative release-version layer at the end.
 import './theme-studio-v171.js';
 
 try {
@@ -82,7 +76,13 @@ try {
 }
 
 try {
-    await import('./version-sync-v186.js');
+    await import('./continuity-v190.js');
 } catch (error) {
-    console.error("[Character Life's] v1.8.6 version synchronizer was skipped safely; feature layers remain loaded.", error);
+    console.error("[Character Life's] v1.9.0 continuity systems were skipped safely; legacy feature layers remain loaded.", error);
+}
+
+try {
+    await import('./version-sync-v190.js');
+} catch (error) {
+    console.error("[Character Life's] v1.9.0 version synchronizer was skipped safely; feature layers remain loaded.", error);
 }
