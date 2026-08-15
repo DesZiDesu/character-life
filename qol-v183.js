@@ -12,6 +12,7 @@ let cl183BulkSelected = new Set();
 let cl183UiQueued = false;
 let cl183Observer = null;
 let cl183ToastrTimer = null;
+const cl183OriginalToastr = new Map();
 
 function cl183Ctx() {
     return globalThis.SillyTavern?.getContext?.() || null;
@@ -151,10 +152,14 @@ function cl183DismissToast(toast) {
 
 function cl183ShowToast(type = 'info', message = '', options = {}) {
     const config = cl183Notifications();
-    if (config.mode === 'off' && !options.force) return null;
+    const safeType = CL183_TOAST_TYPES.includes(type) ? type : 'info';
+    if (!options.force && config.mode === 'off') return null;
+    if (!options.force && config.mode === 'sillytavern') {
+        const original = cl183OriginalToastr.get(safeType);
+        return typeof original === 'function' ? original(String(message ?? ''), String(options.title || "Character Life's")) : null;
+    }
     const host = cl183ToastHost();
     const toast = document.createElement('article');
-    const safeType = CL183_TOAST_TYPES.includes(type) ? type : 'info';
     toast.className = `cl-native-toast is-${safeType}`;
     toast.setAttribute('role', safeType === 'error' ? 'alert' : 'status');
     const title = String(options.title || "Character Life's");
@@ -187,6 +192,7 @@ function cl183InstallToastrBridge() {
     for (const type of CL183_TOAST_TYPES) {
         if (typeof target[type] !== 'function') continue;
         const original = target[type].bind(target);
+        cl183OriginalToastr.set(type, original);
         target[type] = function characterLifeToastBridge(message, title, ...rest) {
             if (!cl183IsOwnToast(title)) return original(message, title, ...rest);
             const config = cl183Notifications();
