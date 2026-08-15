@@ -2,8 +2,9 @@
 
 // Safety-first v1.7.2 entry:
 // 1) load the recovered Character Life core first;
-// 2) add an explicit settings-save hook used only by the new transfer layer;
-// 3) load the Wand enhancer behind a catch so an enhancer failure cannot block the core.
+// 2) add an explicit settings-save hook used only by the transfer layer;
+// 3) enable raw CL_NPC_UPDATE cleanup behind its own safety catch;
+// 4) load the Wand enhancer behind a catch so optional layers cannot block the core.
 import './theme-studio-v171.js';
 
 try {
@@ -17,6 +18,12 @@ try {
                 return module.saveSettings();
             },
         });
+    }
+
+    try {
+        await import('./npc-update-cleaner-v172.js');
+    } catch (error) {
+        console.error("[Character Life's] Raw NPC update cleanup was skipped safely; the core remains loaded.", error);
     }
 
     await import('./character-life-v172.js');
