@@ -1,0 +1,402 @@
+@import url("./style.css");
+
+/* Character Life v1.7.2 — header polish overlay.
+   CSS only: keeps the existing renderer, parser, settings and custom themes untouched. */
+
+/* All built-in headers are intentionally open/borderless. Portrait frames remain. */
+.mes_text.character-life-rendered:is(
+    [data-cl-design="signature"],
+    [data-cl-design="imperial"],
+    [data-cl-design="clean"],
+    [data-cl-design="manga-light"],
+    [data-cl-design="manga-noir"],
+    [data-cl-design="tactical-vector"],
+    [data-cl-design="arcane-regalia"]
+):not([data-cl-custom="true"]) .cl-chat-header,
+.mes_text.character-life-rendered:is(
+    [data-cl-design="signature"],
+    [data-cl-design="imperial"],
+    [data-cl-design="clean"],
+    [data-cl-design="manga-light"],
+    [data-cl-design="manga-noir"],
+    [data-cl-design="tactical-vector"],
+    [data-cl-design="arcane-regalia"]
+):not([data-cl-custom="true"]) .cl-chat-header-core {
+    background: transparent !important;
+    border: 0 !important;
+    border-block: 0 !important;
+    outline: 0 !important;
+    box-shadow: none !important;
+    clip-path: none !important;
+}
+
+.mes_text.character-life-rendered:is(
+    [data-cl-design="signature"],
+    [data-cl-design="imperial"],
+    [data-cl-design="clean"],
+    [data-cl-design="manga-light"],
+    [data-cl-design="manga-noir"],
+    [data-cl-design="tactical-vector"],
+    [data-cl-design="arcane-regalia"]
+):not([data-cl-custom="true"]) .cl-chat-header::before,
+.mes_text.character-life-rendered:is(
+    [data-cl-design="signature"],
+    [data-cl-design="imperial"],
+    [data-cl-design="clean"],
+    [data-cl-design="manga-light"],
+    [data-cl-design="manga-noir"],
+    [data-cl-design="tactical-vector"],
+    [data-cl-design="arcane-regalia"]
+):not([data-cl-custom="true"]) .cl-chat-header::after,
+.mes_text.character-life-rendered:is(
+    [data-cl-design="signature"],
+    [data-cl-design="imperial"],
+    [data-cl-design="clean"],
+    [data-cl-design="manga-light"],
+    [data-cl-design="manga-noir"],
+    [data-cl-design="tactical-vector"],
+    [data-cl-design="arcane-regalia"]
+):not([data-cl-custom="true"]) .cl-chat-header-core::before,
+.mes_text.character-life-rendered:is(
+    [data-cl-design="signature"],
+    [data-cl-design="imperial"],
+    [data-cl-design="clean"],
+    [data-cl-design="manga-light"],
+    [data-cl-design="manga-noir"],
+    [data-cl-design="tactical-vector"],
+    [data-cl-design="arcane-regalia"]
+):not([data-cl-custom="true"]) .cl-chat-header-core::after {
+    content: none !important;
+    display: none !important;
+}
+
+/* Give identity information hierarchy without enclosing it in a box. */
+.mes_text.character-life-rendered:is(
+    [data-cl-design="signature"],
+    [data-cl-design="imperial"],
+    [data-cl-design="clean"],
+    [data-cl-design="manga-light"],
+    [data-cl-design="manga-noir"],
+    [data-cl-design="tactical-vector"],
+    [data-cl-design="arcane-regalia"]
+):not([data-cl-custom="true"]) .cl-chat-identity {
+    gap: 4px;
+}
+
+.mes_text.character-life-rendered:is(
+    [data-cl-design="signature"],
+    [data-cl-design="imperial"],
+    [data-cl-design="clean"],
+    [data-cl-design="manga-light"],
+    [data-cl-design="manga-noir"],
+    [data-cl-design="tactical-vector"],
+    [data-cl-design="arcane-regalia"]
+):not([data-cl-custom="true"]) .cl-chat-role {
+    font-size: .69em;
+    font-weight: 700;
+    letter-spacing: .17em;
+    text-transform: uppercase;
+}
+
+.mes_text.character-life-rendered:is(
+    [data-cl-design="signature"],
+    [data-cl-design="imperial"],
+    [data-cl-design="clean"],
+    [data-cl-design="manga-light"],
+    [data-cl-design="manga-noir"],
+    [data-cl-design="tactical-vector"],
+    [data-cl-design="arcane-regalia"]
+):not([data-cl-custom="true"]) .cl-chat-name {
+    font-size: 1.15em;
+    font-weight: 720;
+    letter-spacing: .025em;
+}
+
+/* A small identity rail replaces the old outer frame. */
+.mes_text.character-life-rendered:is(
+    [data-cl-design="signature"],
+    [data-cl-design="imperial"],
+    [data-cl-design="clean"],
+    [data-cl-design="manga-light"],
+    [data-cl-design="manga-noir"],
+    [data-cl-design="tactical-vector"],
+    [data-cl-design="arcane-regalia"]
+):not([data-cl-custom="true"]) .cl-chat-rule {
+    display: block;
+    width: 54px;
+    max-width: 42%;
+    height: 2px;
+    margin: 1px 0;
+    background: linear-gradient(90deg, var(--cl-local-header), color-mix(in srgb, var(--cl-local-header) 16%, transparent));
+    box-shadow: 0 0 8px color-mix(in srgb, var(--cl-local-header) 22%, transparent);
+}
+
+/* Metadata is a status strip instead of plain “Male Age 16” text. */
+.mes_text.character-life-rendered:is(
+    [data-cl-design="signature"],
+    [data-cl-design="imperial"],
+    [data-cl-design="clean"],
+    [data-cl-design="manga-light"],
+    [data-cl-design="manga-noir"],
+    [data-cl-design="tactical-vector"],
+    [data-cl-design="arcane-regalia"]
+):not([data-cl-custom="true"]) .cl-chat-meta {
+    display: flex !important;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 5px 6px;
+    margin-top: 3px;
+    font-size: .69em;
+    line-height: 1.25;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+}
+
+.mes_text.character-life-rendered:is(
+    [data-cl-design="signature"],
+    [data-cl-design="imperial"],
+    [data-cl-design="clean"],
+    [data-cl-design="manga-light"],
+    [data-cl-design="manga-noir"],
+    [data-cl-design="tactical-vector"],
+    [data-cl-design="arcane-regalia"]
+):not([data-cl-custom="true"]) .cl-chat-meta .cl-chat-affiliation {
+    display: inline-flex;
+    align-items: center;
+    min-width: 0;
+    color: color-mix(in srgb, var(--cl-local-header) 74%, var(--SmartThemeBodyColor, #eee8dc) 26%);
+    font-weight: 650;
+}
+
+.mes_text.character-life-rendered:is(
+    [data-cl-design="signature"],
+    [data-cl-design="imperial"],
+    [data-cl-design="clean"],
+    [data-cl-design="manga-light"],
+    [data-cl-design="manga-noir"],
+    [data-cl-design="tactical-vector"],
+    [data-cl-design="arcane-regalia"]
+):not([data-cl-custom="true"]) .cl-chat-meta :is(.cl-chat-gender, .cl-chat-age) {
+    position: relative;
+    display: inline-flex !important;
+    align-items: center;
+    gap: 6px;
+    min-height: 19px;
+    padding: 2px 7px 2px 6px;
+    color: color-mix(in srgb, var(--SmartThemeBodyColor, #eee8dc) 82%, var(--cl-local-header) 18%);
+    background: linear-gradient(90deg, color-mix(in srgb, var(--cl-local-header) 15%, transparent), color-mix(in srgb, var(--cl-local-header) 3%, transparent));
+    box-shadow: inset 2px 0 0 color-mix(in srgb, var(--cl-local-header) 84%, transparent);
+    font-weight: 680;
+    letter-spacing: .075em;
+}
+
+.mes_text.character-life-rendered:is(
+    [data-cl-design="signature"],
+    [data-cl-design="imperial"],
+    [data-cl-design="clean"],
+    [data-cl-design="manga-light"],
+    [data-cl-design="manga-noir"],
+    [data-cl-design="tactical-vector"],
+    [data-cl-design="arcane-regalia"]
+):not([data-cl-custom="true"]) .cl-chat-meta .cl-chat-gender::before {
+    content: "";
+    width: 6px;
+    height: 6px;
+    flex: 0 0 6px;
+    background: var(--cl-local-header);
+    transform: rotate(45deg);
+    box-shadow: 0 0 7px color-mix(in srgb, var(--cl-local-header) 48%, transparent);
+}
+
+.mes_text.character-life-rendered:is(
+    [data-cl-design="signature"],
+    [data-cl-design="imperial"],
+    [data-cl-design="clean"],
+    [data-cl-design="manga-light"],
+    [data-cl-design="manga-noir"],
+    [data-cl-design="tactical-vector"],
+    [data-cl-design="arcane-regalia"]
+):not([data-cl-custom="true"]) .cl-chat-meta .cl-chat-age::before {
+    content: "";
+    width: 6px;
+    height: 6px;
+    flex: 0 0 6px;
+    border: 1px solid var(--cl-local-header);
+    border-radius: 50%;
+    box-shadow: 0 0 7px color-mix(in srgb, var(--cl-local-header) 36%, transparent);
+}
+
+.mes_text.character-life-rendered:is(
+    [data-cl-design="signature"],
+    [data-cl-design="imperial"],
+    [data-cl-design="clean"],
+    [data-cl-design="manga-light"],
+    [data-cl-design="manga-noir"],
+    [data-cl-design="tactical-vector"],
+    [data-cl-design="arcane-regalia"]
+):not([data-cl-custom="true"]) .cl-chat-meta span:empty {
+    display: none !important;
+}
+
+/* Respect the global Left / Middle / Right header-position setting for every built-in. */
+.mes_text.character-life-rendered:is(
+    [data-cl-design="signature"], [data-cl-design="imperial"], [data-cl-design="clean"],
+    [data-cl-design="manga-light"], [data-cl-design="manga-noir"], [data-cl-design="tactical-vector"], [data-cl-design="arcane-regalia"]
+):not([data-cl-custom="true"])[data-cl-position="left"] .cl-chat-identity { text-align: left; justify-items: start; }
+.mes_text.character-life-rendered:is(
+    [data-cl-design="signature"], [data-cl-design="imperial"], [data-cl-design="clean"],
+    [data-cl-design="manga-light"], [data-cl-design="manga-noir"], [data-cl-design="tactical-vector"], [data-cl-design="arcane-regalia"]
+):not([data-cl-custom="true"])[data-cl-position="center"] .cl-chat-identity { text-align: center; justify-items: center; }
+.mes_text.character-life-rendered:is(
+    [data-cl-design="signature"], [data-cl-design="imperial"], [data-cl-design="clean"],
+    [data-cl-design="manga-light"], [data-cl-design="manga-noir"], [data-cl-design="tactical-vector"], [data-cl-design="arcane-regalia"]
+):not([data-cl-custom="true"])[data-cl-position="right"] .cl-chat-identity { text-align: right; justify-items: end; }
+
+.mes_text.character-life-rendered:is(
+    [data-cl-design="signature"], [data-cl-design="imperial"], [data-cl-design="clean"],
+    [data-cl-design="manga-light"], [data-cl-design="manga-noir"], [data-cl-design="tactical-vector"], [data-cl-design="arcane-regalia"]
+):not([data-cl-custom="true"])[data-cl-position="left"] .cl-chat-meta { justify-content: flex-start; }
+.mes_text.character-life-rendered:is(
+    [data-cl-design="signature"], [data-cl-design="imperial"], [data-cl-design="clean"],
+    [data-cl-design="manga-light"], [data-cl-design="manga-noir"], [data-cl-design="tactical-vector"], [data-cl-design="arcane-regalia"]
+):not([data-cl-custom="true"])[data-cl-position="center"] .cl-chat-meta { justify-content: center; }
+.mes_text.character-life-rendered:is(
+    [data-cl-design="signature"], [data-cl-design="imperial"], [data-cl-design="clean"],
+    [data-cl-design="manga-light"], [data-cl-design="manga-noir"], [data-cl-design="tactical-vector"], [data-cl-design="arcane-regalia"]
+):not([data-cl-custom="true"])[data-cl-position="right"] .cl-chat-meta { justify-content: flex-end; }
+
+.mes_text.character-life-rendered:is(
+    [data-cl-design="signature"], [data-cl-design="imperial"], [data-cl-design="clean"],
+    [data-cl-design="manga-light"], [data-cl-design="manga-noir"], [data-cl-design="tactical-vector"], [data-cl-design="arcane-regalia"]
+):not([data-cl-custom="true"])[data-cl-position="left"] .cl-chat-rule { margin-left: 0; margin-right: auto; }
+.mes_text.character-life-rendered:is(
+    [data-cl-design="signature"], [data-cl-design="imperial"], [data-cl-design="clean"],
+    [data-cl-design="manga-light"], [data-cl-design="manga-noir"], [data-cl-design="tactical-vector"], [data-cl-design="arcane-regalia"]
+):not([data-cl-custom="true"])[data-cl-position="center"] .cl-chat-rule { margin-left: auto; margin-right: auto; }
+.mes_text.character-life-rendered:is(
+    [data-cl-design="signature"], [data-cl-design="imperial"], [data-cl-design="clean"],
+    [data-cl-design="manga-light"], [data-cl-design="manga-noir"], [data-cl-design="tactical-vector"], [data-cl-design="arcane-regalia"]
+):not([data-cl-custom="true"])[data-cl-position="right"] .cl-chat-rule { margin-left: auto; margin-right: 0; }
+
+/* Signature — keep the Chronicle wings, but let the identity float between them. */
+.mes_text[data-cl-design="signature"]:not([data-cl-custom="true"]) .cl-chat-rule {
+    width: 46px;
+    background: linear-gradient(90deg, var(--cl-local-header) 0 64%, transparent 64% 76%, color-mix(in srgb, var(--cl-local-header) 52%, transparent) 76% 100%);
+}
+.mes_text[data-cl-design="signature"]:not([data-cl-custom="true"]) .cl-chat-meta :is(.cl-chat-gender, .cl-chat-age) {
+    background: linear-gradient(90deg, color-mix(in srgb, var(--cl-local-header) 12%, transparent), transparent);
+}
+
+/* Imperial — ceremonial center line without top/bottom framing. */
+.mes_text[data-cl-design="imperial"]:not([data-cl-custom="true"]) .cl-chat-rule {
+    width: 82px;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--cl-local-header) 22%, var(--cl-local-header) 78%, transparent);
+    box-shadow: 0 0 10px color-mix(in srgb, var(--cl-local-header) 24%, transparent);
+}
+.mes_text[data-cl-design="imperial"]:not([data-cl-custom="true"]) .cl-chat-role { letter-spacing: .21em; }
+.mes_text[data-cl-design="imperial"]:not([data-cl-custom="true"]) .cl-chat-meta :is(.cl-chat-gender, .cl-chat-age) {
+    background: radial-gradient(circle at 14% 50%, color-mix(in srgb, var(--cl-local-header) 20%, transparent), transparent 58%);
+    box-shadow: none;
+}
+
+/* Clean — restrained typography and a precise accent stroke. */
+.mes_text[data-cl-design="clean"]:not([data-cl-custom="true"]) .cl-chat-header-core { padding-block: 6px; }
+.mes_text[data-cl-design="clean"]:not([data-cl-custom="true"]) .cl-chat-rule {
+    width: 34px;
+    height: 1px;
+    box-shadow: none;
+}
+.mes_text[data-cl-design="clean"]:not([data-cl-custom="true"]) .cl-chat-meta :is(.cl-chat-gender, .cl-chat-age) {
+    padding-inline: 5px;
+    background: transparent;
+    box-shadow: inset 1px 0 0 color-mix(in srgb, var(--cl-local-header) 58%, transparent);
+}
+
+/* Manga Light — editorial slash line, no panel around the identity. */
+.mes_text[data-cl-design="manga-light"]:not([data-cl-custom="true"]) .cl-chat-rule {
+    width: 62px;
+    height: 3px;
+    transform: skewX(-28deg);
+    background: linear-gradient(90deg, var(--cl-local-header) 0 72%, color-mix(in srgb, var(--SmartThemeBodyColor, #eee8dc) 36%, transparent) 72% 82%, var(--cl-local-header) 82% 100%);
+    box-shadow: none;
+}
+.mes_text[data-cl-design="manga-light"]:not([data-cl-custom="true"]) .cl-chat-meta :is(.cl-chat-gender, .cl-chat-age) {
+    background: color-mix(in srgb, var(--cl-local-header) 9%, transparent);
+    box-shadow: inset 2px 0 0 var(--cl-local-header);
+}
+
+/* Manga Noir — portrait remains on the left with a sharp monochrome identity rail. */
+.mes_text[data-cl-design="manga-noir"]:not([data-cl-custom="true"]) .cl-chat-portrait { order: 0 !important; }
+.mes_text[data-cl-design="manga-noir"]:not([data-cl-custom="true"]) .cl-chat-identity { order: 1 !important; }
+.mes_text[data-cl-design="manga-noir"]:not([data-cl-custom="true"]) .cl-chat-rule {
+    width: 66px;
+    height: 2px;
+    background: linear-gradient(90deg, var(--cl-local-header) 0 18%, color-mix(in srgb, var(--SmartThemeBodyColor, #eee8dc) 72%, transparent) 18% 84%, transparent 84%);
+    box-shadow: none;
+}
+.mes_text[data-cl-design="manga-noir"]:not([data-cl-custom="true"]) .cl-chat-meta :is(.cl-chat-gender, .cl-chat-age) {
+    background: linear-gradient(90deg, color-mix(in srgb, #fff 7%, transparent), transparent);
+    box-shadow: inset 2px 0 0 color-mix(in srgb, var(--cl-local-header) 80%, #fff 20%);
+}
+
+/* Tactical Vector — segmented HUD language, but no enclosing HUD rectangle. */
+.mes_text[data-cl-design="tactical-vector"]:not([data-cl-custom="true"]) .cl-chat-rule {
+    width: 88px;
+    height: 4px;
+    background: repeating-linear-gradient(90deg, var(--cl-local-header) 0 14px, transparent 14px 18px);
+    box-shadow: 0 0 8px color-mix(in srgb, var(--cl-local-header) 22%, transparent);
+}
+.mes_text[data-cl-design="tactical-vector"]:not([data-cl-custom="true"]) .cl-chat-meta :is(.cl-chat-gender, .cl-chat-age) {
+    padding: 3px 9px 3px 7px;
+    clip-path: polygon(5px 0, 100% 0, calc(100% - 5px) 100%, 0 100%);
+    background: linear-gradient(90deg, color-mix(in srgb, var(--cl-local-header) 18%, transparent), color-mix(in srgb, var(--cl-local-header) 5%, transparent));
+    box-shadow: none;
+}
+
+/* Arcane Regalia — jewelry-like details replace the previous outer frame. */
+.mes_text[data-cl-design="arcane-regalia"]:not([data-cl-custom="true"]) .cl-chat-header-core { padding-block: calc(var(--cl-chat-pad-y) + 2px) !important; }
+.mes_text[data-cl-design="arcane-regalia"]:not([data-cl-custom="true"]) .cl-chat-rule {
+    width: 92px;
+    height: 3px;
+    background:
+        radial-gradient(circle at 50% 50%, color-mix(in srgb, var(--cl-local-header) 88%, #f1d58c 12%) 0 3px, transparent 4px),
+        linear-gradient(90deg, transparent 0 8%, color-mix(in srgb, var(--cl-local-header) 44%, transparent) 8% 44%, transparent 44% 56%, color-mix(in srgb, var(--cl-local-header) 44%, transparent) 56% 92%, transparent 92%);
+    box-shadow: 0 0 10px color-mix(in srgb, var(--cl-local-header) 22%, transparent);
+}
+.mes_text[data-cl-design="arcane-regalia"]:not([data-cl-custom="true"]) .cl-chat-role {
+    color: color-mix(in srgb, var(--cl-local-header) 78%, #e9d5a1 22%);
+}
+.mes_text[data-cl-design="arcane-regalia"]:not([data-cl-custom="true"]) .cl-chat-meta :is(.cl-chat-gender, .cl-chat-age) {
+    min-height: 21px;
+    padding-inline: 8px;
+    background: linear-gradient(90deg, color-mix(in srgb, var(--cl-local-header) 18%, transparent), color-mix(in srgb, var(--cl-local-header) 5%, transparent), transparent);
+    box-shadow: inset 2px 0 0 color-mix(in srgb, var(--cl-local-header) 88%, #d6b66d 12%);
+}
+.mes_text[data-cl-design="arcane-regalia"]:not([data-cl-custom="true"]) .cl-chat-meta .cl-chat-gender::before {
+    background: color-mix(in srgb, var(--cl-local-header) 82%, #f0d38a 18%);
+}
+.mes_text[data-cl-design="arcane-regalia"]:not([data-cl-custom="true"]) .cl-chat-meta .cl-chat-age::before {
+    border-color: color-mix(in srgb, var(--cl-local-header) 82%, #f0d38a 18%);
+}
+
+/* Keep metadata useful on narrow iPhone layouts. Empty fields still disappear. */
+@media (max-width: 420px) {
+    .mes_text.character-life-rendered:is(
+        [data-cl-design="signature"], [data-cl-design="imperial"], [data-cl-design="clean"],
+        [data-cl-design="manga-light"], [data-cl-design="manga-noir"], [data-cl-design="tactical-vector"], [data-cl-design="arcane-regalia"]
+    ):not([data-cl-custom="true"]) .cl-chat-meta {
+        display: flex !important;
+        gap: 4px;
+        font-size: .65em;
+        letter-spacing: .055em;
+    }
+
+    .mes_text.character-life-rendered:is(
+        [data-cl-design="signature"], [data-cl-design="imperial"], [data-cl-design="clean"],
+        [data-cl-design="manga-light"], [data-cl-design="manga-noir"], [data-cl-design="tactical-vector"], [data-cl-design="arcane-regalia"]
+    ):not([data-cl-custom="true"]) .cl-chat-meta :is(.cl-chat-gender, .cl-chat-age) {
+        min-height: 18px;
+        padding: 2px 6px 2px 5px;
+    }
+}
