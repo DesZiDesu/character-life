@@ -1,8 +1,10 @@
 /* global SillyTavern, toastr */
 
-// Character Life v1.7.2 per-chat Skill Indication master switch.
+// Character Life v1.8.5 per-chat Skill Indication master switch.
 // New chats default OFF unless they already contain Character Life/Tensei skill state.
 // Disabled chats receive no Character Life skill prompt and skill cards are hidden.
+// v1.8.5 fixes the master checkbox being reset by the document click refresh before
+// the checkbox change event could persist the requested OFF state.
 
 const SETTINGS_KEY = 'character_life';
 const CHAT_SKILL_KEY = 'character_life_skills';
@@ -12,6 +14,7 @@ const SKILL_PROMPT_KEY = 'character_life_skill_protocol_v172';
 
 let initialized = false;
 let applyQueued = false;
+let toggleWritePending = false;
 
 const cleanText = (value, fallback = '', max = 1200) => typeof value === 'string' ? value.trim().slice(0, max) : fallback;
 
@@ -105,8 +108,9 @@ function ensureToggle() {
     const enabled = isEnabled();
     const input = label.querySelector('[data-cl-skill-master]');
     if (input) {
-        input.checked = enabled;
-        input.disabled = !hasChat();
+        // Never overwrite the checkbox while its requested state is being persisted.
+        if (!toggleWritePending) input.checked = enabled;
+        input.disabled = !hasChat() || toggleWritePending;
     }
     for (const subordinate of footer.querySelectorAll('[data-cl-skill-autotrack], [data-cl-skill-show]')) {
         subordinate.disabled = !enabled;
@@ -124,7 +128,7 @@ function applyState() {
 }
 
 function queueApply() {
-    if (applyQueued) return;
+    if (applyQueued || toggleWritePending) return;
     applyQueued = true;
     queueMicrotask(applyState);
 }
@@ -132,20 +136,45 @@ function queueApply() {
 async function setEnabled(enabled) {
     const context = ctx();
     if (!context || !hasChat()) throw new Error('Open a character or group chat first.');
-    context.chatMetadata[CHAT_ENABLED_KEY] = Boolean(enabled);
+    const requested = Boolean(enabled);
+    context.chatMetadata[CHAT_ENABLED_KEY] = requested;
     await context.saveMetadata?.();
-    applyState();
-    notify('success', `Skill Indicators ${enabled ? 'enabled' : 'disabled'} for this chat.`);
-    return Boolean(enabled);
+    // Keep the in-memory metadata authoritative even on ST builds whose save routine
+    // refreshes/replaces metadata objects while saving.
+    const latest = ctx();
+    if (latest?.chatMetadata && latest.chatMetadata[CHAT_ENABLED_KEY] !== requested) {
+        latest.chatMetadata[CHAT_ENABLED_KEY] = requested;
+        await latest.saveMetadata?.();
+    }
+    return requested;
 }
 
 function bindUi() {
     document.addEventListener('change', event => {
         const target = event.target;
         if (!(target instanceof HTMLInputElement) || !target.matches('[data-cl-skill-master]')) return;
-        void setEnabled(target.checked).catch(error => notify('error', error.message));
+        if (toggleWritePending) return;
+        const requested = target.checked;
+        toggleWritePending = true;
+        target.disabled = true;
+        void setEnabled(requested)
+            .then(enabled => notify('success', `Skill Indicators ${enabled ? 'enabled' : 'disabled'} for this chat.`))
+            .catch(error => notify('error', error.message))
+            .finally(() => {
+                toggleWritePending = false;
+                applyState();
+            });
     }, true);
-    document.addEventListener('click', queueApply, true);
+
+    document.addEventListener('click', event => {
+        const target = event.target;
+        // Critical: the old implementation queued applyState() from the checkbox's
+        // own click. That refresh could restore the previous checked value before
+        // the subsequent change handler read it, so OFF became ON again.
+        if (target instanceof Element && target.closest('[data-cl-skill-master-label]')) return;
+        // Defer unrelated UI refreshes until after native click/input/change work.
+        setTimeout(queueApply, 0);
+    }, true);
 }
 
 function bindContextEvents() {
@@ -164,9 +193,18 @@ function bindContextEvents() {
 
 function exposeApi() {
     globalThis.CharacterLifeSkillToggle = Object.freeze({
-        version: '1.7.2',
+        version: '1.8.5',
         enabled: isEnabled,
-        setEnabled,
+        setEnabled: async enabled => {
+            toggleWritePending = true;
+            try {
+                const result = await setEnabled(enabled);
+                return result;
+            } finally {
+                toggleWritePending = false;
+                applyState();
+            }
+        },
         refresh: applyState,
     });
 }
