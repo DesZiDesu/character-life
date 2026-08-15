@@ -5,9 +5,9 @@
     "optional": [],
     "dependencies": [],
     "js": "character-life-v172-entry.js",
-    "css": "style-v180-wand.css",
+    "css": "style-v181.css",
     "author": "DesZiDesu",
-    "version": "1.8.0",
+    "version": "1.8.1",
     "homePage": "https://github.com/DesZiDesu/character-life",
     "auto_update": true
 }
