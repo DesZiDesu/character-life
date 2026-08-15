@@ -1,0 +1,4 @@
+/* Keep the legacy embedded Skills button out of the NPC Library. The v1.8.1 Skill Storage launcher is a separate Wand-menu entry. */
+#character-life-overlay [data-cl-open-skills] {
+    display: none !important;
+}
