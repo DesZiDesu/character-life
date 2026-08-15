@@ -122,7 +122,9 @@ function cl182ScheduleMessage(id, delay) { const n = Number(id); if (!Number.isI
 function cl182PatchUi() {
     document.querySelectorAll('#character-life-overlay .cl-ai-identity-color').forEach(b=>b.remove());
     for (const panel of document.querySelectorAll('#character-life-overlay .cl-color-identity-panel')) if (!panel.querySelector('[data-cl-main-chat-color-note]')) { const n = document.createElement('small'); n.dataset.clMainChatColorNote=''; n.className='cl-main-chat-color-note'; n.innerHTML='<i class="fa-solid fa-message"></i><span>AI identity colors are chosen and tracked from the main role-play chat. Use the picker only to override a saved color manually.</span>'; panel.querySelector('.cl-color-identity-controls')?.insertAdjacentElement('afterend',n); }
-    const badge = document.querySelector('#character-life-settings .inline-drawer-header small'); if (badge) badge.textContent = `v${CL182_VERSION}`;
+    const versionText = `v${CL182_VERSION}`;
+    const badge = document.querySelector('#character-life-settings .inline-drawer-header small'); if (badge && badge.textContent !== versionText) badge.textContent = versionText;
+    const skillBadge = document.querySelector('#character-life-skill-settings .cl-skill-settings-heading > span'); if (skillBadge && skillBadge.textContent !== versionText) skillBadge.textContent = versionText;
 }
 function cl182QueueUi() { queueMicrotask(cl182PatchUi); }
 function cl182BindEvents() {
