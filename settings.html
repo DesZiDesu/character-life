@@ -5,94 +5,122 @@
             <div class="inline-drawer-icon fa-solid fa-circle-chevron-down down" aria-hidden="true"></div>
         </div>
         <div class="inline-drawer-content">
-            <p class="cl-settings-copy">Local NPC portraits and Chronicle speaker presentation for the main SillyTavern chat.</p>
+            <p class="cl-settings-copy">NPC presentation, continuity, skills, and role-play state tools for the active SillyTavern chat.</p>
 
             <div class="cl-settings-actions">
                 <button id="character-life-open" class="menu_button" type="button"><i class="fa-solid fa-users"></i> Open NPC Library</button>
                 <button id="character-life-new" class="menu_button" type="button"><i class="fa-solid fa-user-plus"></i> Create NPC</button>
             </div>
 
-            <label class="checkbox_label" for="character-life-wand">
-                <input id="character-life-wand" type="checkbox">
-                <span>Show Character Life's in the Wand menu</span>
-            </label>
-            <label class="checkbox_label" for="character-life-inject">
-                <input id="character-life-inject" type="checkbox">
-                <span>Teach the active bot to use Character Life speaker tags</span>
-            </label>
-            <label class="checkbox_label" for="character-life-discover">
-                <input id="character-life-discover" type="checkbox">
-                <span>Create chat-scoped placeholders for unknown tagged NPCs</span>
-            </label>
-            <label class="checkbox_label" for="character-life-profile-updates">
-                <input id="character-life-profile-updates" type="checkbox">
-                <span>Let the AI update NPC profiles from facts established in chat</span>
-            </label>
-            <label class="checkbox_label" for="character-life-unified-colors">
-                <input id="character-life-unified-colors" type="checkbox">
-                <span>Use one NPC color for Header, Monologue, and Dialogue (default)</span>
-            </label>
-
-            <div class="cl-settings-grid">
-                <label><span>Design</span><select id="character-life-design"><option value="signature">Chronicle Signature</option><option value="imperial">Chronicle Imperial</option><option value="clean">Clean</option><option value="manga-light">Manga Light</option><option value="manga-noir">Manga Noir</option><option value="tactical-vector">Tactical Vector</option><option value="arcane-regalia">Arcane Regalia</option></select></label>
-                <label><span>Header position</span><select id="character-life-position"><option value="left">Left</option><option value="center">Middle</option><option value="right">Right</option></select></label>
-                <label><span>Portrait shape</span><select id="character-life-shape"><option value="square">Square</option><option value="rounded">Rounded square</option><option value="portrait">Portrait rectangle</option><option value="circle">Circle</option><option value="hexagon">Hexagonal</option></select></label>
-                <label><span>Portrait size <output id="character-life-size-output">76 px</output></span><input id="character-life-size" type="range" min="52" max="124" step="4"></label>
-                <label><span>Chat UI text size <output id="character-life-font-size-output">88%</output></span><input id="character-life-font-size" type="range" min="70" max="120" step="2"></label>
-                <label><span>Panel spacing <output id="character-life-spacing-output">86%</output></span><input id="character-life-spacing" type="range" min="70" max="120" step="2"></label>
-                <label><span>Missing portrait</span><select id="character-life-missing"><option value="empty">Keep empty frame</option><option value="hidden">Hide image frame</option></select></label>
-                <label><span>Language / ภาษา</span><select id="character-life-language"><option value="en">English</option><option value="th">ไทย</option></select></label>
-                <label><span>Manager accent</span><input id="character-life-ui-accent" type="color"></label>
-                <label><span>Manager background</span><input id="character-life-ui-background" type="color"></label>
-                <label><span>Manager surface</span><input id="character-life-ui-surface" type="color"></label>
-                <label><span>Manager text</span><input id="character-life-ui-text" type="color"></label>
-                <label><span>Unknown NPC header fallback</span><input id="character-life-header-color" type="color"></label>
-                <label><span>Unknown NPC thought fallback</span><input id="character-life-thought-color" type="color"></label>
-                <label><span>Unknown NPC dialogue fallback</span><input id="character-life-dialogue-color" type="color"></label>
-            </div>
-
-            <section class="cl-design-preview-shell" aria-label="Selected chat design preview">
-                <span>Live design preview</span>
-                <div class="mes_text character-life-rendered cl-design-preview" data-cl-design="signature" data-cl-position="center" data-cl-shape="rounded" data-cl-missing="empty">
-                    <section class="cl-chat-block cl-chat-thought"><div class="cl-chat-label"><span></span><strong>Avery Vale</strong><i>•</i><em>Thought</em></div><div class="cl-chat-content">Something beyond the gate is watching us.</div></section>
-                    <section class="cl-chat-block cl-chat-header"><div class="cl-chat-wing left"><i></i><span></span></div><div class="cl-chat-header-core"><div class="cl-chat-portrait"><span class="cl-chat-initial">AV</span><b class="tl"></b><b class="br"></b></div><div class="cl-chat-identity"><small class="cl-chat-role">ASTRAL ENVOY</small><i class="cl-chat-rule" aria-hidden="true"></i><strong class="cl-chat-name">Avery Vale</strong><div class="cl-chat-meta"><span class="cl-chat-affiliation">Vanguard Division</span><span class="cl-chat-gender">Woman</span><span class="cl-chat-age">Age 24</span></div></div></div><div class="cl-chat-wing right"><i></i><span></span></div></section>
-                    <section class="cl-chat-block cl-chat-dialogue"><div class="cl-chat-label"><span></span><strong>Avery Vale</strong><i>•</i><em>Dialogue #1</em></div><div class="cl-chat-content">Stay close. We enter together.</div></section>
+            <details class="cl-settings-section" data-cl-settings-section="npc-automation" open>
+                <summary>
+                    <span class="cl-settings-summary-icon"><i class="fa-solid fa-user-gear"></i></span>
+                    <span class="cl-settings-summary-copy"><strong>NPC &amp; AI behavior</strong><small>Speaker tags, discovery, profile updates, and NPC colors</small></span>
+                </summary>
+                <div class="cl-settings-section-body">
+                    <label class="checkbox_label" for="character-life-wand">
+                        <input id="character-life-wand" type="checkbox">
+                        <span>Show Character Life's in the Wand menu</span>
+                    </label>
+                    <label class="checkbox_label" for="character-life-inject">
+                        <input id="character-life-inject" type="checkbox">
+                        <span>Teach the active bot to use Character Life speaker tags</span>
+                    </label>
+                    <label class="checkbox_label" for="character-life-discover">
+                        <input id="character-life-discover" type="checkbox">
+                        <span>Create chat-scoped placeholders for unknown tagged NPCs</span>
+                    </label>
+                    <label class="checkbox_label" for="character-life-profile-updates">
+                        <input id="character-life-profile-updates" type="checkbox">
+                        <span>Let the AI update NPC profiles from facts established in chat</span>
+                    </label>
+                    <label class="checkbox_label" for="character-life-unified-colors">
+                        <input id="character-life-unified-colors" type="checkbox">
+                        <span>Use one NPC color for Header, Monologue, and Dialogue</span>
+                    </label>
                 </div>
-            </section>
-
-            <details id="character-life-css-studio" class="cl-css-studio">
-                <summary><i class="fa-solid fa-pen-ruler"></i> Independent Theme Creator</summary>
-                <p>Create a complete Header, Monologue, and Dialogue theme from a neutral blank canvas. Independent themes do not use a built-in theme as their visual foundation.</p>
-
-                <div class="cl-css-preset-grid">
-                    <label><span>Theme name</span><input id="character-life-preset-name" type="text" maxlength="80" placeholder="My custom theme"></label>
-                    <label hidden aria-hidden="true"><span>Internal compatibility renderer</span><select id="character-life-preset-base"><option value="signature">Chronicle Signature</option><option value="imperial">Chronicle Imperial</option><option value="clean">Clean</option><option value="manga-light">Manga Light</option><option value="manga-noir">Manga Noir</option><option value="tactical-vector">Tactical Vector</option><option value="arcane-regalia">Arcane Regalia</option></select></label>
-                </div>
-
-                <div class="cl-css-actions">
-                    <button id="character-life-preset-new" class="menu_button" type="button"><i class="fa-solid fa-plus"></i> New blank theme</button>
-                    <button id="character-life-preset-save" class="menu_button" type="button"><i class="fa-solid fa-bookmark"></i> Save &amp; use theme</button>
-                    <button id="character-life-preset-delete" class="menu_button" type="button" disabled><i class="fa-solid fa-trash"></i> Delete</button>
-                    <button id="character-life-preset-export" class="menu_button" type="button"><i class="fa-solid fa-file-export"></i> Export JSON</button>
-                    <label class="menu_button cl-css-import"><i class="fa-solid fa-file-import"></i> Import JSON<input id="character-life-preset-import" type="file" accept="application/json,.json"></label>
-                </div>
-
-                <div class="cl-css-editors">
-                    <label><span>Header CSS</span><textarea id="character-life-header-css" rows="7" spellcheck="false" placeholder="&amp; { background: #10131a; border-radius: 18px; }\n.cl-chat-header-core { gap: 12px; }"></textarea></label>
-                    <label><span>Monologue CSS</span><textarea id="character-life-thought-css" rows="7" spellcheck="false" placeholder="&amp; { background: rgba(20,20,28,.88); }\n.cl-chat-content { font-style: italic; }"></textarea></label>
-                    <label><span>Dialogue CSS</span><textarea id="character-life-dialogue-css" rows="7" spellcheck="false" placeholder="&amp; { border-radius: 12px; }\n.cl-chat-content { line-height: 1.65; }"></textarea></label>
-                </div>
-
-                <p class="cl-css-help"><code>&amp;</code> means the selected component. Independent themes first neutralize Character Life's built-in visual styling, then your scoped Header, Monologue, and Dialogue CSS defines the complete appearance. Flat rules can style children such as <code>.cl-chat-header-core</code>, <code>.cl-chat-portrait</code>, <code>.cl-chat-label</code>, and <code>.cl-chat-content</code>.</p>
-                <output id="character-life-css-status" class="cl-css-status" aria-live="polite">Press New blank theme to start from an independent canvas.</output>
             </details>
 
-            <details class="cl-tag-guide">
-                <summary><i class="fa-solid fa-code"></i> Speaker tag format</summary>
-                <pre>[CL_THOUGHT|Avery|field-uniform]Inner thought.[/CL_THOUGHT]
+            <details class="cl-settings-section" data-cl-settings-section="appearance">
+                <summary>
+                    <span class="cl-settings-summary-icon"><i class="fa-solid fa-palette"></i></span>
+                    <span class="cl-settings-summary-copy"><strong>Appearance &amp; chat layout</strong><small>Theme, portraits, spacing, position, language, and fallback colors</small></span>
+                </summary>
+                <div class="cl-settings-section-body">
+                    <div class="cl-settings-grid">
+                        <label><span>Design</span><select id="character-life-design"><option value="signature">Chronicle Signature</option><option value="imperial">Chronicle Imperial</option><option value="clean">Clean</option><option value="manga-light">Manga Light</option><option value="manga-noir">Manga Noir</option><option value="tactical-vector">Tactical Vector</option><option value="arcane-regalia">Arcane Regalia</option></select></label>
+                        <label><span>Header position</span><select id="character-life-position"><option value="left">Left</option><option value="center">Middle</option><option value="right">Right</option></select></label>
+                        <label><span>Portrait shape</span><select id="character-life-shape"><option value="square">Square</option><option value="rounded">Rounded square</option><option value="portrait">Portrait rectangle</option><option value="circle">Circle</option><option value="hexagon">Hexagonal</option></select></label>
+                        <label><span>Portrait size <output id="character-life-size-output">76 px</output></span><input id="character-life-size" type="range" min="52" max="124" step="4"></label>
+                        <label><span>Chat UI text size <output id="character-life-font-size-output">88%</output></span><input id="character-life-font-size" type="range" min="70" max="120" step="2"></label>
+                        <label><span>Panel spacing <output id="character-life-spacing-output">86%</output></span><input id="character-life-spacing" type="range" min="70" max="120" step="2"></label>
+                        <label><span>Missing portrait</span><select id="character-life-missing"><option value="empty">Keep empty frame</option><option value="hidden">Hide image frame</option></select></label>
+                        <label><span>Language / ภาษา</span><select id="character-life-language"><option value="en">English</option><option value="th">ไทย</option></select></label>
+                        <label><span>Manager accent</span><input id="character-life-ui-accent" type="color"></label>
+                        <label><span>Manager background</span><input id="character-life-ui-background" type="color"></label>
+                        <label><span>Manager surface</span><input id="character-life-ui-surface" type="color"></label>
+                        <label><span>Manager text</span><input id="character-life-ui-text" type="color"></label>
+                        <label><span>Unknown NPC header fallback</span><input id="character-life-header-color" type="color"></label>
+                        <label><span>Unknown NPC thought fallback</span><input id="character-life-thought-color" type="color"></label>
+                        <label><span>Unknown NPC dialogue fallback</span><input id="character-life-dialogue-color" type="color"></label>
+                    </div>
+
+                    <section class="cl-design-preview-shell" aria-label="Selected chat design preview">
+                        <span>Live design preview</span>
+                        <div class="mes_text character-life-rendered cl-design-preview" data-cl-design="signature" data-cl-position="center" data-cl-shape="rounded" data-cl-missing="empty">
+                            <section class="cl-chat-block cl-chat-thought"><div class="cl-chat-label"><span></span><strong>Avery Vale</strong><i>•</i><em>Thought</em></div><div class="cl-chat-content">Something beyond the gate is watching us.</div></section>
+                            <section class="cl-chat-block cl-chat-header"><div class="cl-chat-wing left"><i></i><span></span></div><div class="cl-chat-header-core"><div class="cl-chat-portrait"><span class="cl-chat-initial">AV</span><b class="tl"></b><b class="br"></b></div><div class="cl-chat-identity"><small class="cl-chat-role">ASTRAL ENVOY</small><i class="cl-chat-rule" aria-hidden="true"></i><strong class="cl-chat-name">Avery Vale</strong><div class="cl-chat-meta"><span class="cl-chat-affiliation">Vanguard Division</span><span class="cl-chat-gender">Woman</span><span class="cl-chat-age">Age 24</span></div></div></div><div class="cl-chat-wing right"><i></i><span></span></div></section>
+                            <section class="cl-chat-block cl-chat-dialogue"><div class="cl-chat-label"><span></span><strong>Avery Vale</strong><i>•</i><em>Dialogue #1</em></div><div class="cl-chat-content">Stay close. We enter together.</div></section>
+                        </div>
+                    </section>
+                </div>
+            </details>
+
+            <div id="character-life-feature-settings" class="cl-settings-feature-stack" aria-label="Character Life feature settings"></div>
+
+            <details id="character-life-css-studio" class="cl-css-studio cl-settings-section" data-cl-settings-section="theme-creator">
+                <summary>
+                    <span class="cl-settings-summary-icon"><i class="fa-solid fa-pen-ruler"></i></span>
+                    <span class="cl-settings-summary-copy"><strong>Independent Theme Creator</strong><small>Build or import custom Header, Monologue, and Dialogue designs</small></span>
+                </summary>
+                <div class="cl-settings-section-body">
+                    <p>Create a complete Header, Monologue, and Dialogue theme from a neutral blank canvas. Independent themes do not use a built-in theme as their visual foundation.</p>
+
+                    <div class="cl-css-preset-grid">
+                        <label><span>Theme name</span><input id="character-life-preset-name" type="text" maxlength="80" placeholder="My custom theme"></label>
+                        <label hidden aria-hidden="true"><span>Internal compatibility renderer</span><select id="character-life-preset-base"><option value="signature">Chronicle Signature</option><option value="imperial">Chronicle Imperial</option><option value="clean">Clean</option><option value="manga-light">Manga Light</option><option value="manga-noir">Manga Noir</option><option value="tactical-vector">Tactical Vector</option><option value="arcane-regalia">Arcane Regalia</option></select></label>
+                    </div>
+
+                    <div class="cl-css-actions">
+                        <button id="character-life-preset-new" class="menu_button" type="button"><i class="fa-solid fa-plus"></i> New blank theme</button>
+                        <button id="character-life-preset-save" class="menu_button" type="button"><i class="fa-solid fa-bookmark"></i> Save &amp; use theme</button>
+                        <button id="character-life-preset-delete" class="menu_button" type="button" disabled><i class="fa-solid fa-trash"></i> Delete</button>
+                        <button id="character-life-preset-export" class="menu_button" type="button"><i class="fa-solid fa-file-export"></i> Export JSON</button>
+                        <label class="menu_button cl-css-import"><i class="fa-solid fa-file-import"></i> Import JSON<input id="character-life-preset-import" type="file" accept="application/json,.json"></label>
+                    </div>
+
+                    <div class="cl-css-editors">
+                        <label><span>Header CSS</span><textarea id="character-life-header-css" rows="7" spellcheck="false" placeholder="&amp; { background: #10131a; border-radius: 18px; }\n.cl-chat-header-core { gap: 12px; }"></textarea></label>
+                        <label><span>Monologue CSS</span><textarea id="character-life-thought-css" rows="7" spellcheck="false" placeholder="&amp; { background: rgba(20,20,28,.88); }\n.cl-chat-content { font-style: italic; }"></textarea></label>
+                        <label><span>Dialogue CSS</span><textarea id="character-life-dialogue-css" rows="7" spellcheck="false" placeholder="&amp; { border-radius: 12px; }\n.cl-chat-content { line-height: 1.65; }"></textarea></label>
+                    </div>
+
+                    <p class="cl-css-help"><code>&amp;</code> means the selected component. Independent themes first neutralize Character Life's built-in visual styling, then your scoped Header, Monologue, and Dialogue CSS defines the complete appearance. Flat rules can style children such as <code>.cl-chat-header-core</code>, <code>.cl-chat-portrait</code>, <code>.cl-chat-label</code>, and <code>.cl-chat-content</code>.</p>
+                    <output id="character-life-css-status" class="cl-css-status" aria-live="polite">Press New blank theme to start from an independent canvas.</output>
+                </div>
+            </details>
+
+            <details class="cl-tag-guide cl-settings-section" data-cl-settings-section="speaker-tags">
+                <summary>
+                    <span class="cl-settings-summary-icon"><i class="fa-solid fa-code"></i></span>
+                    <span class="cl-settings-summary-copy"><strong>Speaker tag reference</strong><small>Advanced reference for Character Life response tags</small></span>
+                </summary>
+                <div class="cl-settings-section-body">
+                    <pre>[CL_THOUGHT|Avery|field-uniform]Inner thought.[/CL_THOUGHT]
 [CL_HEADER|Avery|field-uniform]
 [CL_DIALOGUE|Avery|field-uniform]Spoken dialogue.[/CL_DIALOGUE]</pre>
-                <p>The form is optional. The extension also understands Chronicle <code>[THINK]</code>, <code>[CHAR]</code>, <code>[NPC]</code>, and <code>[SAY]</code> tags.</p>
+                    <p>The form is optional. The extension also understands Chronicle <code>[THINK]</code>, <code>[CHAR]</code>, <code>[NPC]</code>, and <code>[SAY]</code> tags.</p>
+                </div>
             </details>
         </div>
     </div>
