@@ -1,0 +1,32 @@
+/* Character Life v1.8.2 — unified identity-color repair + Wand clarification. */
+
+html[data-cl-unified-colors="true"] .mes_text.character-life-rendered .cl-chat-block[data-cl-name] {
+    --cl-local-header: var(--cl-unified-color) !important;
+    --cl-local-thought: var(--cl-unified-color) !important;
+    --cl-local-dialogue: var(--cl-unified-color) !important;
+}
+
+#character-life-overlay .cl-ai-identity-color {
+    display: none !important;
+}
+
+#character-life-overlay .cl-main-chat-color-note {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 9px 10px;
+    border: 1px solid color-mix(in srgb, var(--cl-header-color) 24%, var(--cl-line));
+    border-radius: 9px;
+    color: var(--cl-muted);
+    background: color-mix(in srgb, var(--cl-header-color) 5%, transparent);
+    line-height: 1.45;
+}
+
+#character-life-overlay .cl-main-chat-color-note i {
+    margin-top: .16em;
+    color: var(--cl-header-color);
+}
+
+#character-life-overlay .cl-color-identity-controls {
+    grid-template-columns: minmax(0, 1fr);
+}
