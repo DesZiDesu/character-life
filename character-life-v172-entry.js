@@ -45,3 +45,9 @@ try {
 } catch (error) {
     console.error("[Character Life's] Skill Indication system was skipped safely; the recovered Character Life core remains loaded.", error);
 }
+
+try {
+    await import('./skill-optional-v172.js');
+} catch (error) {
+    console.error("[Character Life's] Per-chat Skill Indicator switch was skipped safely; the core remains loaded.", error);
+}
