@@ -2,11 +2,12 @@
 
 import './design-studio.js';
 
-const VERSION = '1.7.1';
+const VERSION = '1.7.2';
 const MARKER = '/* CHARACTER-LIFE-INDEPENDENT-THEME:v1 */';
 const ENHANCER_ID = 'character-life-design-creator-enhancer';
 const RESET_STYLE_ID = 'character-life-independent-theme-reset-v171';
 const UI_STYLE_ID = 'character-life-theme-studio-ui-v171';
+const UNIFIED_COLOR_SETTING_ID = 'character-life-unified-colors';
 let internalEditorWrite = false;
 let syncQueued = false;
 
@@ -26,6 +27,64 @@ function stripMarker(value) { return String(value || '').replace(MARKER, '').tri
 function settingsRoot() {
     try { return SillyTavern.getContext().extensionSettings?.character_life || null; }
     catch { return null; }
+}
+
+function unifiedColorsEnabled() {
+    return settingsRoot()?.config?.unifiedNpcColors !== false;
+}
+
+function syncUnifiedNpcColors() {
+    const enabled = unifiedColorsEnabled();
+    const fallback = settingsRoot()?.config?.headerColor || '#c39a62';
+    const speakerColors = new Map();
+
+    document.querySelectorAll('.mes_text.character-life-rendered .cl-chat-header[data-cl-name]').forEach(block => {
+        const name = String(block.dataset.clName || '').trim().toLocaleLowerCase();
+        if (!name) return;
+        const color = block.style.getPropertyValue('--cl-local-header').trim() || 'var(--cl-header-color)';
+        speakerColors.set(name, color);
+    });
+
+    document.querySelectorAll('.mes_text.character-life-rendered').forEach(message => {
+        message.dataset.clUnifiedColors = enabled ? 'true' : 'false';
+        message.querySelectorAll('.cl-chat-block[data-cl-name]').forEach(block => {
+            if (!enabled) {
+                block.style.removeProperty('--cl-unified-color');
+                return;
+            }
+            const name = String(block.dataset.clName || '').trim().toLocaleLowerCase();
+            const ownHeader = block.classList.contains('cl-chat-header')
+                ? block.style.getPropertyValue('--cl-local-header').trim()
+                : '';
+            block.style.setProperty('--cl-unified-color', speakerColors.get(name) || ownHeader || fallback);
+        });
+    });
+
+    const preview = document.querySelector('.cl-design-preview');
+    if (preview) {
+        preview.dataset.clUnifiedColors = enabled ? 'true' : 'false';
+        preview.querySelectorAll('.cl-chat-block').forEach(block => {
+            if (enabled) block.style.setProperty('--cl-unified-color', 'var(--cl-header-color)');
+            else block.style.removeProperty('--cl-unified-color');
+        });
+    }
+}
+
+function bindUnifiedColorSetting() {
+    const input = document.getElementById(UNIFIED_COLOR_SETTING_ID);
+    if (!(input instanceof HTMLInputElement)) return;
+    input.checked = unifiedColorsEnabled();
+    if (input.dataset.clBound === 'true') return;
+    input.dataset.clBound = 'true';
+    input.addEventListener('change', () => {
+        const root = settingsRoot();
+        if (root) {
+            root.config ||= {};
+            root.config.unifiedNpcColors = Boolean(input.checked);
+            SillyTavern.getContext().saveSettingsDebounced();
+        }
+        syncUnifiedNpcColors();
+    });
 }
 
 function savedPresetById(id) {
@@ -57,6 +116,7 @@ function syncIndependentDom() {
         const presetId = element.dataset.clPreset || '';
         element.toggleAttribute('data-cl-independent', Boolean(presetId && isIndependentSavedPreset(presetId)));
     });
+    syncUnifiedNpcColors();
 }
 
 function installResetCss() {
@@ -132,6 +192,11 @@ function installUiCss() {
 #${ENHANCER_ID} .cl-easy-builder .menu_button{font-size:.84em;line-height:1.25;padding:7px 10px;min-height:36px;white-space:normal}
 #${ENHANCER_ID} .cl-ai-generate{font-size:.86em;line-height:1.3}
 #${ENHANCER_ID} .cl-theme-version{font-size:.72em;opacity:.68;margin-left:5px}
+.mes_text.character-life-rendered[data-cl-unified-colors="true"] .cl-chat-header{--cl-local-header:var(--cl-unified-color)!important}
+.mes_text.character-life-rendered[data-cl-unified-colors="true"] .cl-chat-thought{--cl-local-thought:var(--cl-unified-color)!important}
+.mes_text.character-life-rendered[data-cl-unified-colors="true"] .cl-chat-dialogue{--cl-local-dialogue:var(--cl-unified-color)!important}
+.mes_text.character-life-rendered[data-cl-design="arcane-regalia"]:not([data-cl-custom="true"]) .cl-chat-header-core{background:transparent!important;border:0!important;box-shadow:none!important;padding:var(--cl-chat-header-pad) 0!important}
+.mes_text.character-life-rendered[data-cl-design="arcane-regalia"]:not([data-cl-custom="true"]) .cl-chat-header-core::before{content:none!important;display:none!important}
 @media(max-width:620px){#${ENHANCER_ID}{padding:10px!important;margin:10px 0!important}#${ENHANCER_ID} .cl-design-creator-head{display:block}#${ENHANCER_ID} .cl-mode-switch{margin-top:10px;width:100%}#${ENHANCER_ID} .cl-mode-switch button{flex:1}#${ENHANCER_ID} .cl-easy-builder>header{align-items:flex-start}#${ENHANCER_ID} .cl-easy-builder>header>div:last-child{width:100%;display:grid;grid-template-columns:1fr 1fr}#${ENHANCER_ID} .cl-easy-grid label{grid-template-columns:minmax(0,1fr) minmax(108px,.85fr);gap:10px}#${ENHANCER_ID} .cl-easy-grid label.cl-color-control{grid-template-columns:minmax(0,1fr) 48px!important}#${ENHANCER_ID} .cl-ai-design-actions{display:block}#${ENHANCER_ID} .cl-ai-design-actions .menu_button{width:100%;margin-bottom:7px}}
 `;
     document.head.append(style);
@@ -279,7 +344,7 @@ function updateUiCopy() {
         const summary = s.querySelector(':scope > summary');
         if (summary) summary.innerHTML = '<i class="fa-solid fa-pen-ruler"></i> Independent Theme Creator';
         const intro = s.querySelector(':scope > p');
-        if (intro) intro.textContent = 'Create a complete Header, Monologue, and Dialogue theme from a neutral blank canvas. Built-in themes are not used as the visual foundation for new v1.7.1 themes.';
+        if (intro) intro.textContent = 'Create a complete Header, Monologue, and Dialogue theme from a neutral blank canvas. Built-in themes are not used as the visual foundation for new v1.7.2 themes.';
         const base = document.getElementById('character-life-preset-base');
         const baseLabel = base?.closest('label');
         if (baseLabel) { baseLabel.hidden = true; baseLabel.setAttribute('aria-hidden', 'true'); }
@@ -290,7 +355,7 @@ function updateUiCopy() {
     const title = c.querySelector('.cl-design-creator-head strong');
     const description = c.querySelector('.cl-design-creator-head p');
     if (title) title.innerHTML = `Create a completely new Character Life theme <span class="cl-theme-version">v${VERSION}</span>`;
-    if (description) description.textContent = 'Easy, Advanced, and AI modes now build on an independent blank canvas. The original Character Life DOM is kept only so portraits, NPC data, and speaker parsing continue to work.';
+    if (description) description.textContent = 'Easy, Advanced, and AI modes build on an independent blank canvas. The original Character Life DOM is kept only so portraits, NPC data, and speaker parsing continue to work.';
     if (!c.querySelector('.cl-independent-banner')) {
         c.querySelector('.cl-design-creator-head')?.insertAdjacentHTML('afterend', '<div class="cl-independent-banner"><i class="fa-solid fa-layer-group"></i><div><strong>Independent Blank Canvas</strong><span>New themes neutralize the old visual styling first, then your Header, Monologue, and Dialogue CSS becomes the complete visual design.</span></div></div>');
     }
@@ -309,6 +374,7 @@ function bindV171() {
     installResetCss();
     installUiCss();
     updateUiCopy();
+    bindUnifiedColorSetting();
 
     document.getElementById('character-life-preset-new')?.addEventListener('click', () => queueMicrotask(startIndependentDraft));
     document.getElementById('character-life-preset-save')?.addEventListener('click', () => queueMicrotask(detectLoadedTheme));
@@ -349,7 +415,7 @@ function bindV171() {
         button.className = 'menu_button';
         button.dataset.clIndependentConvert = 'true';
         button.innerHTML = '<i class="fa-solid fa-layer-group"></i> Make independent';
-        button.title = 'Convert the current draft/preset to the v1.7.1 independent blank-canvas renderer.';
+        button.title = 'Convert the current draft/preset to the independent blank-canvas renderer.';
         button.addEventListener('click', () => {
             setIndependentFlag(true);
             addMarkerToHeader();
