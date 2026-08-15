@@ -5,8 +5,8 @@
  */
 
 const MANIFEST_URL = new URL('./manifest.json', import.meta.url);
-const RUNTIME_URL = new URL('./character-life-v172-entry.js', import.meta.url);
-const STYLE_URL = new URL('./style-v190.css', import.meta.url);
+const RUNTIME_URL = new URL('./src/runtime/entry.js', import.meta.url);
+const STYLE_URL = new URL('./styles/style-v190.css', import.meta.url);
 
 async function readManifest() {
     const controller = typeof AbortController === 'function' ? new AbortController() : null;
