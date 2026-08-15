@@ -4,7 +4,7 @@
     "requires": [],
     "optional": [],
     "dependencies": [],
-    "js": "character-life-v172.js",
+    "js": "character-life-v172-entry.js",
     "css": "style-v172-wand.css",
     "author": "DesZiDesu",
     "version": "1.7.2",
