@@ -1,9 +1,10 @@
 /* global SillyTavern */
 
-// Safety-first v1.7.2 entry:
+// Character Life v1.8.1 compatibility entry:
 // 1) load the recovered Character Life core first;
 // 2) add the explicit settings-save hook used by safe transfer/media layers;
-// 3) load each optional layer behind its own catch so one failure cannot block the core.
+// 3) load each optional layer behind its own catch so one failure cannot block the core;
+// 4) apply the v1.8.1 Skill Storage/settings presentation layer last.
 import './theme-studio-v171.js';
 
 try {
@@ -37,7 +38,7 @@ try {
 try {
     await import('./character-life-v172.js');
 } catch (error) {
-    console.error("[Character Life's] v1.7.2 Wand enhancer was skipped safely; the recovered Character Life core remains loaded.", error);
+    console.error("[Character Life's] Wand enhancer was skipped safely; the recovered Character Life core remains loaded.", error);
 }
 
 try {
@@ -50,4 +51,10 @@ try {
     await import('./skill-optional-v172.js');
 } catch (error) {
     console.error("[Character Life's] Per-chat Skill Indicator switch was skipped safely; the core remains loaded.", error);
+}
+
+try {
+    await import('./skill-storage-v181.js');
+} catch (error) {
+    console.error("[Character Life's] v1.8.1 Skill Storage presentation layer was skipped safely; the core remains loaded.", error);
 }
