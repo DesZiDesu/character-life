@@ -229,14 +229,8 @@
 
 @media (max-width: 760px) {
     .cl-native-notifications {
-        width: min(94vw, 390px);
+        width: min(86vw, 360px);
         padding: 8px;
-    }
-    .cl-native-notifications[data-position$="-left"],
-    .cl-native-notifications[data-position$="-right"] {
-        left: 50%;
-        right: auto;
-        transform: translateX(-50%);
     }
     .cl-qol-settings-grid { grid-template-columns: 1fr; }
     .cl-bulk-toggle span { display: none; }
