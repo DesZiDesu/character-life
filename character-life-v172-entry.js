@@ -1,10 +1,11 @@
 /* global SillyTavern */
 
-// Character Life v1.8.1 compatibility entry:
+// Character Life v1.8.2 compatibility entry:
 // 1) load the recovered Character Life core first;
 // 2) add the explicit settings-save hook used by safe transfer/media layers;
 // 3) load each optional layer behind its own catch so one failure cannot block the core;
-// 4) apply the v1.8.1 Skill Storage/settings presentation layer last.
+// 4) apply the Skill Storage layer;
+// 5) apply the v1.8.2 unified-color + main-chat NPC profile director last.
 import './theme-studio-v171.js';
 
 try {
@@ -56,5 +57,11 @@ try {
 try {
     await import('./skill-storage-v181.js');
 } catch (error) {
-    console.error("[Character Life's] v1.8.1 Skill Storage presentation layer was skipped safely; the core remains loaded.", error);
+    console.error("[Character Life's] Skill Storage presentation layer was skipped safely; the core remains loaded.", error);
+}
+
+try {
+    await import('./npc-intelligence-v182.js');
+} catch (error) {
+    console.error("[Character Life's] v1.8.2 NPC identity/profile director was skipped safely; the core remains loaded.", error);
 }
