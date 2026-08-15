@@ -85,6 +85,12 @@ When Character Life's renders the chat itself, disable overlapping Header/Monolo
 
 ## Version
 
+### 1.5.1
+
+- Expanded Header, Monologue, and Dialogue presentation shells to the full available SillyTavern message width on desktop and mobile.
+- Preserved Left, Middle, and Right positioning by anchoring the readable content rail and speaker header inside the full-width presentation.
+- Updated the settings preview to show the same edge-to-edge layout used in chat.
+
 ### 1.5.0
 
 - Reduced the built-in design list to Chronicle Signature, Chronicle Imperial, and Clean.
