@@ -1,11 +1,12 @@
 /* global SillyTavern */
 
-// Character Life v1.8.3 compatibility entry:
+// Character Life v1.8.4 compatibility entry:
 // 1) load the recovered Character Life core first;
 // 2) add the explicit settings-save hook used by safe transfer/media layers;
 // 3) load each optional layer behind its own catch so one failure cannot block the core;
 // 4) apply Skill Storage and the v1.8.2 NPC identity/profile director;
-// 5) apply v1.8.3 native notifications + bulk NPC movement last.
+// 5) apply v1.8.3 native notifications + bulk NPC movement;
+// 6) apply v1.8.4 sparse NPC facts + one-call full profile builder last.
 import './theme-studio-v171.js';
 
 try {
@@ -70,4 +71,10 @@ try {
     await import('./qol-v183.js');
 } catch (error) {
     console.error("[Character Life's] v1.8.3 notifications/bulk-move layer was skipped safely; the core remains loaded.", error);
+}
+
+try {
+    await import('./npc-profile-builder-v184.js');
+} catch (error) {
+    console.error("[Character Life's] v1.8.4 sparse-profile/full-builder layer was skipped safely; the core remains loaded.", error);
 }
