@@ -1,0 +1,225 @@
+@import url("./style-v172-wand.css");
+
+/* Character Life v1.8.0 — Wand header/navigation refinement.
+   Presentation only. Fixes the oversized expanding brand mark and makes
+   Global / Character / Chat navigation feel like one cohesive control. */
+
+.cl-manager-header {
+    min-height: 60px;
+    padding: 9px 14px;
+    gap: 10px;
+    background: linear-gradient(90deg,
+        color-mix(in srgb, var(--cl-header-color) 6%, var(--cl-surface-strong)),
+        var(--cl-surface-strong) 72%);
+    border-bottom: 0;
+}
+
+.cl-manager-header::after {
+    display: none;
+}
+
+/* The old selector targeted div:nth-child(2), which is the brand mark.
+   That gave the rotated feather tile flex:1 and made it stretch across
+   the header on mobile. Lock the brand to a compact fixed tile instead. */
+.cl-manager-header > .cl-brand-mark {
+    width: 34px;
+    height: 34px;
+    min-width: 34px;
+    flex: 0 0 34px !important;
+    transform: none;
+    border: 0;
+    border-radius: 9px;
+    background: color-mix(in srgb, var(--cl-header-color) 11%, transparent);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--cl-header-color) 24%, transparent);
+}
+
+.cl-manager-header > .cl-brand-mark::before,
+.cl-manager-header > .cl-brand-mark::after {
+    content: none !important;
+    display: none !important;
+}
+
+.cl-manager-header > .cl-brand-mark i {
+    transform: none;
+    font-size: 15px;
+}
+
+/* The title block is the third child: Back, Brand, Title, Close. */
+.cl-manager-header > div:nth-child(3) {
+    min-width: 0;
+    flex: 1 1 auto;
+}
+
+.cl-manager-header small {
+    font-size: .69em;
+    letter-spacing: .14em;
+    opacity: .72;
+}
+
+.cl-manager-header h2 {
+    margin-top: 0;
+    font-size: 1.08em;
+    font-weight: 620;
+    letter-spacing: .025em;
+}
+
+.cl-manager-header > button:last-child {
+    width: 38px;
+    min-width: 38px;
+    height: 38px;
+    min-height: 38px;
+    padding: 0;
+    border-radius: 9px;
+    color: var(--cl-muted);
+    border: 1px solid color-mix(in srgb, var(--cl-line) 88%, transparent);
+    background: color-mix(in srgb, var(--cl-surface) 86%, transparent);
+}
+
+.cl-manager-header > button:last-child:hover {
+    color: var(--cl-ink);
+    border-color: color-mix(in srgb, var(--cl-header-color) 36%, var(--cl-line));
+    background: color-mix(in srgb, var(--cl-header-color) 8%, var(--cl-surface));
+}
+
+.cl-manager-toolbar {
+    gap: 8px;
+    padding: 7px 12px 10px;
+    background: linear-gradient(180deg,
+        var(--cl-surface-strong),
+        color-mix(in srgb, var(--cl-surface) 92%, transparent));
+    border-bottom: 1px solid color-mix(in srgb, var(--cl-line) 82%, transparent);
+}
+
+.cl-scope-tabs {
+    gap: 2px;
+    padding: 3px;
+    border: 1px solid color-mix(in srgb, var(--cl-line) 88%, transparent);
+    border-radius: 11px;
+    background: color-mix(in srgb, var(--cl-surface-strong) 78%, transparent);
+}
+
+.cl-scope-tabs button {
+    min-height: 34px;
+    padding: 5px 9px;
+    gap: 6px;
+    border: 0;
+    border-radius: 8px;
+    color: var(--cl-muted);
+    background: transparent;
+}
+
+.cl-scope-tabs button:hover {
+    color: var(--cl-ink);
+    border: 0;
+    background: color-mix(in srgb, var(--cl-header-color) 6%, transparent);
+}
+
+.cl-scope-tabs button.is-active {
+    color: var(--cl-ink);
+    border: 0;
+    background: color-mix(in srgb, var(--cl-header-color) 13%, var(--cl-surface));
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--cl-header-color) 30%, transparent);
+}
+
+.cl-scope-tabs b {
+    display: inline-grid;
+    place-items: center;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+    border: 0;
+    border-radius: 999px;
+    color: color-mix(in srgb, var(--cl-header-color) 84%, var(--cl-ink) 16%);
+    background: color-mix(in srgb, var(--cl-header-color) 10%, transparent);
+    font-size: .72em;
+    font-weight: 650;
+    line-height: 1;
+}
+
+.cl-scope-tabs button.is-active b {
+    color: var(--cl-surface-strong);
+    background: var(--cl-header-color);
+}
+
+@media (max-width: 760px) {
+    .cl-manager-header {
+        min-height: 54px;
+        padding: 7px 10px 6px;
+    }
+
+    .cl-manager-header > .cl-brand-mark {
+        width: 32px;
+        height: 32px;
+        min-width: 32px;
+        flex-basis: 32px !important;
+    }
+
+    .cl-manager-header small {
+        display: none;
+    }
+
+    .cl-manager-header h2 {
+        font-size: 1em;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .cl-manager-header > button:last-child {
+        width: 36px;
+        min-width: 36px;
+        height: 36px;
+        min-height: 36px;
+    }
+
+    .cl-manager-toolbar {
+        padding: 5px 8px 8px;
+        gap: 7px;
+    }
+
+    .cl-scope-tabs {
+        width: 100%;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        padding: 3px;
+    }
+
+    .cl-scope-tabs button {
+        min-height: 35px;
+        justify-content: center;
+        padding-inline: 5px;
+        font-size: .93em;
+    }
+
+    .cl-scope-tabs button i {
+        font-size: .9em;
+    }
+
+    .cl-scope-tabs b {
+        min-width: 17px;
+        height: 17px;
+        padding-inline: 4px;
+    }
+}
+
+@media (max-width: 420px) {
+    .cl-manager-header {
+        gap: 8px;
+    }
+
+    .cl-manager-header > .cl-brand-mark {
+        width: 30px;
+        height: 30px;
+        min-width: 30px;
+        flex-basis: 30px !important;
+        border-radius: 8px;
+    }
+
+    .cl-scope-tabs button {
+        gap: 4px;
+        font-size: .86em;
+    }
+
+    .cl-scope-tabs button i {
+        display: none;
+    }
+}
