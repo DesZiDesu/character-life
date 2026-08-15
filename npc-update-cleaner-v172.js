@@ -7,8 +7,9 @@
 
 const UPDATE_OPEN = '[CL_NPC_UPDATE|';
 const UPDATE_PATTERN = /\[CL_NPC_UPDATE\|([^|\]]+)\|([^\]]+)\]([\s\S]*?)\[\/CL_NPC_UPDATE\]/gi;
-const CLEAN_DELAY = 120;
-const BULK_CLEAN_DELAY = 260;
+const CLEAN_DELAY = 180;
+const RECEIVE_CLEAN_DELAY = 340;
+const BULK_CLEAN_DELAY = 360;
 let initialized = false;
 let bulkTimer = null;
 const messageTimers = new Map();
@@ -160,9 +161,9 @@ function bindEvents() {
     if (!source || !types) return false;
 
     // Character Life core registers first and consumes updates from the rendered
-    // message. Cleanup runs just after that first render, then re-renders from
-    // the clean stored text. No profile-update logic is duplicated here.
-    if (types.MESSAGE_RECEIVED) source.on(types.MESSAGE_RECEIVED, id => scheduleMessageCleanup(id, CLEAN_DELAY));
+    // message. Cleanup runs after the core's two receive-render attempts, then
+    // re-renders from the clean stored text. No profile-update logic is duplicated.
+    if (types.MESSAGE_RECEIVED) source.on(types.MESSAGE_RECEIVED, id => scheduleMessageCleanup(id, RECEIVE_CLEAN_DELAY));
     if (types.MESSAGE_EDITED) source.on(types.MESSAGE_EDITED, id => scheduleMessageCleanup(id, CLEAN_DELAY));
     if (types.MESSAGE_SWIPED) source.on(types.MESSAGE_SWIPED, id => scheduleMessageCleanup(id, CLEAN_DELAY));
     if (types.MORE_MESSAGES_LOADED) source.on(types.MORE_MESSAGES_LOADED, () => scheduleVisibleCleanup(180));
