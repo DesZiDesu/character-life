@@ -85,6 +85,13 @@ When Character Life's renders the chat itself, disable overlapping Header/Monolo
 
 ## Version
 
+### 1.6.1
+
+- Rebuilt both manga headers as transparent, text-led compositions without panel backgrounds, large accent bands, or offset shadows.
+- Simplified Manga Light's decorative rule to a short single-color editorial line.
+- Replaced Manga Noir's portrait outline and offset frame with a clean one-pixel frame that still follows every selected portrait shape.
+- Refined the reference-inspired panels: cream monologue and white dialogue for Light; flat black monologue and dialogue for Noir.
+
 ### 1.6.0
 
 - Added Manga Light and Manga Noir as genuinely distinct responsive Header, Monologue, and Dialogue systems.
