@@ -7,8 +7,30 @@
 
 const EXTENSION_VERSION = '1.8.6';
 const VERSION_CLASS = 'cl-extension-version';
+const VERSION_STYLE_ID = 'character-life-version-v186-style';
 let observer = null;
 let syncQueued = false;
+
+function ensureStyle() {
+    if (document.getElementById(VERSION_STYLE_ID)) return;
+    const style = document.createElement('style');
+    style.id = VERSION_STYLE_ID;
+    style.textContent = `
+        #character-life-settings .inline-drawer-header .${VERSION_CLASS} {
+            margin-left: .3em;
+            font-size: .78em;
+            font-weight: 400;
+            opacity: .62;
+        }
+        #character-life-skill-settings .cl-skill-settings-heading > .${VERSION_CLASS} {
+            font-size: .72em;
+            font-weight: 600;
+            letter-spacing: .08em;
+            opacity: .72;
+        }
+    `;
+    document.head.appendChild(style);
+}
 
 function replaceNode(node, tagName) {
     if (!(node instanceof Element)) return null;
@@ -86,6 +108,7 @@ function bindContextEvents() {
 }
 
 function init() {
+    ensureStyle();
     syncPublicVersions();
     syncBadges();
     bindContextEvents();
