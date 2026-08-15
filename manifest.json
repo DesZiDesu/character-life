@@ -4,10 +4,9 @@
     "requires": [],
     "optional": [],
     "dependencies": [],
-    "js": "character-life-v172-entry.js",
-    "css": "style-v190.css",
+    "js": "bootstrap.js",
     "author": "DesZiDesu",
-    "version": "1.9.2",
+    "version": "1.9.3",
     "homePage": "https://github.com/DesZiDesu/character-life",
     "auto_update": true
 }
