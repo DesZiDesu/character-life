@@ -7,6 +7,7 @@
 const MANIFEST_URL = new URL('./manifest.json', import.meta.url);
 const RELIABILITY_URL = new URL('./src/runtime/reliability-v196.js', import.meta.url);
 const RUNTIME_URL = new URL('./src/runtime/entry.js', import.meta.url);
+const NPC_CONTINUITY_URL = new URL('./src/runtime/npc-continuity-v198.js', import.meta.url);
 const NPC_IDENTITY_URL = new URL('./src/runtime/npc-identity-v197.js', import.meta.url);
 const UI_COHESION_URL = new URL('./src/runtime/ui-cohesion-v195.js', import.meta.url);
 const STYLE_URL = new URL('./styles/style-v190.css', import.meta.url);
@@ -83,9 +84,20 @@ const runtimeUrl = new URL(RUNTIME_URL);
 runtimeUrl.searchParams.set('clv', cacheToken);
 await import(runtimeUrl.href);
 
-// Canonical NPC identity/scope repair runs after the established runtime exists.
-// It is isolated so a migration or presentation issue can never prevent the
-// NPC Library, Skill Storage, or Continuity from loading.
+// v1.9.8 installs the selective lifecycle before the v1.9.7 identity layer.
+// It synchronously disables the older "carry every Chat NPC" behavior, then
+// lets Continuity promote only NPCs that actually qualify as important.
+const continuityUrl = new URL(NPC_CONTINUITY_URL);
+continuityUrl.searchParams.set('clv', cacheToken);
+try {
+    await import(continuityUrl.href);
+} catch (error) {
+    console.error("[Character Life's] Selective NPC continuity failed safely; established runtime remains available.", error);
+}
+
+// Canonical NPC identity/color repair runs after the lifecycle policy is active.
+// With legacy carry disabled, it preserves the one-color identity fixes without
+// automatically moving every Chat NPC into Character scope.
 const identityUrl = new URL(NPC_IDENTITY_URL);
 identityUrl.searchParams.set('clv', cacheToken);
 try {
