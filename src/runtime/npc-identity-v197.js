@@ -1,15 +1,9 @@
 /* global SillyTavern */
 
 // Character Life v1.9.7 — canonical NPC scope + identity-color repair.
-//
-// Goals:
-// 1. Continuity's cross-chat carry should not leave the same NPC in both Chat
-//    and Character libraries. Character becomes the canonical carried record.
-// 2. One NPC has one identity color. Header, Monologue/Thought, Dialogue,
-//    portrait accents, library accents, and decorations all use that color.
-//
-// This module is deterministic/local. It performs no AI generation and uses
-// bounded event-driven refreshes only (no document-wide MutationObserver loop).
+// Deterministic/local only: no extra AI generation and no document-wide
+// MutationObserver. Character becomes the canonical home when Continuity is
+// configured to carry NPC development across chats.
 
 const CL197_VERSION = '1.9.7';
 const SETTINGS_KEY = 'character_life';
@@ -27,7 +21,7 @@ const clone = value => globalThis.structuredClone ? structuredClone(value) : JSO
 const clean = (value, fallback = '', max = 4000) => typeof value === 'string' ? value.trim().slice(0, max) : fallback;
 const validHex = value => /^#[0-9a-f]{6}$/i.test(String(value || '').trim());
 const hex = value => validHex(value) ? String(value).toUpperCase() : '';
-const nameKey = value => clean(value, '', 160).toLocaleLowerCase();
+const keyOf = value => clean(value, '', 160).toLocaleLowerCase();
 
 function characterKey() {
     const c = ctx();
@@ -39,7 +33,7 @@ function characterKey() {
     return `character:${clean(character?.avatar, '', 180) || id || clean(c.name2 || character?.name, 'unknown', 180)}`;
 }
 
-function rootSettings() {
+function settingsRoot() {
     const c = ctx();
     if (!c?.extensionSettings) return null;
     const root = c.extensionSettings[SETTINGS_KEY] ||= { config: {}, customDesigns: [], globalNpcs: [], characterNpcs: {} };
@@ -66,12 +60,12 @@ function aliases(npc) {
     return list.map(value => clean(value, '', 120)).filter(Boolean);
 }
 
-function identitySet(npc) {
-    return new Set([clean(npc?.name, '', 120), ...aliases(npc)].map(nameKey).filter(Boolean));
+function identityKeys(npc) {
+    return new Set([clean(npc?.name, '', 120), ...aliases(npc)].map(keyOf).filter(Boolean));
 }
 
 function sameNpc(a, b) {
-    const left = identitySet(a), right = identitySet(b);
+    const left = identityKeys(a), right = identityKeys(b);
     for (const key of left) if (right.has(key)) return true;
     return false;
 }
@@ -92,38 +86,38 @@ function hslToHex(hue, saturation, lightness) {
     return `#${rgb.map(channel => Math.round((channel + m) * 255).toString(16).padStart(2, '0')).join('')}`.toUpperCase();
 }
 
-function deterministicIdentityColor(name) {
-    let hash = 2166136261;
-    for (const character of String(name || 'NPC')) {
-        hash ^= character.codePointAt(0);
-        hash = Math.imul(hash, 16777619);
-    }
-    // Keep automatic colors readable on Character Life's dark UI while still
-    // giving different NPCs stable identity accents without another AI call.
-    return hslToHex(hash >>> 0 % 360, 66, 66);
+// Match the core's namePalette() header algorithm. This keeps a portrait-less
+// automatic NPC's library avatar and chat identity on the same stable color.
+function nameIdentityColor(name) {
+    let hash = 0;
+    for (const character of String(name || 'Unknown')) hash = ((hash << 5) - hash + character.codePointAt(0)) | 0;
+    return hslToHex(Math.abs(hash) % 360, 68, 65);
 }
 
-function activeIdentityColor(npc) {
+function identityColor(npc) {
     const custom = npc?.customPalette && typeof npc.customPalette === 'object' ? npc.customPalette : {};
     const automatic = npc?.autoPalette && typeof npc.autoPalette === 'object' ? npc.autoPalette : {};
-    if (npc?.themeMode === 'custom') return hex(custom.header) || hex(npc?.accent) || deterministicIdentityColor(npc?.name);
-    return hex(automatic.header) || deterministicIdentityColor(npc?.name);
+    if (npc?.themeMode === 'custom') return hex(custom.header) || hex(npc?.accent) || nameIdentityColor(npc?.name);
+    return hex(automatic.header) || nameIdentityColor(npc?.name);
 }
 
-function unifyPalette(npc) {
+function unifyNpcColor(npc) {
     if (!npc || typeof npc !== 'object' || !clean(npc.name, '', 120)) return false;
-    const color = activeIdentityColor(npc);
+    const color = identityColor(npc);
     let changed = false;
-    if (npc.accent !== color) { npc.accent = color; changed = true; }
+    if (hex(npc.accent) !== color) { npc.accent = color; changed = true; }
+
     if (npc.themeMode === 'custom') {
         const current = npc.customPalette && typeof npc.customPalette === 'object' ? npc.customPalette : {};
         if (hex(current.header) !== color || hex(current.thought) !== color || hex(current.dialogue) !== color) {
             npc.customPalette = { ...current, header: color, thought: color, dialogue: color };
             changed = true;
         }
-    } else {
-        const current = npc.autoPalette && typeof npc.autoPalette === 'object' ? npc.autoPalette : {};
-        if (hex(current.header) !== color || hex(current.thought) !== color || hex(current.dialogue) !== color) {
+    } else if (hex(npc.autoPalette?.header)) {
+        // Preserve null autoPalette for portrait-less NPCs. Core uses null to
+        // know that a future portrait still needs automatic palette extraction.
+        const current = npc.autoPalette;
+        if (hex(current.thought) !== color || hex(current.dialogue) !== color || hex(current.header) !== color) {
             npc.autoPalette = { ...current, header: color, thought: color, dialogue: color };
             changed = true;
         }
@@ -140,9 +134,10 @@ function mergeForms(targetForms, sourceForms) {
     const result = [], seen = new Set();
     for (const form of [...(Array.isArray(sourceForms) ? sourceForms : []), ...(Array.isArray(targetForms) ? targetForms : [])]) {
         if (!form || typeof form !== 'object') continue;
-        const key = clean(form.id, '', 160) || `${clean(form.name, '', 100)}|${clean(form.portraitId, '', 180)}`;
-        if (!key || seen.has(key)) continue;
-        seen.add(key);
+        const id = clean(form.id, '', 160);
+        const signature = id || `${clean(form.name, '', 100)}|${clean(form.portraitId, '', 180)}`;
+        if (!signature || seen.has(signature)) continue;
+        seen.add(signature);
         result.push(clone(form));
         if (result.length >= 50) break;
     }
@@ -151,9 +146,10 @@ function mergeForms(targetForms, sourceForms) {
 
 function mergeNpc(target, source) {
     const next = clone(target || source || {});
-    const sourceNewer = Date.parse(source?.updatedAt || '') >= Date.parse(target?.updatedAt || '');
-    const mergedAliases = [...new Set([...aliases(target), ...aliases(source)].map(value => clean(value, '', 120)).filter(Boolean))].slice(0, 30);
-    next.aliases = mergedAliases;
+    const targetTime = Date.parse(target?.updatedAt || '') || 0;
+    const sourceTime = Date.parse(source?.updatedAt || '') || 0;
+    const sourceNewer = sourceTime >= targetTime;
+    next.aliases = [...new Set([...aliases(target), ...aliases(source)])].slice(0, 30);
 
     for (const field of TEXT_FIELDS) {
         const src = clean(source?.[field], '', 4000);
@@ -163,11 +159,9 @@ function mergeNpc(target, source) {
 
     next.adultProfile = Boolean(target?.adultProfile || source?.adultProfile);
     next.forms = mergeForms(target?.forms, source?.forms);
-    const activeCandidates = [source?.activeFormId, target?.activeFormId].map(value => clean(value, '', 160)).filter(Boolean);
-    next.activeFormId = activeCandidates.find(id => next.forms.some(form => form?.id === id)) || next.forms[0]?.id || '';
+    const preferredForms = [source?.activeFormId, target?.activeFormId].map(value => clean(value, '', 160)).filter(Boolean);
+    next.activeFormId = preferredForms.find(id => next.forms.some(form => form?.id === id)) || next.forms[0]?.id || '';
 
-    // A manual/custom identity is stronger than an automatic one. If both are
-    // custom, use the newer record; otherwise preserve the persistent target.
     const targetCustom = target?.themeMode === 'custom';
     const sourceCustom = source?.themeMode === 'custom';
     if (sourceCustom && (!targetCustom || sourceNewer)) {
@@ -180,23 +174,22 @@ function mergeNpc(target, source) {
         next.accent = target.accent;
     } else {
         next.themeMode = 'auto';
-        const chosen = sourceNewer && source?.autoPalette ? source : target?.autoPalette ? target : source;
-        next.autoPalette = clone(chosen?.autoPalette || {});
-        next.accent = chosen?.accent || next.accent;
+        const paletteOwner = sourceNewer && source?.autoPalette ? source : target?.autoPalette ? target : source;
+        next.autoPalette = paletteOwner?.autoPalette ? clone(paletteOwner.autoPalette) : null;
+        next.accent = paletteOwner?.accent || next.accent;
     }
 
     next.id = clean(target?.id, '', 160) || clean(source?.id, '', 160) || next.id;
     next.name = clean(target?.name, '', 120) || clean(source?.name, 'Unknown NPC', 120);
     next.createdAt = clean(target?.createdAt, '', 80) || clean(source?.createdAt, '', 80) || new Date().toISOString();
-    next.updatedAt = [target?.updatedAt, source?.updatedAt].map(value => clean(value, '', 80)).sort().at(-1) || new Date().toISOString();
-    unifyPalette(next);
+    next.updatedAt = sourceNewer ? (clean(source?.updatedAt, '', 80) || clean(target?.updatedAt, '', 80)) : clean(target?.updatedAt, '', 80);
+    next.updatedAt ||= new Date().toISOString();
+    unifyNpcColor(next);
     return next;
 }
 
-function continuityCarriesNpcs(root) {
+function shouldCarryToCharacter(root) {
     const cfg = root?.continuity?.config;
-    // Continuity's historical default is enabled + carryNpcEvolution=true.
-    // Respect an explicit user opt-out from either switch.
     return cfg?.enabled !== false && cfg?.carryNpcEvolution !== false;
 }
 
@@ -214,49 +207,38 @@ async function reconcileStorage() {
     if (reconciling) { reconcileAgain = true; return; }
     reconciling = true;
     try {
-        const c = ctx(), root = rootSettings();
+        const c = ctx(), root = settingsRoot();
         if (!c || !root) return;
         const key = characterKey();
         root.characterNpcs[key] = Array.isArray(root.characterNpcs[key]) ? root.characterNpcs[key] : [];
         const chat = chatState(false);
         let settingsChanged = false, metadataChanged = false;
 
-        if (root.config.unifiedNpcColors !== true) {
-            root.config.unifiedNpcColors = true;
-            settingsChanged = true;
-        }
+        if (root.config.unifiedNpcColors !== true) { root.config.unifiedNpcColors = true; settingsChanged = true; }
+        for (const npc of root.globalNpcs) if (unifyNpcColor(npc)) settingsChanged = true;
+        for (const npc of root.characterNpcs[key]) if (unifyNpcColor(npc)) settingsChanged = true;
+        if (chat?.npcs) for (const npc of chat.npcs) if (unifyNpcColor(npc)) metadataChanged = true;
 
-        const normalizeList = list => {
-            let changed = false;
-            for (const npc of list) if (unifyPalette(npc)) changed = true;
-            return changed;
-        };
-        if (normalizeList(root.globalNpcs)) settingsChanged = true;
-        if (normalizeList(root.characterNpcs[key])) settingsChanged = true;
-        if (chat?.npcs && normalizeList(chat.npcs)) metadataChanged = true;
-
-        if (chat?.npcs?.length && continuityCarriesNpcs(root)) {
+        if (chat?.npcs?.length && shouldCarryToCharacter(root)) {
             const character = root.characterNpcs[key];
-            const remaining = [];
             for (const source of chat.npcs.slice(0, MAX_NPCS)) {
                 if (!source || !clean(source.name, '', 120)) continue;
                 const index = character.findIndex(target => sameNpc(target, source));
                 if (index >= 0) character[index] = mergeNpc(character[index], source);
                 else {
                     const promoted = clone(source);
-                    unifyPalette(promoted);
+                    unifyNpcColor(promoted);
                     character.push(promoted);
                 }
                 settingsChanged = true;
-                metadataChanged = true;
             }
-            // Once Continuity carries an NPC across chats, Character is the
-            // canonical home. Keeping the same record in Chat only creates a
-            // misleading duplicate and priority ambiguity.
-            chat.npcs = remaining;
+            // Continuity already treats these NPC facts as cross-chat data.
+            // Make that promotion a MOVE/merge instead of retaining a second
+            // Chat copy that shadows the Character record.
+            chat.npcs = [];
+            metadataChanged = true;
         }
 
-        // Deduplicate same-identity Character entries created by older builds.
         const canonical = [];
         for (const npc of root.characterNpcs[key].slice(0, MAX_NPCS)) {
             const index = canonical.findIndex(existing => sameNpc(existing, npc));
@@ -271,9 +253,8 @@ async function reconcileStorage() {
             await c.saveMetadata?.();
         }
         if (settingsChanged) await persistSettings();
-
         try { globalThis.CharacterLifeNpcDirector?.refreshPrompt?.(); } catch {}
-        scheduleRenderRepair(0);
+        schedulePresentation(0);
     } catch (error) {
         console.error("[Character Life's] v1.9.7 NPC scope/identity reconciliation failed safely.", error);
     } finally {
@@ -283,18 +264,13 @@ async function reconcileStorage() {
 }
 
 function resolveNpc(name) {
-    const root = rootSettings();
+    const root = settingsRoot();
     if (!root) return null;
-    const wanted = nameKey(name);
+    const wanted = keyOf(name);
     if (!wanted) return null;
-    const key = characterKey();
-    const lists = [
-        chatState(false)?.npcs || [],
-        root.characterNpcs[key] || [],
-        root.globalNpcs || [],
-    ];
+    const lists = [chatState(false)?.npcs || [], root.characterNpcs[characterKey()] || [], root.globalNpcs || []];
     for (const list of lists) {
-        const hit = list.find(npc => identitySet(npc).has(wanted));
+        const hit = list.find(npc => identityKeys(npc).has(wanted));
         if (hit) return hit;
     }
     return null;
@@ -302,48 +278,45 @@ function resolveNpc(name) {
 
 function repairRenderedColors(rootNode = document) {
     document.documentElement.dataset.clUnifiedColors = 'true';
-    const scope = rootNode && typeof rootNode.querySelectorAll === 'function' ? rootNode : document;
+    const queryRoot = rootNode && typeof rootNode.querySelectorAll === 'function' ? rootNode : document;
     const messages = [];
     if (rootNode instanceof Element && rootNode.matches?.('.mes_text.character-life-rendered')) messages.push(rootNode);
-    for (const message of scope.querySelectorAll?.('.mes_text.character-life-rendered') || []) messages.push(message);
+    for (const message of queryRoot.querySelectorAll?.('.mes_text.character-life-rendered') || []) messages.push(message);
 
     for (const message of [...new Set(messages)]) {
         message.dataset.clUnifiedColors = 'true';
         for (const block of message.querySelectorAll('.cl-chat-block[data-cl-name]')) {
             const npc = resolveNpc(block.dataset.clName);
-            const color = npc ? activeIdentityColor(npc) : deterministicIdentityColor(block.dataset.clName);
+            const color = npc ? identityColor(npc) : nameIdentityColor(block.dataset.clName);
             block.style.setProperty('--cl-unified-color', color, 'important');
             block.style.setProperty('--cl-local-header', color, 'important');
             block.style.setProperty('--cl-local-thought', color, 'important');
             block.style.setProperty('--cl-local-dialogue', color, 'important');
         }
     }
-
     try { globalThis.CharacterLifeNpcDirector?.refreshColors?.(); } catch {}
 }
 
-function setLabel(control, value) {
-    const label = control?.closest?.('label');
-    const span = label?.querySelector(':scope > span');
-    if (span) span.textContent = value;
+function setLabel(control, labelText) {
+    const span = control?.closest?.('label')?.querySelector(':scope > span');
+    if (span) span.textContent = labelText;
 }
 
 function patchNpcEditor(rootNode = document) {
-    const scope = rootNode && typeof rootNode.querySelectorAll === 'function' ? rootNode : document;
+    const queryRoot = rootNode && typeof rootNode.querySelectorAll === 'function' ? rootNode : document;
     const forms = [];
     if (rootNode instanceof HTMLFormElement && rootNode.matches('[data-form="npc"]')) forms.push(rootNode);
-    for (const form of scope.querySelectorAll?.('#character-life-overlay form[data-form="npc"]') || []) forms.push(form);
+    for (const form of queryRoot.querySelectorAll?.('#character-life-overlay form[data-form="npc"]') || []) forms.push(form);
 
     for (const form of [...new Set(forms)]) {
         const header = form.elements?.headerAccent;
         const thought = form.elements?.thoughtAccent;
         const dialogue = form.elements?.dialogueAccent;
         if (!(header instanceof HTMLInputElement) || !(thought instanceof HTMLInputElement) || !(dialogue instanceof HTMLInputElement)) continue;
-
-        const color = hex(header.value) || deterministicIdentityColor(form.elements?.name?.value);
-        if (header.value.toUpperCase() !== color) header.value = color;
-        if (thought.value.toUpperCase() !== color) thought.value = color;
-        if (dialogue.value.toUpperCase() !== color) dialogue.value = color;
+        const color = hex(header.value) || nameIdentityColor(form.elements?.name?.value);
+        header.value = color;
+        thought.value = color;
+        dialogue.value = color;
         setLabel(header, 'NPC identity color');
         thought.closest('label')?.classList.add('cl-channel-hidden');
         dialogue.closest('label')?.classList.add('cl-channel-hidden');
@@ -358,7 +331,7 @@ function patchNpcEditor(rootNode = document) {
     }
 }
 
-function scheduleRenderRepair(delay = 0) {
+function schedulePresentation(delay = 0) {
     clearTimeout(renderTimer);
     renderTimer = setTimeout(() => {
         try { patchNpcEditor(document); repairRenderedColors(document); }
@@ -375,35 +348,33 @@ function bindDomEvents() {
     document.addEventListener('input', event => {
         const target = event.target instanceof Element ? event.target : null;
         if (!target?.matches('#character-life-overlay [name="headerAccent"]')) return;
-        const form = target.closest('form[data-form="npc"]');
-        const color = hex(target.value);
+        const form = target.closest('form[data-form="npc"]'), color = hex(target.value);
         if (!form || !color) return;
         if (form.elements.thoughtAccent) form.elements.thoughtAccent.value = color;
         if (form.elements.dialogueAccent) form.elements.dialogueAccent.value = color;
-        scheduleRenderRepair(0);
+        schedulePresentation(0);
     }, true);
 
     document.addEventListener('change', event => {
         const target = event.target instanceof Element ? event.target : null;
-        if (!target?.closest('#character-life-overlay')) return;
-        setTimeout(() => patchNpcEditor(document), 0);
+        if (target?.closest('#character-life-overlay')) setTimeout(() => patchNpcEditor(document), 0);
     }, true);
 
     document.addEventListener('submit', event => {
         const form = event.target instanceof HTMLFormElement ? event.target : null;
         if (!form?.matches('#character-life-overlay form[data-form="npc"]')) return;
-        // Capture phase runs before the core submit handler constructs FormData.
+        // Capture phase: mirror before the core submit handler builds FormData.
         const color = hex(form.elements.headerAccent?.value);
         if (color) {
-            form.elements.thoughtAccent.value = color;
-            form.elements.dialogueAccent.value = color;
+            if (form.elements.thoughtAccent) form.elements.thoughtAccent.value = color;
+            if (form.elements.dialogueAccent) form.elements.dialogueAccent.value = color;
         }
-        setTimeout(() => { scheduleReconcile(80); scheduleRenderRepair(100); }, 0);
+        setTimeout(() => { scheduleReconcile(80); schedulePresentation(100); }, 0);
     }, true);
 
     document.addEventListener('click', event => {
-        if (!(event.target instanceof Element) || !event.target.closest('#character-life-overlay, #character-life-wand-launcher')) return;
-        setTimeout(() => patchNpcEditor(document), 0);
+        const target = event.target instanceof Element ? event.target : null;
+        if (target?.closest('#character-life-overlay, #character-life-wand-launcher')) setTimeout(() => patchNpcEditor(document), 0);
     }, true);
 }
 
@@ -411,18 +382,18 @@ function bindContextEvents() {
     const c = ctx(), source = c?.eventSource, types = c?.eventTypes || {};
     if (!source?.on) return;
     const seen = new Set();
-    for (const key of ['CHAT_CHANGED','CHAT_LOADED','MESSAGE_RECEIVED','MESSAGE_EDITED','MESSAGE_SWIPED','CHARACTER_MESSAGE_RENDERED','MORE_MESSAGES_LOADED']) {
-        const type = types[key];
+    for (const name of ['CHAT_CHANGED','CHAT_LOADED','MESSAGE_RECEIVED','MESSAGE_EDITED','MESSAGE_SWIPED','CHARACTER_MESSAGE_RENDERED','MORE_MESSAGES_LOADED']) {
+        const type = types[name];
         if (!type || seen.has(type)) continue;
         seen.add(type);
         source.on(type, () => {
-            scheduleReconcile(key === 'MESSAGE_RECEIVED' ? 180 : 100);
-            scheduleRenderRepair(key === 'CHARACTER_MESSAGE_RENDERED' ? 20 : 120);
+            scheduleReconcile(name === 'MESSAGE_RECEIVED' ? 180 : 100);
+            schedulePresentation(name === 'CHARACTER_MESSAGE_RENDERED' ? 20 : 120);
         });
     }
     globalThis.addEventListener('character-life:continuity-updated', () => {
         scheduleReconcile(40);
-        scheduleRenderRepair(80);
+        schedulePresentation(80);
     });
 }
 
@@ -432,16 +403,14 @@ function initialize() {
     try {
         bindDomEvents();
         bindContextEvents();
-        for (const delay of [0, 220, 850, 1800]) {
-            setTimeout(() => { scheduleReconcile(0); scheduleRenderRepair(20); }, delay);
-        }
+        for (const delay of [0, 220, 850, 1800]) setTimeout(() => { scheduleReconcile(0); schedulePresentation(20); }, delay);
         globalThis.CharacterLifeNpcIdentity = Object.freeze({
             version: CL197_VERSION,
             reconcile: reconcileStorage,
             refreshColors: () => repairRenderedColors(document),
             identityColor: name => {
                 const npc = resolveNpc(name);
-                return npc ? activeIdentityColor(npc) : deterministicIdentityColor(name);
+                return npc ? identityColor(npc) : nameIdentityColor(name);
             },
         });
         console.info("[Character Life's] v1.9.7 canonical NPC scope + unified identity color repair enabled.");
