@@ -23,9 +23,16 @@ function isOpen(name) {
     return Boolean(surfaceElement(name)?.classList.contains('is-open'));
 }
 
+function resetLocalMode(name) {
+    if (name !== 'library') return;
+    try { globalThis.CharacterLifeBulkMove?.cancel?.(); }
+    catch (error) { console.warn("[Character Life's] Bulk Move reset skipped safely.", error); }
+}
+
 function closeSurface(name) {
     const overlay = surfaceElement(name);
     if (!overlay) return false;
+    resetLocalMode(name);
     overlay.classList.remove('is-open');
     overlay.setAttribute('aria-hidden', 'true');
     return true;
@@ -46,6 +53,18 @@ function removeLegacyEmbeddedSkills() {
     // module can still re-inject this old button after clicks; leaving it alive
     // allows two full-screen overlays to be opened on top of one another.
     document.querySelectorAll('#character-life-overlay [data-cl-open-skills]').forEach(button => button.remove());
+}
+
+function polishSurfaceLabels() {
+    const bulk = document.querySelector('#character-life-overlay [data-cl-bulk-toggle]');
+    if (bulk) {
+        bulk.title = 'Bulk Move NPCs';
+        bulk.setAttribute('aria-label', 'Bulk Move NPCs');
+    }
+    const skillKicker = document.querySelector('#character-life-skills-overlay .cl-skills-header small');
+    if (skillKicker) skillKicker.textContent = 'CHRONICLE SKILL REGISTRY';
+    const continuityKicker = document.querySelector('#character-life-continuity-overlay .cl190-manager > header small');
+    if (continuityKicker) continuityKicker.textContent = 'CHRONICLE CONTINUITY';
 }
 
 function launcherIntent(target) {
@@ -71,6 +90,12 @@ function defensiveClose(event) {
     queueMicrotask(syncBodyLock);
 }
 
+function afterUiAction() {
+    removeLegacyEmbeddedSkills();
+    polishSurfaceLabels();
+    syncBodyLock();
+}
+
 function handleCaptureClick(event) {
     const target = targetElement(event);
     if (!target) return;
@@ -86,8 +111,7 @@ function handleCaptureClick(event) {
         queueMicrotask(() => {
             try { globalThis.CharacterLifeSkills?.open?.(); }
             catch (error) { console.warn("[Character Life's] Legacy Skill Storage handoff failed safely.", error); }
-            removeLegacyEmbeddedSkills();
-            syncBodyLock();
+            afterUiAction();
         });
         return;
     }
@@ -97,14 +121,11 @@ function handleCaptureClick(event) {
         // Run before each launcher's own click handler. The requested surface is
         // opened normally by its owning feature after this capture handler.
         closeOthers(intent);
-        queueMicrotask(() => {
-            removeLegacyEmbeddedSkills();
-            syncBodyLock();
-        });
+        queueMicrotask(afterUiAction);
     } else {
-        // The legacy skill module schedules re-injection after ordinary clicks.
-        // Queue our cleanup after it so the standalone architecture stays stable.
-        queueMicrotask(removeLegacyEmbeddedSkills);
+        // Legacy feature layers may re-inject controls after ordinary clicks.
+        // Queue our cleanup after them so the standalone architecture stays stable.
+        queueMicrotask(afterUiAction);
     }
 
     if (target.closest('#character-life-continuity-overlay [data-cl190-tab]')) {
@@ -131,14 +152,14 @@ function bind() {
     document.addEventListener('click', handleCaptureClick, true);
     document.addEventListener('keydown', handleEscape, true);
 
-    removeLegacyEmbeddedSkills();
-    syncBodyLock();
+    afterUiAction();
+    for (const delay of [100, 400, 1000]) setTimeout(afterUiAction, delay);
 
     globalThis.CharacterLifeUiShell = Object.freeze({
         version: CL_UI_VERSION,
         close: closeSurface,
         closeOthers,
-        sync: syncBodyLock,
+        sync: afterUiAction,
     });
 
     console.info(`[Character Life's] cohesive UI safety layer v${CL_UI_VERSION} loaded.`);
