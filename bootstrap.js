@@ -11,6 +11,7 @@ const NPC_CONTINUITY_URL = new URL('./src/runtime/npc-continuity-v198.js', impor
 const NPC_IDENTITY_URL = new URL('./src/runtime/npc-identity-v197.js', import.meta.url);
 const UI_COHESION_URL = new URL('./src/runtime/ui-cohesion-v195.js', import.meta.url);
 const TOOL_UI_URL = new URL('./src/runtime/tool-ui-v199.js', import.meta.url);
+const MOBILE_UI_RELIABILITY_URL = new URL('./src/runtime/mobile-ui-reliability-v1910.js', import.meta.url);
 const STYLE_URL = new URL('./styles/style-v190.css', import.meta.url);
 
 async function readManifest() {
@@ -108,7 +109,7 @@ try {
 }
 
 // Keep the historical surface-safety layer as a fallback. v1.9.9 loads after it
-// and owns the final Skill Storage / Continuity close, navigation, and mobile UI.
+// and owns the Skill Storage / Continuity visual shell and close behavior.
 const cohesionUrl = new URL(UI_COHESION_URL);
 cohesionUrl.searchParams.set('clv', cacheToken);
 try {
@@ -123,6 +124,16 @@ try {
     await import(toolUiUrl.href);
 } catch (error) {
     console.error("[Character Life's] Skill Storage / Continuity UI rebuild failed safely; existing interfaces remain available.", error);
+}
+
+// v1.9.10 is a narrow, final mobile interaction layer. It loads after v1.9.9 so
+// Safari receives explicit one-pane Skill rendering and reliable Continuity taps.
+const mobileUiUrl = new URL(MOBILE_UI_RELIABILITY_URL);
+mobileUiUrl.searchParams.set('clv', cacheToken);
+try {
+    await import(mobileUiUrl.href);
+} catch (error) {
+    console.error("[Character Life's] Mobile UI reliability layer failed safely; established tool interfaces remain available.", error);
 }
 
 // Runtime modules now exist; refresh the consolidated prompt/diagnostics once so

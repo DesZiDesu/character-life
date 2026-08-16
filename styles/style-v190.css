@@ -4,5 +4,6 @@
 @import url("./ui-cohesion-v195.css");
 @import url("./npc-continuity-v198.css");
 @import url("./tool-ui-v199.css");
+@import url("./mobile-ui-reliability-v1910.css");
 
 /* Character Life aggregate stylesheet. Release version comes from manifest.json. */
