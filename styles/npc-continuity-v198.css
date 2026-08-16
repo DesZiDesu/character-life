@@ -1,0 +1,146 @@
+/* Character Life v1.9.8 — selective NPC continuity lifecycle. */
+
+#character-life-continuity-settings .cl198-legacy-carry-hidden {
+    display: none !important;
+}
+
+.cl198-continuity-settings {
+    display: grid;
+    gap: 10px;
+    margin-top: 12px;
+    padding: 12px;
+    border: 1px solid color-mix(in srgb, var(--cl-ui-accent, #c39a62) 28%, var(--cl-line, #555));
+    background: linear-gradient(120deg, color-mix(in srgb, var(--cl-ui-accent, #c39a62) 6%, transparent), transparent 62%);
+}
+
+.cl198-continuity-settings > header,
+.cl198-npc-persistence > header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--cl-ui-accent, var(--cl-header-color, #c39a62));
+    font-size: .78em;
+    font-weight: 700;
+    letter-spacing: .12em;
+}
+
+.cl198-continuity-settings > label:not(.checkbox_label) {
+    display: grid;
+    gap: 5px;
+}
+
+.cl198-continuity-settings > label > span,
+.cl198-persistence-grid label > span {
+    color: var(--cl-muted, #aaa);
+    font-size: .86em;
+}
+
+.cl198-continuity-settings input[type="number"],
+.cl198-continuity-settings select,
+.cl198-persistence-grid select {
+    width: 100%;
+    min-height: 38px;
+    box-sizing: border-box;
+}
+
+.cl198-continuity-settings small,
+.cl198-continuity-settings > p,
+.cl198-npc-persistence > p {
+    margin: 0;
+    color: var(--cl-muted, #aaa);
+    font-size: .82em;
+    line-height: 1.45;
+}
+
+.cl198-continuity-settings > p strong {
+    color: color-mix(in srgb, var(--cl-ui-accent, #c39a62) 72%, var(--cl-ink, #eee) 28%);
+}
+
+.cl198-continuity-badge {
+    display: inline-flex;
+    align-items: center;
+    width: fit-content;
+    max-width: 100%;
+    margin-top: 2px;
+    padding: 1px 6px;
+    border: 1px solid color-mix(in srgb, var(--cl-header-color, #c39a62) 24%, transparent);
+    color: color-mix(in srgb, var(--cl-header-color, #c39a62) 70%, var(--cl-muted, #aaa) 30%);
+    font-size: .66em;
+    line-height: 1.4;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.cl198-continuity-badge[data-stage="candidate"] {
+    border-color: color-mix(in srgb, var(--cl-header-color, #c39a62) 44%, transparent);
+    color: color-mix(in srgb, var(--cl-header-color, #c39a62) 86%, var(--cl-ink, #eee) 14%);
+}
+
+.cl198-continuity-badge[data-stage="persistent"] {
+    background: color-mix(in srgb, var(--cl-header-color, #c39a62) 10%, transparent);
+}
+
+.cl198-continuity-badge[data-stage="chat-only"] {
+    opacity: .72;
+}
+
+.cl198-npc-persistence {
+    display: grid;
+    gap: 10px;
+}
+
+.cl198-persistence-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 10px;
+    align-items: end;
+}
+
+.cl198-persistence-grid label {
+    display: grid;
+    gap: 5px;
+}
+
+.cl198-score {
+    display: grid;
+    gap: 3px;
+    min-width: 92px;
+    padding: 6px 9px;
+    border-left: 2px solid var(--cl-header-color, #c39a62);
+    background: color-mix(in srgb, var(--cl-header-color, #c39a62) 6%, transparent);
+}
+
+.cl198-score small {
+    color: var(--cl-muted, #aaa);
+    font-size: .68em;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+}
+
+.cl198-score strong {
+    color: var(--cl-ink, #eee);
+    font-size: 1.05em;
+}
+
+.cl198-score strong span {
+    color: var(--cl-muted, #aaa);
+    font-size: .75em;
+    font-weight: 400;
+}
+
+@media (max-width: 760px) {
+    .cl198-continuity-settings {
+        padding: 10px;
+    }
+
+    .cl198-persistence-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .cl198-score {
+        min-width: 0;
+    }
+}
