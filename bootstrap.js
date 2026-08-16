@@ -5,6 +5,7 @@
  */
 
 const MANIFEST_URL = new URL('./manifest.json', import.meta.url);
+const RELIABILITY_URL = new URL('./src/runtime/reliability-v196.js', import.meta.url);
 const RUNTIME_URL = new URL('./src/runtime/entry.js', import.meta.url);
 const UI_COHESION_URL = new URL('./src/runtime/ui-cohesion-v195.js', import.meta.url);
 const STYLE_URL = new URL('./styles/style-v190.css', import.meta.url);
@@ -65,6 +66,18 @@ globalThis.CharacterLifeBootstrap = Object.freeze({
 // runtime evaluates; a stylesheet failure therefore cannot trap the loading UI.
 installReleaseStyle(cacheToken);
 
+// Reliability loads before the historical feature stack. This lets it consolidate
+// Character Life prompt slots and register continuity replay guards before older
+// modules bind their own chat listeners. A failure here is isolated and never
+// prevents the established runtime from loading.
+const reliabilityUrl = new URL(RELIABILITY_URL);
+reliabilityUrl.searchParams.set('clv', cacheToken);
+try {
+    await import(reliabilityUrl.href);
+} catch (error) {
+    console.error("[Character Life's] Reliability coordinator failed safely; loading the established runtime.", error);
+}
+
 const runtimeUrl = new URL(RUNTIME_URL);
 runtimeUrl.searchParams.set('clv', cacheToken);
 await import(runtimeUrl.href);
@@ -78,3 +91,8 @@ try {
 } catch (error) {
     console.error("[Character Life's] UI cohesion layer failed safely; core interfaces remain available.", error);
 }
+
+// Runtime modules now exist; refresh the consolidated prompt/diagnostics once so
+// the first role-play turn does not have to wait for a later chat event.
+try { globalThis.CharacterLifeReliability?.refresh?.(); }
+catch (error) { console.warn("[Character Life's] Reliability refresh skipped safely.", error); }

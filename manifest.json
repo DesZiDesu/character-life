@@ -6,7 +6,7 @@
     "dependencies": [],
     "js": "bootstrap.js",
     "author": "DesZiDesu",
-    "version": "1.9.5",
+    "version": "1.9.6",
     "homePage": "https://github.com/DesZiDesu/character-life",
     "auto_update": true
 }
