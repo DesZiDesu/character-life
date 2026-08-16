@@ -6,6 +6,7 @@
 
 const MANIFEST_URL = new URL('./manifest.json', import.meta.url);
 const RUNTIME_URL = new URL('./src/runtime/entry.js', import.meta.url);
+const UI_COHESION_URL = new URL('./src/runtime/ui-cohesion-v195.js', import.meta.url);
 const STYLE_URL = new URL('./styles/style-v190.css', import.meta.url);
 
 async function readManifest() {
@@ -67,3 +68,13 @@ installReleaseStyle(cacheToken);
 const runtimeUrl = new URL(RUNTIME_URL);
 runtimeUrl.searchParams.set('clv', cacheToken);
 await import(runtimeUrl.href);
+
+// Keep UI safety separate from the feature runtime. If this presentation layer
+// fails, the NPC Library, Skill Storage, and Continuity engines remain loaded.
+const cohesionUrl = new URL(UI_COHESION_URL);
+cohesionUrl.searchParams.set('clv', cacheToken);
+try {
+    await import(cohesionUrl.href);
+} catch (error) {
+    console.error("[Character Life's] UI cohesion layer failed safely; core interfaces remain available.", error);
+}
