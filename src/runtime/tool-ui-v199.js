@@ -124,8 +124,6 @@ function goSkillList() {
     if (!manager) return;
     manager.dataset.mobileView = 'list';
     const activeScope = q('[data-cl-skill-scope].is-active', manager);
-    // Clicking the active scope is the existing engine's supported way to clear
-    // selection/editor state without mutating private variables.
     if (activeScope instanceof HTMLElement) activeScope.click();
     setTimeout(() => { manager.dataset.mobileView = 'list'; q('[data-cl-skill-search]', manager)?.focus?.(); }, 0);
 }
@@ -143,9 +141,9 @@ function decorateSkill() {
     if (header) {
         header.classList.add('cl199-tool-header');
         const kicker = q('small', header);
-        if (kicker) kicker.textContent = 'CHARACTER LIFE · SKILL ARCHIVE';
+        if (kicker && kicker.textContent !== 'CHARACTER LIFE · SKILL ARCHIVE') kicker.textContent = 'CHARACTER LIFE · SKILL ARCHIVE';
         const title = q('#cl-skills-title', header);
-        if (title) title.textContent = 'Skill Storage';
+        if (title && title.textContent !== 'Skill Storage') title.textContent = 'Skill Storage';
         const close = q('[data-cl-skill-close]', header);
         if (close) {
             close.classList.add('cl199-close');
@@ -161,19 +159,19 @@ function decorateSkill() {
     ensureSkillBack(manager);
 
     for (const tab of qa('[data-cl-skill-scope]', manager)) {
+        const active = tab.classList.contains('is-active');
         tab.setAttribute('role', 'tab');
-        tab.setAttribute('aria-selected', tab.classList.contains('is-active') ? 'true' : 'false');
-        tab.setAttribute('tabindex', tab.classList.contains('is-active') ? '0' : '-1');
+        tab.setAttribute('aria-selected', active ? 'true' : 'false');
+        tab.setAttribute('tabindex', active ? '0' : '-1');
     }
     q('.cl-skill-scope-tabs', manager)?.setAttribute('role', 'tablist');
     syncSkillMobileView(manager);
 
     if (!skillObserver) {
         skillObserver = new MutationObserver(records => {
-            if (!records.some(record => record.addedNodes.length || record.removedNodes.length || record.type === 'attributes')) return;
-            scheduleRefresh(0);
+            if (records.some(record => record.addedNodes.length || record.removedNodes.length)) scheduleRefresh(0);
         });
-        skillObserver.observe(manager, { childList: true, subtree: true, attributes: true, attributeFilter: ['class'] });
+        skillObserver.observe(manager, { childList: true, subtree: true });
     }
     return true;
 }
@@ -191,9 +189,9 @@ function decorateContinuity() {
     if (header) {
         header.classList.add('cl199-tool-header');
         const kicker = q('small', header);
-        if (kicker) kicker.textContent = 'CHARACTER LIFE · CONTINUITY';
+        if (kicker && kicker.textContent !== 'CHARACTER LIFE · CONTINUITY') kicker.textContent = 'CHARACTER LIFE · CONTINUITY';
         const title = q('#cl190-title', header);
-        if (title) title.textContent = 'Continuity Hub';
+        if (title && title.textContent !== 'Continuity Hub') title.textContent = 'Continuity Hub';
         const close = q('[data-cl190-close]', header);
         if (close) {
             close.classList.add('cl199-close');
@@ -220,10 +218,9 @@ function decorateContinuity() {
 
     if (!continuityObserver) {
         continuityObserver = new MutationObserver(records => {
-            if (!records.some(record => record.addedNodes.length || record.removedNodes.length || record.type === 'attributes')) return;
-            scheduleRefresh(0);
+            if (records.some(record => record.addedNodes.length || record.removedNodes.length)) scheduleRefresh(0);
         });
-        continuityObserver.observe(manager, { childList: true, subtree: true, attributes: true, attributeFilter: ['class'] });
+        continuityObserver.observe(manager, { childList: true, subtree: true });
     }
     return true;
 }
@@ -322,7 +319,7 @@ function onClickCapture(event) {
         setTimeout(() => {
             decorateContinuity();
             activeContinuityTab()?.scrollIntoView?.({ behavior: 'smooth', block: 'nearest', inline: 'center' });
-            q('#character-life-continuity-overlay .cl190-body')?.scrollTo?.({ top: 0, behavior: 'instant' });
+            q('#character-life-continuity-overlay .cl190-body')?.scrollTo?.({ top: 0, behavior: 'auto' });
         }, 0);
     }
 
@@ -382,7 +379,12 @@ function initialize() {
             refresh,
             closeSkills: () => hardClose('skills'),
             closeContinuity: () => hardClose('continuity'),
-            closeAll: () => { hardClose('skills', { restore: false }); hardClose('continuity', { restore: false }); hardClose('library', { restore: false }); },
+            closeAll: () => {
+                hardClose('skills', { restore: false });
+                hardClose('continuity', { restore: false });
+                hardClose('library', { restore: false });
+                bodyLock();
+            },
         });
         console.info("[Character Life's] v1.9.9 Skill Storage + Continuity UI shell enabled.");
     } catch (error) {
