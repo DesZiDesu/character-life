@@ -7,6 +7,7 @@
 const MANIFEST_URL = new URL('./manifest.json', import.meta.url);
 const RELIABILITY_URL = new URL('./src/runtime/reliability-v196.js', import.meta.url);
 const RUNTIME_URL = new URL('./src/runtime/entry.js', import.meta.url);
+const NPC_IDENTITY_URL = new URL('./src/runtime/npc-identity-v197.js', import.meta.url);
 const UI_COHESION_URL = new URL('./src/runtime/ui-cohesion-v195.js', import.meta.url);
 const STYLE_URL = new URL('./styles/style-v190.css', import.meta.url);
 
@@ -81,6 +82,17 @@ try {
 const runtimeUrl = new URL(RUNTIME_URL);
 runtimeUrl.searchParams.set('clv', cacheToken);
 await import(runtimeUrl.href);
+
+// Canonical NPC identity/scope repair runs after the established runtime exists.
+// It is isolated so a migration or presentation issue can never prevent the
+// NPC Library, Skill Storage, or Continuity from loading.
+const identityUrl = new URL(NPC_IDENTITY_URL);
+identityUrl.searchParams.set('clv', cacheToken);
+try {
+    await import(identityUrl.href);
+} catch (error) {
+    console.error("[Character Life's] NPC identity/scope repair failed safely; established runtime remains available.", error);
+}
 
 // Keep UI safety separate from the feature runtime. If this presentation layer
 // fails, the NPC Library, Skill Storage, and Continuity engines remain loaded.
