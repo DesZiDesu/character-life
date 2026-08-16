@@ -10,6 +10,7 @@ const RUNTIME_URL = new URL('./src/runtime/entry.js', import.meta.url);
 const NPC_CONTINUITY_URL = new URL('./src/runtime/npc-continuity-v198.js', import.meta.url);
 const NPC_IDENTITY_URL = new URL('./src/runtime/npc-identity-v197.js', import.meta.url);
 const UI_COHESION_URL = new URL('./src/runtime/ui-cohesion-v195.js', import.meta.url);
+const TOOL_UI_URL = new URL('./src/runtime/tool-ui-v199.js', import.meta.url);
 const STYLE_URL = new URL('./styles/style-v190.css', import.meta.url);
 
 async function readManifest() {
@@ -106,14 +107,22 @@ try {
     console.error("[Character Life's] NPC identity/scope repair failed safely; established runtime remains available.", error);
 }
 
-// Keep UI safety separate from the feature runtime. If this presentation layer
-// fails, the NPC Library, Skill Storage, and Continuity engines remain loaded.
+// Keep the historical surface-safety layer as a fallback. v1.9.9 loads after it
+// and owns the final Skill Storage / Continuity close, navigation, and mobile UI.
 const cohesionUrl = new URL(UI_COHESION_URL);
 cohesionUrl.searchParams.set('clv', cacheToken);
 try {
     await import(cohesionUrl.href);
 } catch (error) {
     console.error("[Character Life's] UI cohesion layer failed safely; core interfaces remain available.", error);
+}
+
+const toolUiUrl = new URL(TOOL_UI_URL);
+toolUiUrl.searchParams.set('clv', cacheToken);
+try {
+    await import(toolUiUrl.href);
+} catch (error) {
+    console.error("[Character Life's] Skill Storage / Continuity UI rebuild failed safely; existing interfaces remain available.", error);
 }
 
 // Runtime modules now exist; refresh the consolidated prompt/diagnostics once so
