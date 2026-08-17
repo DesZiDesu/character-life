@@ -5,6 +5,7 @@
 
 const CL1911_PORTRAIT_VERSION = '1.9.11';
 const STAGE_SELECTOR = '#character-life-overlay [data-crop-stage]';
+const DISPLAY_SELECTOR = '#character-life-overlay [data-portrait-id], .mes_text.character-life-rendered .cl-chat-portrait';
 const states = new WeakMap();
 let refreshTimer = null;
 let observer = null;
@@ -105,6 +106,45 @@ function applyFrame(stage, x, y, zoom) {
     syncControl(controls.y, values.y, false);
     syncControl(controls.zoom, values.zoom, true);
     return true;
+}
+
+function renderedValuesFor(frame) {
+    const image = frame.querySelector('img');
+    const legacyTransform = image?.style?.transform || '';
+    const legacyPosition = image?.style?.objectPosition || '';
+    const legacyWasReapplied = /scale\s*\(/i.test(legacyTransform);
+
+    if (!legacyWasReapplied && frame.dataset.cl1911DisplayX !== undefined) {
+        return {
+            x: clamp(frame.dataset.cl1911DisplayX, 50, 0, 100),
+            y: clamp(frame.dataset.cl1911DisplayY, 18, 0, 100),
+            zoom: clamp(frame.dataset.cl1911DisplayZoom, 1, 1, 3),
+        };
+    }
+
+    const position = legacyPosition.match(/(-?\d+(?:\.\d+)?)%\s+(-?\d+(?:\.\d+)?)%/);
+    const scale = legacyTransform.match(/scale\s*\(\s*(-?\d+(?:\.\d+)?)\s*\)/i);
+    const values = {
+        x: clamp(frame.dataset.x ?? position?.[1], 50, 0, 100),
+        y: clamp(frame.dataset.y ?? position?.[2], 18, 0, 100),
+        zoom: clamp(frame.dataset.zoom ?? scale?.[1], 1, 1, 3),
+    };
+    frame.dataset.cl1911DisplayX = String(values.x);
+    frame.dataset.cl1911DisplayY = String(values.y);
+    frame.dataset.cl1911DisplayZoom = String(values.zoom);
+    return values;
+}
+
+function decorateDisplayFrame(frame) {
+    if (!(frame instanceof HTMLElement) || frame.matches('[data-crop-stage]')) return;
+    const image = frame.querySelector('img');
+    if (!(image instanceof HTMLImageElement) || image.hidden || !image.src) return;
+    if (!image.complete) {
+        image.addEventListener('load', () => decorateDisplayFrame(frame), { once: true });
+        return;
+    }
+    const values = renderedValuesFor(frame);
+    applyFrame(frame, values.x, values.y, values.zoom);
 }
 
 function beginOrigin(stage, state) {
@@ -262,6 +302,7 @@ function refresh() {
     refreshTimer = null;
     try {
         document.querySelectorAll(STAGE_SELECTOR).forEach(decorateStage);
+        document.querySelectorAll(DISPLAY_SELECTOR).forEach(decorateDisplayFrame);
     } catch (error) {
         console.warn("[Character Life's] v1.9.11 portrait framing refresh skipped safely.", error);
     }
@@ -285,9 +326,20 @@ function init() {
     document.addEventListener('click', handleResetClick, true);
 
     observer = new MutationObserver(records => {
-        if (records.some(record => record.addedNodes.length || record.removedNodes.length)) scheduleRefresh(20);
+        const relevant = records.some(record => {
+            if (record.type === 'childList') return record.addedNodes.length || record.removedNodes.length;
+            if (record.type !== 'attributes') return false;
+            if (record.attributeName === 'src' || record.attributeName === 'hidden') return true;
+            if (record.attributeName === 'style' && record.target instanceof HTMLImageElement) {
+                return /scale\s*\(/i.test(record.target.style.transform || '');
+            }
+            return false;
+        });
+        if (relevant) scheduleRefresh(20);
     });
-    if (document.body) observer.observe(document.body, { childList: true, subtree: true });
+    if (document.body) observer.observe(document.body, {
+        childList: true, subtree: true, attributes: true, attributeFilter: ['src', 'hidden', 'style'],
+    });
     globalThis.addEventListener('resize', () => scheduleRefresh(40));
     globalThis.addEventListener('orientationchange', () => scheduleRefresh(80));
     for (const delay of [0, 80, 250, 700, 1500]) setTimeout(refresh, delay);
