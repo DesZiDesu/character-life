@@ -1,0 +1,30 @@
+/* Character Life v1.9.14 — coarse-pointer interaction reliability.
+   Touch devices should not require a first tap merely to enter :hover state. */
+
+#character-life-continuity-overlay details > summary {
+    cursor: pointer;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+@media (hover: none), (pointer: coarse) {
+    .cl-product-nav button:not(.is-active):hover {
+        color: var(--cl-muted) !important;
+        background: transparent !important;
+    }
+
+    #character-life-continuity-overlay .cl190-tabs button:not(.is-active):hover {
+        color: var(--cl-muted) !important;
+        background: transparent !important;
+        box-shadow: none !important;
+    }
+
+    .cl-product-nav button,
+    #character-life-continuity-overlay .cl190-tabs button,
+    #character-life-continuity-overlay details > summary {
+        -webkit-tap-highlight-color: transparent;
+        touch-action: manipulation;
+    }
+}
