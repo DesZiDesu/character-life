@@ -9,6 +9,7 @@ const RELIABILITY_URL = new URL('./src/runtime/reliability-v196.js', import.meta
 const RUNTIME_URL = new URL('./src/runtime/entry.js', import.meta.url);
 const NPC_CONTINUITY_URL = new URL('./src/runtime/npc-continuity-v198.js', import.meta.url);
 const NPC_IDENTITY_URL = new URL('./src/runtime/npc-identity-v197.js', import.meta.url);
+const TOUCH_INTERACTION_URL = new URL('./src/runtime/touch-interaction-v1914.js', import.meta.url);
 const FEATURE_SHELL_URL = new URL('./src/runtime/feature-shell-v1913.js', import.meta.url);
 const PORTRAIT_FRAMING_URL = new URL('./src/runtime/portrait-framing-v1911.js', import.meta.url);
 const STYLE_URL = new URL('./styles/style-v190.css', import.meta.url);
@@ -100,6 +101,17 @@ try {
     await import(identityUrl.href);
 } catch (error) {
     console.error("[Character Life's] NPC identity/scope repair failed safely; established runtime remains available.", error);
+}
+
+// v1.9.14 registers touch ownership before the unified shell capture handler.
+// This lets one physical touch produce one navigation/details action and removes
+// the duplicate synthetic click that iOS can dispatch after pointerup.
+const touchInteractionUrl = new URL(TOUCH_INTERACTION_URL);
+touchInteractionUrl.searchParams.set('clv', cacheToken);
+try {
+    await import(touchInteractionUrl.href);
+} catch (error) {
+    console.error("[Character Life's] Single-tap interaction guard failed safely; mouse/keyboard interfaces remain available.", error);
 }
 
 // v1.9.13 replaces the stacked historical Skill/Continuity UI-cohesion layers
