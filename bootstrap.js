@@ -9,10 +9,7 @@ const RELIABILITY_URL = new URL('./src/runtime/reliability-v196.js', import.meta
 const RUNTIME_URL = new URL('./src/runtime/entry.js', import.meta.url);
 const NPC_CONTINUITY_URL = new URL('./src/runtime/npc-continuity-v198.js', import.meta.url);
 const NPC_IDENTITY_URL = new URL('./src/runtime/npc-identity-v197.js', import.meta.url);
-const UI_COHESION_URL = new URL('./src/runtime/ui-cohesion-v195.js', import.meta.url);
-const TOOL_UI_URL = new URL('./src/runtime/tool-ui-v199.js', import.meta.url);
-const MOBILE_UI_RELIABILITY_URL = new URL('./src/runtime/mobile-ui-reliability-v1910.js', import.meta.url);
-const UNIFIED_UI_URL = new URL('./src/runtime/unified-ui-v1911.js', import.meta.url);
+const FEATURE_SHELL_URL = new URL('./src/runtime/feature-shell-v1913.js', import.meta.url);
 const PORTRAIT_FRAMING_URL = new URL('./src/runtime/portrait-framing-v1911.js', import.meta.url);
 const STYLE_URL = new URL('./styles/style-v190.css', import.meta.url);
 
@@ -89,8 +86,6 @@ runtimeUrl.searchParams.set('clv', cacheToken);
 await import(runtimeUrl.href);
 
 // v1.9.8 installs the selective lifecycle before the v1.9.7 identity layer.
-// It synchronously disables the older "carry every Chat NPC" behavior, then
-// lets Continuity promote only NPCs that actually qualify as important.
 const continuityUrl = new URL(NPC_CONTINUITY_URL);
 continuityUrl.searchParams.set('clv', cacheToken);
 try {
@@ -99,9 +94,6 @@ try {
     console.error("[Character Life's] Selective NPC continuity failed safely; established runtime remains available.", error);
 }
 
-// Canonical NPC identity/color repair runs after the lifecycle policy is active.
-// With legacy carry disabled, it preserves the one-color identity fixes without
-// automatically moving every Chat NPC into Character scope.
 const identityUrl = new URL(NPC_IDENTITY_URL);
 identityUrl.searchParams.set('clv', cacheToken);
 try {
@@ -110,47 +102,20 @@ try {
     console.error("[Character Life's] NPC identity/scope repair failed safely; established runtime remains available.", error);
 }
 
-// Keep the historical surface-safety layer as a fallback. v1.9.9 loads after it
-// and owns the Skill Storage / Continuity visual shell and close behavior.
-const cohesionUrl = new URL(UI_COHESION_URL);
-cohesionUrl.searchParams.set('clv', cacheToken);
+// v1.9.13 replaces the stacked historical Skill/Continuity UI-cohesion layers
+// with one coordinator. The original feature engines still own their data and
+// actions; only window structure, product switching, and responsive presentation
+// are coordinated here.
+const featureShellUrl = new URL(FEATURE_SHELL_URL);
+featureShellUrl.searchParams.set('clv', cacheToken);
 try {
-    await import(cohesionUrl.href);
+    await import(featureShellUrl.href);
 } catch (error) {
-    console.error("[Character Life's] UI cohesion layer failed safely; core interfaces remain available.", error);
+    console.error("[Character Life's] NPC-style feature shell failed safely; core feature engines remain available.", error);
 }
 
-const toolUiUrl = new URL(TOOL_UI_URL);
-toolUiUrl.searchParams.set('clv', cacheToken);
-try {
-    await import(toolUiUrl.href);
-} catch (error) {
-    console.error("[Character Life's] Skill Storage / Continuity UI rebuild failed safely; existing interfaces remain available.", error);
-}
-
-// v1.9.10 is a narrow mobile interaction layer. It loads after v1.9.9 so
-// Safari receives explicit one-pane Skill rendering and reliable Continuity taps.
-const mobileUiUrl = new URL(MOBILE_UI_RELIABILITY_URL);
-mobileUiUrl.searchParams.set('clv', cacheToken);
-try {
-    await import(mobileUiUrl.href);
-} catch (error) {
-    console.error("[Character Life's] Mobile UI reliability layer failed safely; established tool interfaces remain available.", error);
-}
-
-// v1.9.11 is deliberately final and non-destructive. It presents the existing
-// NPC, Skill, and Continuity engines through one product navigation shell while
-// retaining every legacy overlay/launcher contract as a fallback underneath.
-const unifiedUiUrl = new URL(UNIFIED_UI_URL);
-unifiedUiUrl.searchParams.set('clv', cacheToken);
-try {
-    await import(unifiedUiUrl.href);
-} catch (error) {
-    console.error("[Character Life's] Unified UI layer failed safely; legacy Wand interfaces remain available.", error);
-}
-
-// Portrait framing is isolated from the unified shell so a browser-specific
-// gesture problem can never prevent the three established feature UIs loading.
+// Portrait framing remains isolated from the feature shell so a browser-specific
+// gesture problem can never prevent the established feature engines from loading.
 const portraitFramingUrl = new URL(PORTRAIT_FRAMING_URL);
 portraitFramingUrl.searchParams.set('clv', cacheToken);
 try {
@@ -159,7 +124,5 @@ try {
     console.error("[Character Life's] Portrait framing reliability failed safely; existing portrait controls remain available.", error);
 }
 
-// Runtime modules now exist; refresh the consolidated prompt/diagnostics once so
-// the first role-play turn does not have to wait for a later chat event.
 try { globalThis.CharacterLifeReliability?.refresh?.(); }
 catch (error) { console.warn("[Character Life's] Reliability refresh skipped safely.", error); }
