@@ -12,6 +12,8 @@ const NPC_IDENTITY_URL = new URL('./src/runtime/npc-identity-v197.js', import.me
 const UI_COHESION_URL = new URL('./src/runtime/ui-cohesion-v195.js', import.meta.url);
 const TOOL_UI_URL = new URL('./src/runtime/tool-ui-v199.js', import.meta.url);
 const MOBILE_UI_RELIABILITY_URL = new URL('./src/runtime/mobile-ui-reliability-v1910.js', import.meta.url);
+const UNIFIED_UI_URL = new URL('./src/runtime/unified-ui-v1911.js', import.meta.url);
+const PORTRAIT_FRAMING_URL = new URL('./src/runtime/portrait-framing-v1911.js', import.meta.url);
 const STYLE_URL = new URL('./styles/style-v190.css', import.meta.url);
 
 async function readManifest() {
@@ -126,7 +128,7 @@ try {
     console.error("[Character Life's] Skill Storage / Continuity UI rebuild failed safely; existing interfaces remain available.", error);
 }
 
-// v1.9.10 is a narrow, final mobile interaction layer. It loads after v1.9.9 so
+// v1.9.10 is a narrow mobile interaction layer. It loads after v1.9.9 so
 // Safari receives explicit one-pane Skill rendering and reliable Continuity taps.
 const mobileUiUrl = new URL(MOBILE_UI_RELIABILITY_URL);
 mobileUiUrl.searchParams.set('clv', cacheToken);
@@ -134,6 +136,27 @@ try {
     await import(mobileUiUrl.href);
 } catch (error) {
     console.error("[Character Life's] Mobile UI reliability layer failed safely; established tool interfaces remain available.", error);
+}
+
+// v1.9.11 is deliberately final and non-destructive. It presents the existing
+// NPC, Skill, and Continuity engines through one product navigation shell while
+// retaining every legacy overlay/launcher contract as a fallback underneath.
+const unifiedUiUrl = new URL(UNIFIED_UI_URL);
+unifiedUiUrl.searchParams.set('clv', cacheToken);
+try {
+    await import(unifiedUiUrl.href);
+} catch (error) {
+    console.error("[Character Life's] Unified UI layer failed safely; legacy Wand interfaces remain available.", error);
+}
+
+// Portrait framing is isolated from the unified shell so a browser-specific
+// gesture problem can never prevent the three established feature UIs loading.
+const portraitFramingUrl = new URL(PORTRAIT_FRAMING_URL);
+portraitFramingUrl.searchParams.set('clv', cacheToken);
+try {
+    await import(portraitFramingUrl.href);
+} catch (error) {
+    console.error("[Character Life's] Portrait framing reliability failed safely; existing portrait controls remain available.", error);
 }
 
 // Runtime modules now exist; refresh the consolidated prompt/diagnostics once so
