@@ -1,5 +1,7 @@
 @import url("./style-v180-wand.css");
-@import url("./skill-storage-v181.css");
 @import url("./style-v182-fixes.css");
 
-/* Character Life v1.8.2 aggregate stylesheet. */
+/* Character Life v1.8.2 aggregate stylesheet.
+ * The historical Skill Storage manager skin is no longer imported; the current
+ * feature shell owns the Skill window while the skill engine/indicator styles
+ * continue to come from the established v1.7.2 feature stylesheet. */
