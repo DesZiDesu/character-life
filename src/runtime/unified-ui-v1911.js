@@ -197,7 +197,11 @@ function refresh() {
     try {
         normalizeWandEntry();
         markCompatibilityLaunchers();
-        for (const name of Object.keys(TOOLS)) decorateSurface(name);
+        const libraryReady = decorateSurface('library');
+        decorateSurface('skills');
+        decorateSurface('continuity');
+        if (libraryReady) document.documentElement.dataset.characterLifeUnifiedUi = CL1911_VERSION;
+        else delete document.documentElement.dataset.characterLifeUnifiedUi;
         const current = activeTool();
         if (current) {
             for (const nav of qa('[data-cl1911-nav]')) {
@@ -206,7 +210,8 @@ function refresh() {
             }
         }
     } catch (error) {
-        console.warn("[Character Life's] v1.9.11 unified UI refresh skipped safely.", error);
+        delete document.documentElement.dataset.characterLifeUnifiedUi;
+        console.warn("[Character Life's] v1.9.11 unified UI refresh skipped safely; compatibility Wand launchers remain visible.", error);
     }
 }
 
@@ -243,7 +248,6 @@ function health() {
 }
 
 function init() {
-    document.documentElement.dataset.characterLifeUnifiedUi = CL1911_VERSION;
     bindContextEvents();
 
     domObserver = new MutationObserver(records => {
