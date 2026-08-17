@@ -3,18 +3,13 @@
  * are intentionally not shown in the Extensions drawer.
  */
 
+/* SillyTavern owns the open/closed display state of inline drawers. */
 #character-life-settings .inline-drawer-content {
-    display: grid;
     gap: 8px;
 }
 
-#character-life-settings .cl-settings-copy {
-    margin: 2px 0 6px;
-}
-
-#character-life-settings .cl-settings-actions {
-    margin: 0 0 4px;
-}
+#character-life-settings .cl-settings-copy { margin: 2px 0 6px; }
+#character-life-settings .cl-settings-actions { margin: 0 0 4px; }
 
 #character-life-settings .cl-settings-section,
 #character-life-settings .cl-settings-feature-shell {
@@ -41,9 +36,7 @@
 }
 
 #character-life-settings .cl-settings-section > summary::-webkit-details-marker,
-#character-life-settings .cl-settings-feature-shell > summary::-webkit-details-marker {
-    display: none;
-}
+#character-life-settings .cl-settings-feature-shell > summary::-webkit-details-marker { display: none; }
 
 #character-life-settings .cl-settings-section > summary::after,
 #character-life-settings .cl-settings-feature-shell > summary::after {
@@ -60,9 +53,7 @@
 }
 
 #character-life-settings .cl-settings-section[open] > summary::after,
-#character-life-settings .cl-settings-feature-shell[open] > summary::after {
-    transform: rotate(180deg);
-}
+#character-life-settings .cl-settings-feature-shell[open] > summary::after { transform: rotate(180deg); }
 
 #character-life-settings .cl-settings-section > summary:hover,
 #character-life-settings .cl-settings-feature-shell > summary:hover {
@@ -116,9 +107,6 @@
     margin: 0;
 }
 
-/* Feature cards already contain their own markup. Their old feature-specific
- * headers repeated titles and historical versions, so the organizer summary is
- * the only header shown inside the Extensions drawer. */
 #character-life-settings .cl-settings-feature-shell .cl-settings-section-body > :is(
     #character-life-skill-settings,
     #character-life-qol-settings,
@@ -136,16 +124,11 @@
     #character-life-skill-settings,
     #character-life-qol-settings,
     #character-life-continuity-settings
-) > header {
-    display: none !important;
-}
+) > header { display: none !important; }
 
-/* Historical module versions are implementation details, not release versions. */
 #character-life-settings .cl-settings-feature-shell [data-character-life-version],
 #character-life-settings .cl-settings-feature-shell .cl-extension-version,
-#character-life-settings .cl-theme-version {
-    display: none !important;
-}
+#character-life-settings .cl-theme-version { display: none !important; }
 
 #character-life-settings .cl-settings-section .cl-settings-grid,
 #character-life-settings .cl-settings-section .cl-design-preview-shell,
@@ -157,14 +140,10 @@
 }
 
 #character-life-settings #character-life-css-studio > .cl-settings-section-body > p,
-#character-life-settings .cl-tag-guide > .cl-settings-section-body > p {
-    margin: 0;
-}
+#character-life-settings .cl-tag-guide > .cl-settings-section-body > p { margin: 0; }
 
 @media (max-width: 620px) {
-    #character-life-settings .inline-drawer-content {
-        gap: 7px;
-    }
+    #character-life-settings .inline-drawer-content { gap: 7px; }
 
     #character-life-settings .cl-settings-section > summary,
     #character-life-settings .cl-settings-feature-shell > summary {
@@ -179,9 +158,7 @@
         flex-basis: 26px;
     }
 
-    #character-life-settings .cl-settings-section-body {
-        padding: 9px;
-    }
+    #character-life-settings .cl-settings-section-body { padding: 9px; }
 
     #character-life-settings .cl-settings-summary-copy small {
         white-space: normal;
