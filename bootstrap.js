@@ -9,6 +9,9 @@ const RELIABILITY_URL = new URL('./src/runtime/reliability-v196.js', import.meta
 const RUNTIME_URL = new URL('./src/runtime/entry.js', import.meta.url);
 const NPC_CONTINUITY_URL = new URL('./src/runtime/npc-continuity-v198.js', import.meta.url);
 const NPC_IDENTITY_URL = new URL('./src/runtime/npc-identity-v197.js', import.meta.url);
+const NPC_IDENTITY_REVEAL_URL = new URL('./src/runtime/npc-identity-reveal-v1915.js', import.meta.url);
+const SPEAKER_RUN_URL = new URL('./src/runtime/speaker-run-v1915.js', import.meta.url);
+const NEW_CHAT_TRANSFER_URL = new URL('./src/runtime/new-chat-transfer-v1915.js', import.meta.url);
 const TOUCH_INTERACTION_URL = new URL('./src/runtime/touch-interaction-v1914.js', import.meta.url);
 const FEATURE_SHELL_URL = new URL('./src/runtime/feature-shell-v1913.js', import.meta.url);
 const PORTRAIT_FRAMING_URL = new URL('./src/runtime/portrait-framing-v1911.js', import.meta.url);
@@ -101,6 +104,22 @@ try {
     await import(identityUrl.href);
 } catch (error) {
     console.error("[Character Life's] NPC identity/scope repair failed safely; established runtime remains available.", error);
+}
+
+// v1.9.15 adds deterministic speaker runs, identity reveal merging, and an
+// explicit New Chat carry-current-context choice without replacing legacy engines.
+for (const [urlBase, label] of [
+    [NPC_IDENTITY_REVEAL_URL, 'NPC identity reveal merge'],
+    [SPEAKER_RUN_URL, 'single-header speaker runs'],
+    [NEW_CHAT_TRANSFER_URL, 'New Chat context transfer'],
+]) {
+    const url = new URL(urlBase);
+    url.searchParams.set('clv', cacheToken);
+    try {
+        await import(url.href);
+    } catch (error) {
+        console.error(`[Character Life's] ${label} failed safely; established runtime remains available.`, error);
+    }
 }
 
 // v1.9.14 registers touch ownership before the unified shell capture handler.
