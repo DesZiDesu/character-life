@@ -3,6 +3,7 @@
 // Character Life v1.9.15 — explicit carry-current-context choice for New Chat.
 // Durable Continuity state already lives at Character/Group scope. This layer
 // only offers to copy the current chat-local scene, NPCs, and skills.
+import './playthrough-reset-v1916.js';
 
 const NPC_CHAT_KEY = 'character_life_npcs';
 const CONTINUITY_CHAT_KEY = 'character_life_continuity_v190';
@@ -29,6 +30,11 @@ function characterKey(context = ctx()) {
     return `character:${text(character?.avatar, '', 180) || id || text(context.name2 || character?.name, 'unknown', 180)}`;
 }
 
+function activePlaythroughId() {
+    try { return text(globalThis.CharacterLifePlaythrough?.activeId?.(), 'legacy', 180) || 'legacy'; }
+    catch { return 'legacy'; }
+}
+
 function currentSnapshot() {
     const context = ctx();
     const chatId = text(context?.getCurrentChatId?.(), '', 300);
@@ -47,7 +53,7 @@ function currentSnapshot() {
         || Array.isArray(scene?.absent) && scene.absent.length
     );
     if (!sceneHasData && !npcs.length && !skills.length) return null;
-    return { sourceChatId: chatId, characterKey: characterKey(context), scene, npcs, skills };
+    return { sourceChatId: chatId, characterKey: characterKey(context), playthroughId: activePlaythroughId(), scene, npcs, skills };
 }
 
 function newChatControl(target) {
@@ -83,6 +89,7 @@ async function applyTransfer() {
     const transfer = pendingTransfer;
     pendingTransfer = null;
     if (characterKey(context) !== transfer.characterKey) return;
+    if (activePlaythroughId() !== transfer.playthroughId) return;
 
     context.chatMetadata ||= {};
     if (transfer.scene) {
@@ -113,6 +120,7 @@ function bindEvents() {
     return true;
 }
 
+globalThis.addEventListener('character-life:playthrough-reset', () => { pendingTransfer = null; });
 document.addEventListener('click', captureChoice, true);
 if (bindEvents()) console.info("[Character Life's] v1.9.15 New Chat context choice enabled.");
 else console.warn("[Character Life's] v1.9.15 New Chat context choice could not bind to SillyTavern events.");
