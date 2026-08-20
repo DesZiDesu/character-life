@@ -535,7 +535,6 @@ body.character-life-open { overflow: hidden; }
 
 /* end styles/style.css */
 
-
 /* Character Life v1.7.2 — header polish overlay.
    CSS only: keeps the existing renderer, parser, settings and custom themes untouched. */
 
@@ -1110,114 +1109,11 @@ body.character-life-open { overflow: hidden; }
     margin-right: 2px;
     opacity: .42;
 }
-
-/* Shared neutral workspace. */
-#character-life-overlay .cl-manager,
-#character-life-skills-overlay .cl-skills-manager.cl-feature-manager,
-#character-life-continuity-overlay .cl190-manager.cl-feature-manager {
-    --cl12-bg: var(--SmartThemeBlurTintColor, #171717);
-    --cl12-text: var(--SmartThemeBodyColor, #eee);
-    --cl12-border: var(--SmartThemeBorderColor, rgba(255,255,255,.16));
-    --cl12-soft: color-mix(in srgb, var(--cl12-text) 5%, transparent);
-    --cl12-soft-strong: color-mix(in srgb, var(--cl12-text) 9%, transparent);
-    --cl12-muted: color-mix(in srgb, var(--cl12-text) 62%, transparent);
-    width: min(1120px, calc(100vw - 28px)) !important;
-    height: min(860px, calc(100vh - 28px)) !important;
-    height: min(860px, calc(100dvh - 28px)) !important;
-    max-width: none !important;
-    max-height: none !important;
-    border: 1px solid var(--cl12-border) !important;
-    border-radius: 12px !important;
-    clip-path: none !important;
-    color: var(--cl12-text) !important;
-    background: var(--cl12-bg) !important;
-    box-shadow: 0 18px 60px rgba(0,0,0,.48) !important;
-}
 #character-life-overlay .cl-manager { --cl12-accent: var(--cl-ui-accent, #77a7d9); }
 #character-life-skills-overlay .cl-skills-manager { --cl12-accent: #9b91d9; }
-#character-life-continuity-overlay .cl190-manager { --cl12-accent: #c7a56a; }
-#character-life-overlay .cl-manager::before,
-#character-life-skills-overlay .cl-feature-manager::before,
-#character-life-continuity-overlay .cl-feature-manager::before {
-    display: none !important;
-}
-
-/* Compact product headers. */
-#character-life-overlay .cl-manager-header,
-#character-life-skills-overlay .cl-skills-header.cl-manager-header,
-#character-life-continuity-overlay .cl190-manager > header.cl-manager-header {
-    min-height: 62px !important;
-    box-sizing: border-box;
-    padding: 9px 12px !important;
-    border: 0 !important;
-    border-bottom: 1px solid var(--cl12-border) !important;
-    background: color-mix(in srgb, var(--cl12-bg) 94%, black 6%) !important;
-}
 #character-life-overlay .cl-manager-header {
     grid-template-columns: auto 38px minmax(0, 1fr) auto !important;
     gap: 9px !important;
-}
-#character-life-overlay .cl-manager-header::after,
-#character-life-skills-overlay .cl-skills-header::after,
-#character-life-continuity-overlay .cl190-manager > header::after {
-    display: none !important;
-}
-#character-life-overlay .cl-brand-mark,
-#character-life-skills-overlay .cl-skills-mark,
-#character-life-continuity-overlay .cl190-mark {
-    width: 38px !important;
-    min-width: 38px !important;
-    height: 38px !important;
-    border: 1px solid color-mix(in srgb, var(--cl12-accent) 45%, var(--cl12-border)) !important;
-    border-radius: 8px !important;
-    color: var(--cl12-accent) !important;
-    background: color-mix(in srgb, var(--cl12-accent) 10%, transparent) !important;
-    transform: none !important;
-}
-#character-life-overlay .cl-brand-mark i,
-#character-life-skills-overlay .cl-skills-mark i,
-#character-life-continuity-overlay .cl190-mark i {
-    transform: none !important;
-}
-#character-life-overlay .cl-manager-header small,
-#character-life-skills-overlay .cl-skills-header small,
-#character-life-continuity-overlay .cl190-manager > header small {
-    color: var(--cl12-muted) !important;
-    font-size: .66rem !important;
-    font-weight: 600;
-    letter-spacing: .12em !important;
-    line-height: 1.2;
-}
-#character-life-overlay .cl-manager-header h2,
-#character-life-skills-overlay .cl-skills-header h2,
-#character-life-continuity-overlay .cl190-manager > header h2 {
-    margin: 1px 0 0 !important;
-    color: var(--cl12-text) !important;
-    font-size: 1.12rem !important;
-    font-weight: 650 !important;
-    line-height: 1.22;
-    letter-spacing: 0 !important;
-}
-#character-life-overlay .cl-manager-back,
-#character-life-overlay .cl-manager-header > .menu_button,
-#character-life-skills-overlay .cl-skills-header > button,
-#character-life-continuity-overlay .cl190-manager > header > button {
-    width: 40px !important;
-    min-width: 40px !important;
-    height: 40px !important;
-    min-height: 40px !important;
-    padding: 0 !important;
-    border: 1px solid var(--cl12-border) !important;
-    border-radius: 7px !important;
-    color: var(--cl12-text) !important;
-    background: transparent !important;
-    box-shadow: none !important;
-}
-#character-life-overlay .cl-manager-back:hover,
-#character-life-overlay .cl-manager-header > .menu_button:hover,
-#character-life-skills-overlay .cl-skills-header > button:hover,
-#character-life-continuity-overlay .cl190-manager > header > button:hover {
-    background: var(--cl12-soft-strong) !important;
 }
 
 /* Characters and Skills share a clear library workspace, not decorative cards. */
@@ -1379,173 +1275,11 @@ body.character-life-open { overflow: hidden; }
     background: color-mix(in srgb, var(--cl12-bg) 95%, black 5%) !important;
 }
 
-/* Continuity: compact destination grid and calm readable content. */
-#character-life-continuity-overlay .cl190-tabs.cl-continuity-tabs {
-    display: grid !important;
-    grid-template-columns: repeat(7, minmax(0, 1fr)) !important;
-    gap: 4px !important;
-    min-width: 0 !important;
-    min-height: 0 !important;
-    height: auto !important;
-    padding: 7px 9px !important;
-    overflow: visible !important;
-    border: 0 !important;
-    border-bottom: 1px solid var(--cl12-border) !important;
-    background: var(--cl12-bg) !important;
-}
-#character-life-continuity-overlay .cl190-tabs button {
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    gap: 6px !important;
-    min-width: 0 !important;
-    min-height: 38px !important;
-    padding: 6px 7px !important;
-    border: 1px solid transparent !important;
-    border-radius: 7px !important;
-    color: var(--cl12-muted) !important;
-    background: transparent !important;
-    box-shadow: none !important;
-    white-space: normal !important;
-    overflow-wrap: anywhere;
-}
-#character-life-continuity-overlay .cl190-tabs button:hover,
-#character-life-continuity-overlay .cl190-tabs button.is-active {
-    color: var(--cl12-text) !important;
-    border-color: color-mix(in srgb, var(--cl12-accent) 36%, var(--cl12-border)) !important;
-    background: var(--cl12-soft-strong) !important;
-}
-#character-life-continuity-overlay .cl-continuity-layout {
-    min-width: 0 !important;
-    min-height: 0 !important;
-    overflow: hidden !important;
-    background: var(--cl12-bg) !important;
-}
-#character-life-continuity-overlay .cl190-body.cl-npc-detail {
-    display: grid !important;
-    align-content: start !important;
-    gap: 10px !important;
-    min-width: 0 !important;
-    min-height: 0 !important;
-    width: 100% !important;
-    height: 100% !important;
-    box-sizing: border-box;
-    padding: 16px !important;
-    overflow-x: hidden !important;
-    overflow-y: auto !important;
-    color: var(--cl12-text) !important;
-    background: var(--cl12-bg) !important;
-    -webkit-overflow-scrolling: touch;
-}
-#character-life-continuity-overlay .cl190-card,
-#character-life-continuity-overlay .cl190-stat-grid > div,
-#character-life-continuity-overlay .cl190-scene-grid > div,
-#character-life-continuity-overlay .cl190-empty {
-    border: 1px solid var(--cl12-border) !important;
-    border-radius: 9px !important;
-    color: var(--cl12-text) !important;
-    background: var(--cl12-soft) !important;
-    box-shadow: none !important;
-}
-#character-life-continuity-overlay .cl190-card {
-    padding: 14px 15px !important;
-}
-#character-life-continuity-overlay .cl190-card::before {
-    display: none !important;
-}
-#character-life-continuity-overlay .cl190-card h4 {
-    margin: 0 0 7px !important;
-    color: var(--cl12-text) !important;
-    font-size: .9rem !important;
-    font-weight: 650 !important;
-    letter-spacing: 0 !important;
-    text-transform: none;
-}
-#character-life-continuity-overlay .cl190-card p,
-#character-life-continuity-overlay .cl190-stat-grid span,
-#character-life-continuity-overlay .cl190-scene-grid small {
-    color: var(--cl12-muted) !important;
-}
-#character-life-continuity-overlay .cl190-stat-grid,
-#character-life-continuity-overlay .cl190-scene-grid {
-    gap: 8px !important;
-}
-#character-life-continuity-overlay .cl190-stat-grid > div {
-    min-height: 86px !important;
-    padding: 12px !important;
-}
-#character-life-continuity-overlay .cl190-stat-grid b {
-    color: var(--cl12-text) !important;
-    font-size: 1.55rem !important;
-    font-weight: 600 !important;
-}
-#character-life-continuity-overlay .cl190-kind,
-#character-life-continuity-overlay .cl190-chips span,
-#character-life-continuity-overlay .cl190-skill-meta span {
-    border: 1px solid var(--cl12-border) !important;
-    color: var(--cl12-text) !important;
-    background: var(--cl12-soft) !important;
-}
-
-/* Long values always wrap in all three tools. */
-#character-life-overlay :is(h2,h3,h4,p,span,strong,small,dd,label,button),
-#character-life-skills-overlay :is(h2,h3,h4,p,span,strong,small,label,button),
-#character-life-continuity-overlay :is(h2,h3,h4,p,span,strong,small,label,button) {
-    min-width: 0;
-    overflow-wrap: anywhere;
-    word-break: normal;
-}
-
 /* Phone layout: one viewport, one content scroller, safe-area-aware controls. */
 @media (max-width: 760px) {
-    #character-life-overlay.is-open,
-    #character-life-skills-overlay.is-open,
-    #character-life-continuity-overlay.is-open {
-        display: flex !important;
-        inset: 0 !important;
-        width: 100% !important;
-        height: 100vh !important;
-        height: 100svh !important;
-        height: 100dvh !important;
-        padding: 0 !important;
-        align-items: stretch !important;
-        justify-content: stretch !important;
-    }
-    #character-life-overlay .cl-manager,
-    #character-life-skills-overlay .cl-skills-manager.cl-feature-manager,
-    #character-life-continuity-overlay .cl190-manager.cl-feature-manager {
-        width: 100% !important;
-        height: 100vh !important;
-        height: 100svh !important;
-        height: 100dvh !important;
-        min-height: 0 !important;
-        max-height: none !important;
-        border: 0 !important;
-        border-radius: 0 !important;
-        box-shadow: none !important;
-    }
-    #character-life-overlay .cl-manager-header,
-    #character-life-skills-overlay .cl-skills-header.cl-manager-header,
-    #character-life-continuity-overlay .cl190-manager > header.cl-manager-header {
-        min-height: calc(58px + env(safe-area-inset-top)) !important;
-        padding: calc(8px + env(safe-area-inset-top)) 9px 8px !important;
-    }
     #character-life-overlay .cl-manager-header {
         grid-template-columns: auto 36px minmax(0, 1fr) 40px !important;
         gap: 7px !important;
-    }
-    #character-life-overlay .cl-brand-mark,
-    #character-life-skills-overlay .cl-skills-mark,
-    #character-life-continuity-overlay .cl190-mark {
-        width: 36px !important;
-        min-width: 36px !important;
-        height: 36px !important;
-    }
-    #character-life-overlay .cl-manager-header h2,
-    #character-life-skills-overlay .cl-skills-header h2,
-    #character-life-continuity-overlay .cl190-manager > header h2 {
-        max-width: none !important;
-        font-size: 1rem !important;
     }
     #character-life-overlay .cl-manager-toolbar,
     #character-life-skills-overlay .cl-skills-toolbar.cl-manager-toolbar {
@@ -1624,45 +1358,12 @@ body.character-life-open { overflow: hidden; }
         max-width: min(78vw, 280px);
         font-size: .76rem;
     }
-    #character-life-continuity-overlay .cl190-tabs.cl-continuity-tabs {
-        grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
-        gap: 3px !important;
-        padding: 5px 6px !important;
-    }
-    #character-life-continuity-overlay .cl190-tabs button {
-        display: grid !important;
-        grid-template-rows: 15px minmax(0, 1fr) !important;
-        gap: 2px !important;
-        min-height: 43px !important;
-        padding: 4px 2px !important;
-        font-size: .66rem;
-        line-height: 1.05;
-    }
-    #character-life-continuity-overlay .cl190-tabs button i {
-        font-size: .78rem;
-    }
-    #character-life-continuity-overlay .cl190-body.cl-npc-detail {
-        padding: 10px 8px calc(14px + env(safe-area-inset-bottom)) !important;
-    }
-    #character-life-continuity-overlay .cl190-stat-grid,
-    #character-life-continuity-overlay .cl190-scene-grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-    }
 }
 
 @media (max-width: 360px) {
-    #character-life-continuity-overlay .cl190-tabs button {
-        font-size: .61rem;
-    }
-    #character-life-overlay .cl-manager-header small,
-    #character-life-skills-overlay .cl-skills-header small,
-    #character-life-continuity-overlay .cl190-manager > header small {
-        display: none !important;
-    }
 }
 
 /* end styles/style-v172.css */
-
 
 /* inlined styles/style-v172-skills.css */
 /* Character Life v1.7.2 — Persistent media + generic Skill Indication */
@@ -2240,7 +1941,6 @@ body.character-life-open { overflow: hidden; }
 
 /* end styles/style-v172-skills.css */
 
-
 /* Character Life v1.7.2 Wand intelligence + transfer controls.
    Presentation only. Core chat designs remain in style-v172.css. */
 
@@ -2417,7 +2117,6 @@ body.character-life-open { overflow: hidden; }
 }
 
 /* end styles/style-v172-wand.css */
-
 
 /* Character Life v1.8.0 — Wand header/navigation refinement.
    Presentation only. Fixes the oversized expanding brand mark and makes
@@ -2645,7 +2344,6 @@ body.character-life-open { overflow: hidden; }
 
 /* end styles/style-v180-wand.css */
 
-
 /* inlined styles/style-v182-fixes.css */
 /* Character Life v1.8.2 — unified identity-color repair + Wand clarification. */
 
@@ -2682,14 +2380,12 @@ html[data-cl-unified-colors="true"] .mes_text.character-life-rendered .cl-chat-b
 
 /* end styles/style-v182-fixes.css */
 
-
 /* Character Life v1.8.2 aggregate stylesheet.
  * The historical Skill Storage manager skin is no longer imported; the current
  * feature shell owns the Skill window while the skill engine/indicator styles
  * continue to come from the established v1.7.2 feature stylesheet. */
 
 /* end styles/style-v182.css */
-
 
 /* inlined styles/qol-v183.css */
 /* Character Life v1.8.3 — native notifications + bulk NPC movement. */
@@ -2947,11 +2643,9 @@ html[data-cl-unified-colors="true"] .mes_text.character-life-rendered .cl-chat-b
 
 /* end styles/qol-v183.css */
 
-
 /* Character Life v1.8.3 aggregate stylesheet. */
 
 /* end styles/style-v183.css */
-
 
 /* inlined styles/profile-builder-v184.css */
 /* Character Life v1.8.4 — sparse profile / one-call builder. */
@@ -3061,11 +2755,9 @@ html[data-cl-unified-colors="true"] .mes_text.character-life-rendered .cl-chat-b
 
 /* end styles/profile-builder-v184.css */
 
-
 /* Character Life v1.8.4 aggregate stylesheet. */
 
 /* end styles/style-v184.css */
-
 
 /* inlined styles/settings.css */
 /* Character Life settings organization.
@@ -3177,25 +2869,6 @@ html[data-cl-unified-colors="true"] .mes_text.character-life-rendered .cl-chat-b
     margin: 0;
 }
 
-#character-life-settings .cl-settings-feature-shell .cl-settings-section-body > :is(
-    #character-life-skill-settings,
-    #character-life-qol-settings,
-    #character-life-continuity-settings
-) {
-    margin: 0 !important;
-    padding: 0 !important;
-    border: 0 !important;
-    border-radius: 0 !important;
-    background: transparent !important;
-    box-shadow: none !important;
-}
-
-#character-life-settings .cl-settings-feature-shell .cl-settings-section-body > :is(
-    #character-life-skill-settings,
-    #character-life-qol-settings,
-    #character-life-continuity-settings
-) > header { display: none !important; }
-
 #character-life-settings .cl-settings-feature-shell [data-character-life-version],
 #character-life-settings .cl-settings-feature-shell .cl-extension-version,
 #character-life-settings .cl-theme-version { display: none !important; }
@@ -3238,164 +2911,10 @@ html[data-cl-unified-colors="true"] .mes_text.character-life-rendered .cl-chat-b
     }
 }
 
-/* end styles/settings.css */
-
-
-/* inlined styles/npc-continuity-v198.css */
-/* Character Life v1.9.8 — selective NPC continuity lifecycle. */
-
-#character-life-continuity-settings .cl198-legacy-carry-hidden {
-    display: none !important;
-}
-
-.cl198-continuity-settings {
-    display: grid;
-    gap: 10px;
-    margin-top: 12px;
-    padding: 12px;
-    border: 1px solid color-mix(in srgb, var(--cl-ui-accent, #c39a62) 28%, var(--cl-line, #555));
-    background: linear-gradient(120deg, color-mix(in srgb, var(--cl-ui-accent, #c39a62) 6%, transparent), transparent 62%);
-}
-
-.cl198-continuity-settings > header,
-.cl198-npc-persistence > header {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    color: var(--cl-ui-accent, var(--cl-header-color, #c39a62));
-    font-size: .78em;
-    font-weight: 700;
-    letter-spacing: .12em;
-}
-
-.cl198-continuity-settings > label:not(.checkbox_label) {
-    display: grid;
-    gap: 5px;
-}
-
-.cl198-continuity-settings > label > span,
-.cl198-persistence-grid label > span {
-    color: var(--cl-muted, #aaa);
-    font-size: .86em;
-}
-
-.cl198-continuity-settings input[type="number"],
-.cl198-continuity-settings select,
-.cl198-persistence-grid select {
-    width: 100%;
-    min-height: 38px;
-    box-sizing: border-box;
-}
-
-.cl198-continuity-settings small,
-.cl198-continuity-settings > p,
-.cl198-npc-persistence > p {
-    margin: 0;
-    color: var(--cl-muted, #aaa);
-    font-size: .82em;
-    line-height: 1.45;
-}
-
-.cl198-continuity-settings > p strong {
-    color: color-mix(in srgb, var(--cl-ui-accent, #c39a62) 72%, var(--cl-ink, #eee) 28%);
-}
-
-.cl198-continuity-badge {
-    display: inline-flex;
-    align-items: center;
-    width: fit-content;
-    max-width: 100%;
-    margin-top: 2px;
-    padding: 1px 6px;
-    border: 1px solid color-mix(in srgb, var(--cl-header-color, #c39a62) 24%, transparent);
-    color: color-mix(in srgb, var(--cl-header-color, #c39a62) 70%, var(--cl-muted, #aaa) 30%);
-    font-size: .66em;
-    line-height: 1.4;
-    letter-spacing: .06em;
-    text-transform: uppercase;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.cl198-continuity-badge[data-stage="candidate"] {
-    border-color: color-mix(in srgb, var(--cl-header-color, #c39a62) 44%, transparent);
-    color: color-mix(in srgb, var(--cl-header-color, #c39a62) 86%, var(--cl-ink, #eee) 14%);
-}
-
-.cl198-continuity-badge[data-stage="persistent"] {
-    background: color-mix(in srgb, var(--cl-header-color, #c39a62) 10%, transparent);
-}
-
-.cl198-continuity-badge[data-stage="chat-only"] {
-    opacity: .72;
-}
-
-.cl198-npc-persistence {
-    display: grid;
-    gap: 10px;
-}
-
-.cl198-persistence-grid {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    gap: 10px;
-    align-items: end;
-}
-
-.cl198-persistence-grid label {
-    display: grid;
-    gap: 5px;
-}
-
-.cl198-score {
-    display: grid;
-    gap: 3px;
-    min-width: 92px;
-    padding: 6px 9px;
-    border-left: 2px solid var(--cl-header-color, #c39a62);
-    background: color-mix(in srgb, var(--cl-header-color, #c39a62) 6%, transparent);
-}
-
-.cl198-score small {
-    color: var(--cl-muted, #aaa);
-    font-size: .68em;
-    text-transform: uppercase;
-    letter-spacing: .08em;
-}
-
-.cl198-score strong {
-    color: var(--cl-ink, #eee);
-    font-size: 1.05em;
-}
-
-.cl198-score strong span {
-    color: var(--cl-muted, #aaa);
-    font-size: .75em;
-    font-weight: 400;
-}
-
 @media (max-width: 760px) {
-    .cl198-continuity-settings {
-        padding: 10px;
-    }
-
-    .cl198-persistence-grid {
-        grid-template-columns: 1fr;
-    }
-
-    .cl198-score {
-        min-width: 0;
-    }
 }
-
-/* end styles/npc-continuity-v198.css */
-
 
 /* inlined styles/feature-shell-v1913.css */
-/* Character Life v1.9.13 — NPC Library is the single visual reference.
-   Skill Storage and Continuity keep their engines, but their windows now use
-   the same shell, header, controls, spacing, surfaces, and responsive behavior. */
 
 :root {
     --cl1913-accent: var(--cl-header-color, var(--cl-ui-accent, #c39a62));
@@ -3407,91 +2926,9 @@ html[data-cl-unified-colors="true"] .mes_text.character-life-rendered .cl-chat-b
     --cl1913-soft-line: color-mix(in srgb, var(--cl1913-ink) 10%, transparent);
 }
 
-html[data-character-life-shell="1.9.13"] #character-life-skill-storage-launcher,
-html[data-character-life-shell="1.9.13"] #character-life-continuity-launcher,
-#character-life-overlay [data-cl-open-skills] {
-    display: none !important;
-}
-
 html.character-life-product-open,
 html.character-life-product-open body {
     overscroll-behavior: none;
-}
-
-/* ---------- Overlay stack: backdrop can never sit above the dialog ---------- */
-#character-life-skills-overlay,
-#character-life-continuity-overlay {
-    position: fixed !important;
-    inset: 0 !important;
-    z-index: 31010 !important;
-    display: none !important;
-    place-items: center !important;
-    width: 100vw !important;
-    height: 100vh !important;
-    height: 100dvh !important;
-    margin: 0 !important;
-    padding: 24px !important;
-    box-sizing: border-box !important;
-    overflow: hidden !important;
-    pointer-events: none !important;
-}
-
-#character-life-skills-overlay.is-open,
-#character-life-continuity-overlay.is-open {
-    display: grid !important;
-    pointer-events: auto !important;
-}
-
-#character-life-skills-overlay .cl-skills-backdrop,
-#character-life-continuity-overlay .cl190-backdrop {
-    position: absolute !important;
-    inset: 0 !important;
-    z-index: 0 !important;
-    width: 100% !important;
-    height: 100% !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    border: 0 !important;
-    background: color-mix(in srgb, #000 72%, transparent) !important;
-    backdrop-filter: blur(8px) !important;
-    -webkit-backdrop-filter: blur(8px) !important;
-    pointer-events: auto !important;
-    touch-action: manipulation;
-}
-
-#character-life-skills-overlay .cl-feature-manager,
-#character-life-continuity-overlay .cl-feature-manager {
-    position: relative !important;
-    z-index: 2 !important;
-    isolation: isolate;
-    pointer-events: auto !important;
-    width: min(1160px, 100%) !important;
-    height: min(860px, calc(100dvh - 48px)) !important;
-    max-width: 1160px !important;
-    max-height: none !important;
-    margin: 0 !important;
-    overflow: hidden !important;
-    color: var(--cl-ink, var(--cl1913-ink)) !important;
-    border: 1px solid color-mix(in srgb, var(--cl-header-color, var(--cl1913-accent)) 48%, var(--cl-line, var(--cl1913-line))) !important;
-    border-radius: 0 !important;
-    background:
-        linear-gradient(135deg, color-mix(in srgb, var(--cl-surface-strong, var(--cl1913-bg)) 96%, var(--cl-header-color, var(--cl1913-accent)) 4%), var(--cl-surface-strong, var(--cl1913-bg)) 56%),
-        radial-gradient(circle at 8% 4%, color-mix(in srgb, var(--cl-header-color, var(--cl1913-accent)) 14%, transparent), transparent 42%) !important;
-    box-shadow: 0 24px 90px color-mix(in srgb, #000 68%, transparent) !important;
-    clip-path: polygon(0 0, calc(100% - 22px) 0, 100% 22px, 100% 100%, 22px 100%, 0 calc(100% - 22px)) !important;
-}
-
-#character-life-skills-overlay .cl-feature-manager::before,
-#character-life-continuity-overlay .cl-feature-manager::before {
-    content: "" !important;
-    display: block !important;
-    position: absolute !important;
-    inset: 7px !important;
-    z-index: 50 !important;
-    border: 1px solid color-mix(in srgb, var(--cl-header-color, var(--cl1913-accent)) 14%, transparent) !important;
-    border-radius: 0 !important;
-    clip-path: inherit !important;
-    pointer-events: none !important;
 }
 
 #character-life-skills-overlay .cl-feature-manager {
@@ -3500,116 +2937,11 @@ html.character-life-product-open body {
     grid-template-rows: auto auto auto minmax(0, 1fr) auto !important;
 }
 
-#character-life-continuity-overlay .cl-feature-manager {
-    display: grid !important;
-    grid-template-columns: minmax(0, 1fr) !important;
-    grid-template-rows: auto auto auto minmax(0, 1fr) !important;
-}
-
 /* NPC Library receives the same extra product-navigation row. */
 #character-life-overlay .cl-manager:has(> [data-cl-product-nav]) {
     grid-template-rows: auto auto auto minmax(0, 1fr) auto !important;
 }
 
-/* ---------- Header: reuse the current NPC Library design exactly ---------- */
-#character-life-skills-overlay .cl-skills-header.cl-manager-header,
-#character-life-continuity-overlay .cl190-manager > header.cl-manager-header {
-    position: relative !important;
-    z-index: 60 !important;
-    display: flex !important;
-    align-items: center !important;
-    gap: 10px !important;
-    min-height: 60px !important;
-    padding: 9px 14px !important;
-    border: 0 !important;
-    border-bottom: 0 !important;
-    border-radius: 0 !important;
-    background: linear-gradient(90deg,
-        color-mix(in srgb, var(--cl-header-color) 6%, var(--cl-surface-strong)),
-        var(--cl-surface-strong) 72%) !important;
-}
-
-#character-life-skills-overlay .cl-skills-header::after,
-#character-life-continuity-overlay .cl190-manager > header::after {
-    content: none !important;
-    display: none !important;
-}
-
-#character-life-skills-overlay .cl-skills-header > .cl-brand-mark,
-#character-life-continuity-overlay .cl190-manager > header > .cl-brand-mark {
-    display: grid !important;
-    place-items: center !important;
-    width: 34px !important;
-    height: 34px !important;
-    min-width: 34px !important;
-    flex: 0 0 34px !important;
-    transform: none !important;
-    border: 0 !important;
-    border-radius: 9px !important;
-    color: var(--cl-header-color) !important;
-    background: color-mix(in srgb, var(--cl-header-color) 11%, transparent) !important;
-    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--cl-header-color) 24%, transparent) !important;
-}
-
-#character-life-skills-overlay .cl-skills-header > .cl-brand-mark::before,
-#character-life-skills-overlay .cl-skills-header > .cl-brand-mark::after,
-#character-life-continuity-overlay .cl190-manager > header > .cl-brand-mark::before,
-#character-life-continuity-overlay .cl190-manager > header > .cl-brand-mark::after {
-    content: none !important;
-    display: none !important;
-}
-
-#character-life-skills-overlay .cl-skills-header > .cl-brand-mark i,
-#character-life-continuity-overlay .cl190-manager > header > .cl-brand-mark i {
-    transform: none !important;
-    font-size: 15px !important;
-}
-
-#character-life-skills-overlay .cl-skills-header > div:not(.cl-brand-mark),
-#character-life-continuity-overlay .cl190-manager > header > div:not(.cl-brand-mark) {
-    min-width: 0 !important;
-    flex: 1 1 auto !important;
-}
-
-#character-life-skills-overlay .cl-skills-header small,
-#character-life-continuity-overlay .cl190-manager > header small {
-    display: block !important;
-    color: var(--cl-muted) !important;
-    font-size: .69em !important;
-    font-weight: 400 !important;
-    letter-spacing: .14em !important;
-    opacity: .72 !important;
-}
-
-#character-life-skills-overlay .cl-skills-header h2,
-#character-life-continuity-overlay .cl190-manager > header h2 {
-    margin: 0 !important;
-    color: var(--cl-ink) !important;
-    font-family: inherit !important;
-    font-size: 1.08em !important;
-    font-weight: 620 !important;
-    letter-spacing: .025em !important;
-    line-height: 1.2 !important;
-}
-
-#character-life-skills-overlay .cl-skills-header > button,
-#character-life-continuity-overlay .cl190-manager > header > button {
-    position: relative !important;
-    z-index: 80 !important;
-    width: 38px !important;
-    min-width: 38px !important;
-    height: 38px !important;
-    min-height: 38px !important;
-    padding: 0 !important;
-    border: 1px solid color-mix(in srgb, var(--cl-line) 88%, transparent) !important;
-    border-radius: 9px !important;
-    color: var(--cl-muted) !important;
-    background: color-mix(in srgb, var(--cl-surface) 86%, transparent) !important;
-    pointer-events: auto !important;
-    touch-action: manipulation !important;
-}
-
-/* ---------- Main NPC / Skill / Continuity product navigation ---------- */
 .cl-product-nav {
     position: relative;
     z-index: 55;
@@ -3826,254 +3158,6 @@ html.character-life-product-open body {
 
 #character-life-skills-overlay .cl-skill-legacy-settings { display: none !important; }
 
-/* ---------- Continuity: new NPC-style window, stable one-row secondary tabs ---------- */
-#character-life-continuity-overlay .cl190-tabs.cl-continuity-tabs {
-    position: relative !important;
-    z-index: 40 !important;
-    display: flex !important;
-    align-items: stretch !important;
-    flex-wrap: nowrap !important;
-    gap: 2px !important;
-    width: 100% !important;
-    min-width: 0 !important;
-    min-height: 52px !important;
-    max-height: 52px !important;
-    margin: 0 !important;
-    padding: 6px 10px !important;
-    overflow-x: auto !important;
-    overflow-y: hidden !important;
-    border: 0 !important;
-    border-bottom: 1px solid color-mix(in srgb, var(--cl-line) 82%, transparent) !important;
-    background: linear-gradient(180deg,
-        var(--cl-surface-strong),
-        color-mix(in srgb, var(--cl-surface) 92%, transparent)) !important;
-    scrollbar-width: none;
-    -webkit-overflow-scrolling: touch;
-    touch-action: pan-x;
-}
-
-#character-life-continuity-overlay .cl190-tabs::-webkit-scrollbar { display: none; }
-
-#character-life-continuity-overlay .cl190-tabs button {
-    position: relative !important;
-    flex: 0 0 auto !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    gap: 6px !important;
-    min-width: 108px !important;
-    min-height: 38px !important;
-    max-height: 38px !important;
-    padding: 5px 10px !important;
-    border: 0 !important;
-    border-radius: 8px !important;
-    color: var(--cl-muted) !important;
-    background: transparent !important;
-    box-shadow: none !important;
-    opacity: 1 !important;
-    white-space: nowrap !important;
-    touch-action: manipulation !important;
-}
-
-#character-life-continuity-overlay .cl190-tabs button:hover,
-#character-life-continuity-overlay .cl190-tabs button.is-active {
-    color: var(--cl-ink) !important;
-    background: color-mix(in srgb, var(--cl-header-color) 13%, var(--cl-surface)) !important;
-    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--cl-header-color) 30%, transparent) !important;
-}
-
-#character-life-continuity-overlay .cl-continuity-layout {
-    position: relative !important;
-    z-index: 10 !important;
-    display: grid !important;
-    grid-template-columns: minmax(0, 1fr) !important;
-    grid-template-rows: minmax(0, 1fr) !important;
-    min-width: 0 !important;
-    min-height: 0 !important;
-    overflow: hidden !important;
-    background: var(--cl-surface-strong) !important;
-}
-
-#character-life-continuity-overlay .cl190-body.cl-npc-detail {
-    display: grid !important;
-    align-content: start !important;
-    gap: 12px !important;
-    min-width: 0 !important;
-    min-height: 0 !important;
-    width: 100% !important;
-    height: 100% !important;
-    padding: 18px !important;
-    overflow-x: hidden !important;
-    overflow-y: auto !important;
-    background: transparent !important;
-    -webkit-overflow-scrolling: touch;
-    touch-action: pan-y;
-}
-
-#character-life-continuity-overlay .cl190-card,
-#character-life-continuity-overlay .cl190-stat-grid > div,
-#character-life-continuity-overlay .cl190-scene-grid > div,
-#character-life-continuity-overlay .cl190-empty {
-    position: relative;
-    border: 1px solid var(--cl-line) !important;
-    border-radius: 0 !important;
-    color: var(--cl-ink) !important;
-    background: color-mix(in srgb, var(--cl-surface) 58%, transparent) !important;
-    box-shadow: none !important;
-}
-
-#character-life-continuity-overlay .cl190-card { padding: 15px 16px !important; }
-#character-life-continuity-overlay .cl190-card::before {
-    content: "";
-    position: absolute;
-    left: -1px;
-    top: 13px;
-    bottom: 13px;
-    width: 2px;
-    background: var(--cl-header-color);
-}
-
-#character-life-continuity-overlay .cl190-card h4 {
-    margin: 0 0 9px !important;
-    color: var(--cl-ink) !important;
-    font-size: .9em !important;
-    font-weight: 680 !important;
-    letter-spacing: .08em !important;
-    text-transform: uppercase;
-}
-
-#character-life-continuity-overlay .cl190-card p {
-    margin: 5px 0 !important;
-    color: color-mix(in srgb, var(--cl-ink) 80%, transparent) !important;
-    line-height: 1.5 !important;
-}
-
-#character-life-continuity-overlay .cl190-stat-grid {
-    display: grid !important;
-    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
-    gap: 10px !important;
-}
-
-#character-life-continuity-overlay .cl190-stat-grid > div {
-    min-height: 108px !important;
-    padding: 15px !important;
-}
-
-#character-life-continuity-overlay .cl190-stat-grid b {
-    display: block !important;
-    color: var(--cl-ink) !important;
-    font-size: 1.9em !important;
-    font-weight: 500 !important;
-}
-
-#character-life-continuity-overlay .cl190-stat-grid span { color: var(--cl-muted) !important; font-size: .78em !important; }
-
-#character-life-continuity-overlay .cl190-scene-grid {
-    display: grid !important;
-    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
-    gap: 10px !important;
-}
-
-#character-life-continuity-overlay .cl190-scene-grid > div { padding: 12px !important; }
-#character-life-continuity-overlay .cl190-scene-grid small { display: block; color: var(--cl-muted); margin-bottom: 3px; }
-
-#character-life-continuity-overlay .cl190-row {
-    display: grid !important;
-    grid-template-columns: auto minmax(0, 1fr) !important;
-    gap: 10px !important;
-    padding: 10px 0 !important;
-    border-top: 1px solid var(--cl-soft-line, var(--cl1913-soft-line)) !important;
-}
-
-#character-life-continuity-overlay .cl190-row:first-of-type { border-top: 0 !important; }
-
-#character-life-continuity-overlay .cl190-kind,
-#character-life-continuity-overlay .cl190-chips span,
-#character-life-continuity-overlay .cl190-skill-meta span {
-    display: inline-flex;
-    align-items: center;
-    width: max-content;
-    max-width: 100%;
-    padding: 4px 7px !important;
-    border: 1px solid color-mix(in srgb, var(--cl-header-color) 28%, var(--cl-line)) !important;
-    border-radius: 0 !important;
-    color: color-mix(in srgb, var(--cl-header-color) 78%, var(--cl-ink) 22%) !important;
-    background: color-mix(in srgb, var(--cl-header-color) 7%, transparent) !important;
-    font-size: .72em !important;
-}
-
-#character-life-continuity-overlay .cl190-metrics {
-    display: grid !important;
-    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-    gap: 7px !important;
-    margin-top: 10px !important;
-}
-
-#character-life-continuity-overlay .cl190-metrics label,
-#character-life-continuity-overlay .cl190-diagnostics > div {
-    display: flex !important;
-    justify-content: space-between !important;
-    gap: 8px !important;
-    padding: 8px 9px !important;
-    border: 1px solid var(--cl-soft-line, var(--cl1913-soft-line)) !important;
-    border-radius: 0 !important;
-    background: color-mix(in srgb, var(--cl-surface-strong) 74%, transparent) !important;
-}
-
-#character-life-continuity-overlay .cl190-diagnostics {
-    display: grid !important;
-    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-    gap: 7px !important;
-}
-
-#character-life-continuity-overlay .cl190-progress {
-    height: 7px !important;
-    margin: 11px 0 7px !important;
-    border-radius: 0 !important;
-    overflow: hidden !important;
-    background: color-mix(in srgb, var(--cl-ink) 8%, transparent) !important;
-}
-
-#character-life-continuity-overlay .cl190-progress i {
-    display: block !important;
-    height: 100% !important;
-    border-radius: 0 !important;
-    background: var(--cl-header-color) !important;
-}
-
-#character-life-continuity-overlay .cl190-empty {
-    display: grid !important;
-    place-items: center !important;
-    min-height: 220px !important;
-    padding: 24px !important;
-    text-align: center !important;
-    color: var(--cl-muted) !important;
-}
-
-#character-life-continuity-overlay .cl190-actions {
-    display: flex !important;
-    flex-wrap: wrap !important;
-    gap: 8px !important;
-    margin-top: 12px !important;
-}
-
-#character-life-continuity-overlay .cl190-actions button {
-    min-height: 38px !important;
-    padding: 7px 11px !important;
-    border: 1px solid var(--cl-line) !important;
-    border-radius: 0 !important;
-    color: var(--cl-ink) !important;
-    background: transparent !important;
-}
-
-/* Extension-drawer feature settings remain compact after old UI styles are removed. */
-#character-life-settings .cl-skill-settings-grid,
-#character-life-settings .cl190-settings-grid {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 9px 12px;
-}
-
 #character-life-settings .cl-skill-settings-master {
     align-items: flex-start !important;
     gap: 9px !important;
@@ -4085,69 +3169,6 @@ html.character-life-product-open body {
 
 /* ---------- Mobile: full-bleed like the NPC Library, no left gutter ---------- */
 @media (max-width: 760px) {
-    #character-life-skills-overlay,
-    #character-life-continuity-overlay {
-        inset: 0 !important;
-        left: 0 !important;
-        right: 0 !important;
-        top: 0 !important;
-        bottom: 0 !important;
-        width: 100vw !important;
-        width: 100dvw !important;
-        height: 100vh !important;
-        height: 100dvh !important;
-        padding: 0 !important;
-        margin: 0 !important;
-        align-items: stretch !important;
-        justify-items: stretch !important;
-    }
-
-    #character-life-skills-overlay .cl-feature-manager,
-    #character-life-continuity-overlay .cl-feature-manager {
-        width: 100vw !important;
-        width: 100dvw !important;
-        max-width: none !important;
-        height: 100vh !important;
-        height: 100dvh !important;
-        min-height: 0 !important;
-        max-height: none !important;
-        margin: 0 !important;
-        padding-top: env(safe-area-inset-top) !important;
-        padding-bottom: env(safe-area-inset-bottom) !important;
-        border-left: 0 !important;
-        border-right: 0 !important;
-        border-radius: 0 !important;
-        clip-path: none !important;
-    }
-
-    #character-life-skills-overlay .cl-feature-manager::before,
-    #character-life-continuity-overlay .cl-feature-manager::before { display: none !important; }
-
-    #character-life-skills-overlay .cl-skills-header.cl-manager-header,
-    #character-life-continuity-overlay .cl190-manager > header.cl-manager-header {
-        min-height: 54px !important;
-        padding: 7px 10px 6px !important;
-    }
-
-    #character-life-skills-overlay .cl-skills-header > .cl-brand-mark,
-    #character-life-continuity-overlay .cl190-manager > header > .cl-brand-mark {
-        width: 32px !important;
-        height: 32px !important;
-        min-width: 32px !important;
-        flex-basis: 32px !important;
-    }
-
-    #character-life-skills-overlay .cl-skills-header small,
-    #character-life-continuity-overlay .cl190-manager > header small { display: none !important; }
-
-    #character-life-skills-overlay .cl-skills-header h2,
-    #character-life-continuity-overlay .cl190-manager > header h2 {
-        font-size: 1em !important;
-        white-space: normal !important;
-        overflow: visible !important;
-        overflow-wrap: anywhere !important;
-        word-break: break-word !important;
-    }
 
     .cl-product-nav {
         min-height: 50px;
@@ -4233,43 +3254,11 @@ html.character-life-product-open body {
     #character-life-skills-overlay .cl-skills-layout > main.cl-npc-detail { padding: 14px 12px !important; }
     #character-life-skills-overlay .cl-skill-editor-grid { grid-template-columns: 1fr !important; }
     #character-life-skills-overlay .cl-skill-editor-grid .wide { grid-column: auto !important; }
-
-    #character-life-continuity-overlay .cl190-tabs.cl-continuity-tabs {
-        min-height: 48px !important;
-        max-height: 48px !important;
-        padding: 5px 7px !important;
-    }
-
-    #character-life-continuity-overlay .cl190-tabs button {
-        min-width: 104px !important;
-        min-height: 36px !important;
-        max-height: 36px !important;
-        padding-inline: 8px !important;
-        font-size: .83em !important;
-    }
-
-    #character-life-continuity-overlay .cl190-body.cl-npc-detail { padding: 12px !important; }
-    #character-life-continuity-overlay .cl190-stat-grid,
-    #character-life-continuity-overlay .cl190-scene-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
-    #character-life-continuity-overlay .cl190-metrics,
-    #character-life-continuity-overlay .cl190-diagnostics { grid-template-columns: 1fr !important; }
-
-    #character-life-settings .cl-skill-settings-grid,
-    #character-life-settings .cl190-settings-grid { grid-template-columns: 1fr; }
 }
 
 @media (max-width: 420px) {
     .cl-product-nav button { font-size: .76em; gap: 4px; }
     .cl-product-nav button i { display: none; }
-
-    #character-life-skills-overlay .cl-skills-header > .cl-brand-mark,
-    #character-life-continuity-overlay .cl190-manager > header > .cl-brand-mark {
-        width: 30px !important;
-        height: 30px !important;
-        min-width: 30px !important;
-        flex-basis: 30px !important;
-        border-radius: 8px !important;
-    }
 
     #character-life-skills-overlay .cl-skills-toolbar > .cl-primary {
         width: 44px !important;
@@ -4280,30 +3269,6 @@ html.character-life-product-open body {
 }
 
 @media (prefers-reduced-motion: reduce) {
-    #character-life-skills-overlay *,
-    #character-life-continuity-overlay * { scroll-behavior: auto !important; }
-}
-
-/* end styles/feature-shell-v1913.css */
-
-
-/* inlined styles/feature-shell-safety-v1913.css */
-/* Character Life v1.9.13 — first-frame interaction safety.
- * These rules apply before the runtime decorator adds shared shell classes, so
- * the Continuity backdrop can never cover its dialog during initial creation. */
-
-#character-life-skills-overlay > .cl-skills-manager,
-#character-life-continuity-overlay > .cl190-manager {
-    position: relative !important;
-    z-index: 2 !important;
-    pointer-events: auto !important;
-}
-
-#character-life-skills-overlay > .cl-skills-backdrop,
-#character-life-continuity-overlay > .cl190-backdrop {
-    position: absolute !important;
-    inset: 0 !important;
-    z-index: 0 !important;
 }
 
 /* Avoid relying on :has() for the NPC Library's fifth grid row. The runtime
@@ -4312,48 +3277,14 @@ html.character-life-product-open body {
     grid-template-rows: auto auto auto minmax(0, 1fr) auto !important;
 }
 
-/* end styles/feature-shell-safety-v1913.css */
-
-
-/* inlined styles/touch-interaction-v1914.css */
-/* Character Life v1.9.14 — coarse-pointer interaction reliability.
-   Touch devices should not require a first tap merely to enter :hover state. */
-
-#character-life-continuity-overlay details > summary {
-    cursor: pointer;
-    touch-action: manipulation;
-    -webkit-tap-highlight-color: transparent;
-    user-select: none;
-    -webkit-user-select: none;
-}
-
 @media (hover: none), (pointer: coarse) {
     .cl-product-nav button:not(.is-active):hover {
         color: var(--cl-muted) !important;
         background: transparent !important;
     }
-
-    #character-life-continuity-overlay .cl190-tabs button:not(.is-active):hover {
-        color: var(--cl-muted) !important;
-        background: transparent !important;
-        box-shadow: none !important;
-    }
-
-    .cl-product-nav button,
-    #character-life-continuity-overlay .cl190-tabs button,
-    #character-life-continuity-overlay details > summary {
-        -webkit-tap-highlight-color: transparent;
-        touch-action: manipulation;
-    }
 }
 
 /* end styles/touch-interaction-v1914.css */
-
-
-/* Character Life aggregate stylesheet. Release version comes from manifest.json.
- * Legacy Skill/Continuity window skins are intentionally not loaded; v1.9.13+
- * renders both tools through the same visual shell as the NPC Library. */
-
 
 /* Character Life v1.9.19 — approved A voice treatment, safe wrapping, and Wand launcher polish. */
 .mes_text.character-life-rendered .cl-chat-identity,
@@ -4461,7 +3392,6 @@ html.character-life-product-open body {
     #character-life-wand-launcher.cl-wand-launcher:not([hidden]) { min-height: 50px; padding: 8px 10px; }
     .mes_text.character-life-rendered .cl-chat-label { gap: 6px; letter-spacing: .09em; }
 }
-
 
 /* Character Life v1.10.0 — separated feature surfaces and expandable Wand menu.
    This is an enhancement layer: legacy selectors, engines, and persistence remain intact. */
@@ -4575,32 +3505,11 @@ html.character-life-product-open body {
     overflow-wrap: anywhere;
     white-space: normal;
 }
-
-/* Shared shell reset: no cross-feature navigation inside the feature modals. */
-#character-life-overlay .cl-product-nav,
-#character-life-skills-overlay .cl-product-nav,
-#character-life-continuity-overlay .cl-product-nav {
-    display: none !important;
-}
 #character-life-overlay .cl-manager {
     grid-template-rows: auto auto minmax(0, 1fr) auto !important;
 }
 #character-life-skills-overlay .cl-feature-manager {
     grid-template-rows: auto auto minmax(0, 1fr) auto !important;
-}
-#character-life-continuity-overlay .cl-feature-manager {
-    grid-template-rows: auto auto minmax(0, 1fr) !important;
-}
-#character-life-overlay .cl-manager-header h2,
-#character-life-skills-overlay .cl-skills-header h2,
-#character-life-continuity-overlay .cl190-manager > header h2,
-#character-life-overlay .cl-npc-row strong,
-#character-life-overlay .cl-npc-row small,
-#character-life-skills-overlay .cl-skill-row strong,
-#character-life-skills-overlay .cl-skill-row small {
-    white-space: normal;
-    overflow-wrap: anywhere;
-    word-break: break-word;
 }
 
 /* Characters — archive cards / warm parchment accent */
@@ -4718,82 +3627,6 @@ html.character-life-product-open body {
     border-top-color: rgba(137, 157, 207, .18);
 }
 
-/* Continuity — timeline / chronicle surface with direct-tap tab grid */
-#character-life-continuity-overlay .cl-feature-manager {
-    width: min(1140px, 96vw);
-    border: 1px solid rgba(193, 165, 104, .46);
-    border-radius: 14px;
-    background:
-        linear-gradient(90deg, rgba(193, 165, 104, .08) 1px, transparent 1px),
-        linear-gradient(rgba(193, 165, 104, .04) 1px, transparent 1px),
-        #151512;
-    background-size: 32px 32px;
-    box-shadow: 0 24px 72px rgba(0, 0, 0, .54), inset 0 1px rgba(255,255,255,.05);
-}
-#character-life-continuity-overlay .cl190-manager > header {
-    border-bottom: 1px solid rgba(193, 165, 104, .24);
-    background: linear-gradient(90deg, rgba(193, 165, 104, .13), transparent 68%);
-}
-#character-life-continuity-overlay .cl190-mark {
-    color: #ddc487;
-    background: rgba(193, 165, 104, .13);
-    border-color: rgba(193, 165, 104, .42);
-}
-#character-life-continuity-overlay .cl190-manager > header h2 {
-    color: #f1db9f;
-    letter-spacing: .025em;
-}
-#character-life-continuity-overlay .cl190-tabs.cl-continuity-tabs {
-    display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 8px;
-    height: auto;
-    max-height: none;
-    overflow: visible;
-    padding: 12px;
-    border-bottom: 1px solid rgba(193, 165, 104, .20);
-    background: rgba(0, 0, 0, .16);
-}
-#character-life-continuity-overlay .cl190-tabs button {
-    min-width: 0;
-    min-height: 42px;
-    padding: 8px 10px;
-    white-space: normal;
-    overflow-wrap: anywhere;
-    line-height: 1.2;
-    border: 1px solid rgba(193, 165, 104, .20);
-    border-radius: 8px;
-    color: rgba(245, 227, 177, .72);
-    background: rgba(193, 165, 104, .06);
-}
-#character-life-continuity-overlay .cl190-tabs button:hover,
-#character-life-continuity-overlay .cl190-tabs button.is-active {
-    color: #fff0c6;
-    border-color: rgba(193, 165, 104, .64);
-    background: rgba(193, 165, 104, .19);
-}
-#character-life-continuity-overlay .cl190-body {
-    min-height: 0;
-    overflow: auto;
-    padding: 16px;
-    background: rgba(8, 8, 6, .24);
-}
-#character-life-continuity-overlay .cl190-body h3,
-#character-life-continuity-overlay .cl190-body h4 {
-    overflow-wrap: anywhere;
-    line-height: 1.28;
-    color: #f1db9f;
-}
-#character-life-continuity-overlay .cl190-body p,
-#character-life-continuity-overlay .cl190-body li,
-#character-life-continuity-overlay .cl190-body label {
-    overflow-wrap: anywhere;
-    line-height: 1.5;
-}
-#character-life-continuity-overlay .cl190-body > * {
-    max-width: 100%;
-}
-
 /* Full-height mobile layout; all three surfaces keep readable wrapping. */
 @media (max-width: 720px) {
     #character-life-wand-launcher .cl-wand-parent {
@@ -4803,36 +3636,6 @@ html.character-life-product-open body {
     }
     #character-life-wand-launcher .cl-wand-submenu {
         margin-left: 14px;
-    }
-    #character-life-overlay,
-    #character-life-skills-overlay,
-    #character-life-continuity-overlay {
-        align-items: stretch;
-        justify-content: stretch;
-        padding: 0;
-    }
-    #character-life-overlay .cl-manager,
-    #character-life-skills-overlay .cl-feature-manager,
-    #character-life-continuity-overlay .cl-feature-manager {
-        width: 100dvw;
-        max-width: none;
-        height: 100dvh;
-        max-height: none;
-        min-height: 100dvh;
-        border-left: 0;
-        border-right: 0;
-        border-radius: 0;
-    }
-    #character-life-overlay .cl-manager-header,
-    #character-life-skills-overlay .cl-skills-header,
-    #character-life-continuity-overlay .cl190-manager > header {
-        padding-top: max(12px, env(safe-area-inset-top));
-    }
-    #character-life-overlay .cl-manager-header h2,
-    #character-life-skills-overlay .cl-skills-header h2,
-    #character-life-continuity-overlay .cl190-manager > header h2 {
-        max-width: min(70vw, 270px);
-        font-size: clamp(1.05rem, 5vw, 1.35rem);
     }
     #character-life-skills-overlay .cl-skills-layout {
         display: block !important;
@@ -4855,22 +3658,7 @@ html.character-life-product-open body {
     #character-life-skills-overlay .cl-skills-manager[data-mobile-view="editor"] .cl-skill-detail {
         display: none !important;
     }
-    #character-life-continuity-overlay .cl190-tabs.cl-continuity-tabs {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 6px;
-        padding: 8px;
-    }
-    #character-life-continuity-overlay .cl190-tabs button {
-        min-height: 44px;
-        padding: 7px 6px;
-        font-size: .78rem;
-    }
-    #character-life-continuity-overlay .cl190-body {
-        padding: 12px;
-        padding-bottom: max(12px, env(safe-area-inset-bottom));
-    }
 }
-
 
 /* Character Life v1.10.1 — SillyTavern-native Wand and Extensions styling.
    Keep feature behavior and the Character Life palette; use ST's compact rows,
@@ -5130,12 +3918,6 @@ html.character-life-product-open body {
 #character-life-settings textarea {
     border-radius: 4px;
 }
-#character-life-settings .cl198-continuity-settings,
-#character-life-settings .cl183-qol-settings,
-#character-life-settings .cl196-diagnostics {
-    border-radius: 5px;
-    box-shadow: none;
-}
 @media (max-width: 620px) {
     #character-life-settings .inline-drawer-content {
         padding-inline: 6px;
@@ -5153,56 +3935,6 @@ html.character-life-product-open body {
         margin-left: 27px;
         padding-left: 6px;
     }
-}
-
-
-/* Character Life v1.11.0 — complete mobile-first feature UI redesign.
-   Characters, Skill Storage, and Continuity intentionally have separate visual
-   systems while sharing the same safe viewport, touch, and overflow rules. */
-
-/* ---------- Shared full-screen interaction contract ---------- */
-#character-life-overlay,
-#character-life-skills-overlay,
-#character-life-continuity-overlay {
-    box-sizing: border-box;
-    overflow: hidden;
-    overscroll-behavior: none;
-    -webkit-tap-highlight-color: transparent;
-}
-#character-life-overlay .cl-manager,
-#character-life-skills-overlay .cl-skills-manager,
-#character-life-continuity-overlay .cl190-manager {
-    box-sizing: border-box;
-    min-width: 0;
-    min-height: 0;
-    max-width: 100%;
-    max-height: 100%;
-    overflow: hidden;
-    overscroll-behavior: contain;
-}
-#character-life-overlay button,
-#character-life-overlay input,
-#character-life-overlay select,
-#character-life-overlay textarea,
-#character-life-skills-overlay button,
-#character-life-skills-overlay input,
-#character-life-skills-overlay select,
-#character-life-skills-overlay textarea,
-#character-life-continuity-overlay button,
-#character-life-continuity-overlay input,
-#character-life-continuity-overlay select,
-#character-life-continuity-overlay textarea {
-    touch-action: manipulation;
-}
-#character-life-overlay .cl-manager-header h2,
-#character-life-skills-overlay .cl-skills-header h2,
-#character-life-continuity-overlay .cl190-manager > header h2,
-#character-life-overlay .cl-manager-header small,
-#character-life-skills-overlay .cl-skills-header small,
-#character-life-continuity-overlay .cl190-manager > header small {
-    min-width: 0;
-    overflow-wrap: anywhere;
-    white-space: normal;
 }
 
 /* ---------- Characters: Field Archive ---------- */
@@ -5649,227 +4381,8 @@ html.character-life-product-open body {
     max-width: 100%;
 }
 
-/* ---------- Continuity: Chronicle Map ---------- */
-#character-life-continuity-overlay .cl190-manager {
-    --cl-header-color: #f0b86c;
-    --cl-ink: #fff5e6;
-    --cl-muted: rgba(255, 235, 204, .66);
-    --cl-line: rgba(240, 184, 108, .24);
-    --cl-surface: #211a14;
-    --cl-surface-strong: #15110e;
-    width: min(1180px, calc(100vw - 32px));
-    height: min(900px, calc(100vh - 32px));
-    height: min(900px, calc(100dvh - 32px));
-    max-height: none;
-    grid-template-rows: auto auto minmax(0, 1fr) !important;
-    border: 1px solid rgba(240, 184, 108, .38);
-    border-radius: 18px;
-    background:
-        linear-gradient(145deg, rgba(240, 184, 108, .08), transparent 38%),
-        #15110e;
-    box-shadow: 0 24px 90px rgba(0, 0, 0, .62);
-}
-#character-life-continuity-overlay .cl190-manager > header {
-    min-height: 74px !important;
-    padding: 12px 18px !important;
-    border-bottom: 1px solid rgba(240, 184, 108, .20) !important;
-    background: linear-gradient(90deg, rgba(240, 184, 108, .13), transparent 65%) !important;
-}
-#character-life-continuity-overlay .cl190-manager > header > .cl190-mark {
-    width: 42px !important;
-    height: 42px !important;
-    min-width: 42px !important;
-    border: 1px solid rgba(240, 184, 108, .46) !important;
-    border-radius: 12px !important;
-    color: #ffd28d !important;
-    background: rgba(240, 184, 108, .12) !important;
-}
-#character-life-continuity-overlay .cl190-manager > header small {
-    color: #f0bd79 !important;
-}
-#character-life-continuity-overlay .cl190-manager > header h2 {
-    color: #fff5e6 !important;
-    font-size: clamp(1.08rem, 2vw, 1.35rem) !important;
-    font-weight: 650 !important;
-}
-#character-life-continuity-overlay .cl190-manager > header > button {
-    width: 42px !important;
-    min-width: 42px !important;
-    height: 42px !important;
-    min-height: 42px !important;
-    border: 1px solid rgba(240, 184, 108, .30) !important;
-    border-radius: 10px !important;
-    color: #ffe1ad !important;
-    background: transparent !important;
-}
-#character-life-continuity-overlay .cl190-tabs.cl-continuity-tabs {
-    display: grid !important;
-    grid-template-columns: repeat(7, minmax(0, 1fr)) !important;
-    align-items: stretch !important;
-    gap: 5px !important;
-    width: 100% !important;
-    min-width: 0 !important;
-    min-height: 62px !important;
-    max-height: none !important;
-    box-sizing: border-box;
-    padding: 8px 12px !important;
-    overflow: visible !important;
-    border-bottom: 1px solid rgba(240, 184, 108, .20) !important;
-    background: #1b1510 !important;
-}
-#character-life-continuity-overlay .cl190-tabs button {
-    display: grid !important;
-    grid-template-rows: 20px minmax(0, 1fr);
-    align-content: center;
-    justify-items: center;
-    gap: 3px !important;
-    min-width: 0 !important;
-    min-height: 44px !important;
-    max-height: none !important;
-    padding: 6px 5px !important;
-    border: 1px solid transparent !important;
-    border-radius: 9px !important;
-    color: rgba(255, 235, 204, .64) !important;
-    background: transparent !important;
-    white-space: normal !important;
-    overflow-wrap: anywhere;
-    line-height: 1.12;
-}
-#character-life-continuity-overlay .cl190-tabs button i {
-    font-size: .92em;
-}
-#character-life-continuity-overlay .cl190-tabs button:hover,
-#character-life-continuity-overlay .cl190-tabs button.is-active {
-    color: #fff2d4 !important;
-    border-color: rgba(240, 184, 108, .42) !important;
-    background: rgba(240, 184, 108, .14) !important;
-    box-shadow: none !important;
-}
-#character-life-continuity-overlay .cl-continuity-layout {
-    min-width: 0 !important;
-    min-height: 0 !important;
-    overflow: hidden !important;
-    background: #15110e !important;
-}
-#character-life-continuity-overlay .cl190-body.cl-npc-detail {
-    display: grid !important;
-    align-content: start !important;
-    gap: 14px !important;
-    min-width: 0 !important;
-    min-height: 0 !important;
-    width: 100% !important;
-    height: 100% !important;
-    box-sizing: border-box;
-    padding: clamp(16px, 3vw, 28px) !important;
-    overflow-x: hidden !important;
-    overflow-y: auto !important;
-    background: transparent !important;
-    -webkit-overflow-scrolling: touch;
-}
-#character-life-continuity-overlay .cl190-card,
-#character-life-continuity-overlay .cl190-stat-grid > div,
-#character-life-continuity-overlay .cl190-scene-grid > div,
-#character-life-continuity-overlay .cl190-empty {
-    border: 1px solid rgba(240, 184, 108, .22) !important;
-    border-radius: 14px !important;
-    color: #fff5e6 !important;
-    background: rgba(33, 26, 20, .76) !important;
-    box-shadow: none !important;
-}
-#character-life-continuity-overlay .cl190-card {
-    padding: 18px 19px !important;
-}
-#character-life-continuity-overlay .cl190-card::before {
-    left: -1px;
-    top: 16px;
-    bottom: 16px;
-    width: 3px;
-    border-radius: 0 3px 3px 0;
-    background: #f0b86c;
-}
-#character-life-continuity-overlay .cl190-card h4 {
-    margin: 0 0 10px !important;
-    color: #ffe0a9 !important;
-    font-size: .88em !important;
-    font-weight: 750 !important;
-    letter-spacing: .12em !important;
-}
-#character-life-continuity-overlay .cl190-card p {
-    color: rgba(255, 235, 204, .82) !important;
-    line-height: 1.55 !important;
-}
-#character-life-continuity-overlay .cl190-stat-grid {
-    display: grid !important;
-    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
-    gap: 10px !important;
-}
-#character-life-continuity-overlay .cl190-stat-grid > div {
-    min-height: 112px !important;
-    padding: 16px !important;
-}
-#character-life-continuity-overlay .cl190-stat-grid b {
-    color: #fff7e9 !important;
-    font-size: clamp(1.65rem, 4vw, 2.1rem) !important;
-    font-weight: 500 !important;
-}
-#character-life-continuity-overlay .cl190-stat-grid span {
-    color: rgba(255, 235, 204, .65) !important;
-}
-#character-life-continuity-overlay .cl190-scene-grid {
-    display: grid !important;
-    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
-    gap: 10px !important;
-}
-#character-life-continuity-overlay .cl190-scene-grid > div {
-    min-width: 0;
-    padding: 13px !important;
-}
-#character-life-continuity-overlay .cl190-scene-grid small {
-    color: rgba(255, 235, 204, .62);
-}
-#character-life-continuity-overlay .cl190-kind,
-#character-life-continuity-overlay .cl190-chips span,
-#character-life-continuity-overlay .cl190-skill-meta span {
-    border: 1px solid rgba(240, 184, 108, .30) !important;
-    border-radius: 999px !important;
-    color: #ffd28d !important;
-    background: rgba(240, 184, 108, .10) !important;
-}
-#character-life-continuity-overlay .cl190-body h3,
-#character-life-continuity-overlay .cl190-body h4 {
-    max-width: 100%;
-    overflow-wrap: anywhere;
-}
-
 /* ---------- iOS / Android mobile layout ---------- */
 @media (max-width: 760px) {
-    #character-life-overlay.is-open,
-    #character-life-skills-overlay.is-open,
-    #character-life-continuity-overlay.is-open {
-        display: flex !important;
-        align-items: stretch !important;
-        justify-content: stretch !important;
-        width: 100vw;
-        height: 100vh;
-        height: 100dvh;
-        padding: 0 !important;
-        inset: 0;
-    }
-    #character-life-overlay .cl-manager,
-    #character-life-skills-overlay .cl-skills-manager,
-    #character-life-continuity-overlay .cl190-manager {
-        width: 100vw !important;
-        max-width: none !important;
-        height: 100vh !important;
-        height: 100dvh !important;
-        min-height: 100vh !important;
-        min-height: 100dvh !important;
-        max-height: none !important;
-        border-left-width: 0 !important;
-        border-right-width: 0 !important;
-        border-radius: 0 !important;
-        box-shadow: none !important;
-    }
 
     /* Characters: list screen and detail screen are real mobile states. */
     #character-life-overlay .cl-manager-header {
@@ -6052,64 +4565,6 @@ html.character-life-product-open body {
         gap: 6px;
         padding: 8px 10px calc(8px + env(safe-area-inset-bottom));
     }
-
-    /* Continuity: no horizontal tab strip; every destination is directly tappable. */
-    #character-life-continuity-overlay .cl190-manager {
-        grid-template-rows: auto auto minmax(0, 1fr) !important;
-    }
-    #character-life-continuity-overlay .cl190-manager > header {
-        min-height: 64px !important;
-        padding: calc(10px + env(safe-area-inset-top)) 12px 10px !important;
-    }
-    #character-life-continuity-overlay .cl190-manager > header > .cl190-mark {
-        width: 38px !important;
-        height: 38px !important;
-        min-width: 38px !important;
-    }
-    #character-life-continuity-overlay .cl190-manager > header > button {
-        width: 40px !important;
-        min-width: 40px !important;
-        height: 40px !important;
-        min-height: 40px !important;
-    }
-    #character-life-continuity-overlay .cl190-tabs.cl-continuity-tabs {
-        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-        gap: 6px !important;
-        min-height: 0 !important;
-        max-height: none !important;
-        padding: 8px 10px !important;
-        overflow: visible !important;
-    }
-    #character-life-continuity-overlay .cl190-tabs button {
-        grid-template-rows: 18px minmax(0, 1fr);
-        min-height: 46px !important;
-        padding: 7px 5px !important;
-        font-size: .79em;
-    }
-    #character-life-continuity-overlay .cl-continuity-layout,
-    #character-life-continuity-overlay .cl190-body.cl-npc-detail {
-        min-height: 0 !important;
-    }
-    #character-life-continuity-overlay .cl190-body.cl-npc-detail {
-        padding: 12px 10px calc(18px + env(safe-area-inset-bottom)) !important;
-        gap: 10px !important;
-    }
-    #character-life-continuity-overlay .cl190-stat-grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-        gap: 8px !important;
-    }
-    #character-life-continuity-overlay .cl190-stat-grid > div {
-        min-height: 92px !important;
-        padding: 12px !important;
-    }
-    #character-life-continuity-overlay .cl190-scene-grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-        gap: 8px !important;
-    }
-    #character-life-continuity-overlay .cl190-card {
-        padding: 14px 15px !important;
-        border-radius: 12px !important;
-    }
 }
 
 @media (max-width: 380px) {
@@ -6117,33 +4572,6 @@ html.character-life-product-open body {
     #character-life-skills-overlay .cl-skill-scope-tabs button span {
         font-size: .78em;
     }
-    #character-life-continuity-overlay .cl190-tabs button {
-        font-size: .72em;
-    }
-}
-
-
-/* v1.11.0 cascade correction: the legacy shell used !important on its
-   shared window frame; these selectors intentionally replace that frame. */
-#character-life-skills-overlay .cl-skills-manager.cl-feature-manager,
-#character-life-continuity-overlay .cl190-manager.cl-feature-manager {
-    width: min(1120px, calc(100vw - 32px)) !important;
-    height: min(900px, calc(100vh - 32px)) !important;
-    height: min(900px, calc(100dvh - 32px)) !important;
-    max-width: none !important;
-    max-height: none !important;
-    border: 1px solid rgba(155, 140, 255, .38) !important;
-    border-radius: 18px !important;
-    clip-path: none !important;
-    background: #0f0e1c !important;
-    box-shadow: 0 24px 90px rgba(0, 0, 0, .60) !important;
-}
-#character-life-continuity-overlay .cl190-manager.cl-feature-manager {
-    width: min(1180px, calc(100vw - 32px)) !important;
-    border-color: rgba(240, 184, 108, .38) !important;
-    background:
-        linear-gradient(145deg, rgba(240, 184, 108, .08), transparent 38%),
-        #15110e !important;
 }
 #character-life-skills-overlay .cl-skills-header.cl-manager-header {
     min-height: 74px !important;
@@ -6151,73 +4579,7 @@ html.character-life-product-open body {
     border-bottom: 1px solid rgba(155, 140, 255, .20) !important;
     background: linear-gradient(90deg, rgba(155, 140, 255, .12), transparent 65%) !important;
 }
-#character-life-continuity-overlay .cl190-manager > header.cl-manager-header {
-    min-height: 74px !important;
-    padding: 12px 18px !important;
-    border-bottom: 1px solid rgba(240, 184, 108, .20) !important;
-    background: linear-gradient(90deg, rgba(240, 184, 108, .13), transparent 65%) !important;
-}
 @media (max-width: 760px) {
-    #character-life-skills-overlay .cl-skills-manager.cl-feature-manager,
-    #character-life-continuity-overlay .cl190-manager.cl-feature-manager {
-        width: 100vw !important;
-        height: 100vh !important;
-        height: 100dvh !important;
-        min-height: 100vh !important;
-        min-height: 100dvh !important;
-        max-width: none !important;
-        max-height: none !important;
-        border-radius: 0 !important;
-        border-left-width: 0 !important;
-        border-right-width: 0 !important;
-        box-shadow: none !important;
-    }
-    #character-life-skills-overlay .cl-skills-header.cl-manager-header,
-    #character-life-continuity-overlay .cl190-manager > header.cl-manager-header {
-        min-height: 64px !important;
-        padding: calc(10px + env(safe-area-inset-top)) 12px 10px !important;
-    }
-}
-
-/* v1.12.0 final cascade: keep the neutral workspace above every historical skin. */
-#character-life-overlay .cl-manager,
-#character-life-skills-overlay .cl-skills-manager.cl-feature-manager,
-#character-life-continuity-overlay .cl190-manager.cl-feature-manager {
-    width: min(1120px, calc(100vw - 28px)) !important;
-    height: min(860px, calc(100vh - 28px)) !important;
-    height: min(860px, calc(100dvh - 28px)) !important;
-    max-width: none !important;
-    max-height: none !important;
-    border: 1px solid var(--cl12-border) !important;
-    border-radius: 12px !important;
-    color: var(--cl12-text) !important;
-    background: var(--cl12-bg) !important;
-    box-shadow: 0 18px 60px rgba(0,0,0,.48) !important;
-}
-#character-life-overlay .cl-manager-header,
-#character-life-skills-overlay .cl-skills-header.cl-manager-header,
-#character-life-continuity-overlay .cl190-manager > header.cl-manager-header {
-    min-height: 62px !important;
-    padding: 9px 12px !important;
-    border: 0 !important;
-    border-bottom: 1px solid var(--cl12-border) !important;
-    background: color-mix(in srgb, var(--cl12-bg) 94%, black 6%) !important;
-}
-#character-life-overlay .cl-brand-mark,
-#character-life-skills-overlay .cl-skills-mark,
-#character-life-continuity-overlay .cl190-mark {
-    border-color: color-mix(in srgb, var(--cl12-accent) 45%, var(--cl12-border)) !important;
-    border-radius: 8px !important;
-    color: var(--cl12-accent) !important;
-    background: color-mix(in srgb, var(--cl12-accent) 10%, transparent) !important;
-}
-#character-life-overlay .cl-manager-header h2,
-#character-life-skills-overlay .cl-skills-header h2,
-#character-life-continuity-overlay .cl190-manager > header h2 {
-    color: var(--cl12-text) !important;
-    font-size: 1.12rem !important;
-    font-weight: 650 !important;
-    letter-spacing: 0 !important;
 }
 #character-life-overlay .cl-manager-toolbar,
 #character-life-skills-overlay .cl-skills-toolbar.cl-manager-toolbar {
@@ -6275,72 +4637,8 @@ html.character-life-product-open body {
     border-top: 1px solid var(--cl12-border) !important;
     background: color-mix(in srgb, var(--cl12-bg) 95%, black 5%) !important;
 }
-#character-life-continuity-overlay .cl190-tabs.cl-continuity-tabs {
-    grid-template-columns: repeat(7, minmax(0, 1fr)) !important;
-    gap: 4px !important;
-    min-height: 0 !important;
-    padding: 7px 9px !important;
-    border-bottom: 1px solid var(--cl12-border) !important;
-    background: var(--cl12-bg) !important;
-}
-#character-life-continuity-overlay .cl190-tabs button {
-    display: flex !important;
-    min-height: 38px !important;
-    padding: 6px 7px !important;
-    border-radius: 7px !important;
-    color: var(--cl12-muted) !important;
-    background: transparent !important;
-}
-#character-life-continuity-overlay .cl190-tabs button:hover,
-#character-life-continuity-overlay .cl190-tabs button.is-active {
-    color: var(--cl12-text) !important;
-    border-color: color-mix(in srgb, var(--cl12-accent) 36%, var(--cl12-border)) !important;
-    background: var(--cl12-soft-strong) !important;
-}
-#character-life-continuity-overlay .cl-continuity-layout,
-#character-life-continuity-overlay .cl190-body.cl-npc-detail {
-    background: var(--cl12-bg) !important;
-}
-#character-life-continuity-overlay .cl190-body.cl-npc-detail {
-    padding: 16px !important;
-}
-#character-life-continuity-overlay .cl190-card,
-#character-life-continuity-overlay .cl190-stat-grid > div,
-#character-life-continuity-overlay .cl190-scene-grid > div,
-#character-life-continuity-overlay .cl190-empty {
-    border: 1px solid var(--cl12-border) !important;
-    border-radius: 9px !important;
-    color: var(--cl12-text) !important;
-    background: var(--cl12-soft) !important;
-}
-#character-life-continuity-overlay .cl190-card::before {
-    display: none !important;
-}
-#character-life-continuity-overlay .cl190-card h4 {
-    color: var(--cl12-text) !important;
-    font-size: .9rem !important;
-    letter-spacing: 0 !important;
-}
 
 @media (max-width: 760px) {
-    #character-life-overlay .cl-manager,
-    #character-life-skills-overlay .cl-skills-manager.cl-feature-manager,
-    #character-life-continuity-overlay .cl190-manager.cl-feature-manager {
-        width: 100% !important;
-        height: 100vh !important;
-        height: 100svh !important;
-        height: 100dvh !important;
-        min-height: 0 !important;
-        border: 0 !important;
-        border-radius: 0 !important;
-        box-shadow: none !important;
-    }
-    #character-life-overlay .cl-manager-header,
-    #character-life-skills-overlay .cl-skills-header.cl-manager-header,
-    #character-life-continuity-overlay .cl190-manager > header.cl-manager-header {
-        min-height: calc(58px + env(safe-area-inset-top)) !important;
-        padding: calc(8px + env(safe-area-inset-top)) 9px 8px !important;
-    }
     #character-life-overlay .cl-manager-toolbar,
     #character-life-skills-overlay .cl-skills-toolbar.cl-manager-toolbar {
         grid-template-columns: minmax(0, 1fr) 42px !important;
@@ -6353,21 +4651,6 @@ html.character-life-product-open body {
     #character-life-overlay .cl-npc-detail,
     #character-life-skills-overlay .cl-skills-layout > main.cl-npc-detail {
         padding: 12px 10px calc(14px + env(safe-area-inset-bottom)) !important;
-    }
-    #character-life-continuity-overlay .cl190-tabs.cl-continuity-tabs {
-        grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
-        gap: 3px !important;
-        padding: 5px 6px !important;
-    }
-    #character-life-continuity-overlay .cl190-tabs button {
-        display: grid !important;
-        grid-template-rows: 15px minmax(0, 1fr) !important;
-        min-height: 43px !important;
-        padding: 4px 2px !important;
-        font-size: .66rem !important;
-    }
-    #character-life-continuity-overlay .cl190-body.cl-npc-detail {
-        padding: 10px 8px calc(14px + env(safe-area-inset-bottom)) !important;
     }
 }
 
