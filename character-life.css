@@ -4798,3 +4798,345 @@ html.character-life-product-open body {
     padding-top: env(safe-area-inset-top);
     padding-bottom: env(safe-area-inset-bottom);
 }
+
+/* v1.15.0 — Formal archive interface for Characters and Skill Storage.
+   The existing data, editors, portrait controls, scope handling, and skill
+   rendering stay unchanged; this layer replaces the old decorative skins. */
+#character-life-overlay .cl-manager,
+#character-life-skills-overlay .cl-skills-manager {
+    --cl-formal-bg: var(--cl-ui-background, var(--SmartThemeBlurTintColor, #151312));
+    --cl-formal-surface: var(--cl-ui-surface, #211e1b);
+    --cl-formal-surface-2: color-mix(in srgb, var(--cl-formal-surface) 82%, var(--cl-formal-bg));
+    --cl-formal-text: var(--cl-ui-text, var(--SmartThemeBodyColor, #eee8dc));
+    --cl-formal-muted: color-mix(in srgb, var(--cl-formal-text) 62%, transparent);
+    --cl-formal-line: color-mix(in srgb, var(--cl-formal-text) 20%, transparent);
+    --cl-formal-accent: var(--cl-ui-accent, #c39a62);
+    display: grid !important;
+    grid-template-rows: auto auto minmax(0, 1fr) auto !important;
+    width: 100% !important;
+    height: 100dvh !important;
+    min-height: 100svh !important;
+    max-height: none !important;
+    border: 1px solid var(--cl-formal-line) !important;
+    border-radius: 0 !important;
+    clip-path: none !important;
+    color: var(--cl-formal-text) !important;
+    background: var(--cl-formal-bg) !important;
+    box-shadow: none !important;
+}
+#character-life-overlay .cl-manager::before { display: none !important; }
+
+#character-life-overlay .cl-manager-header,
+#character-life-skills-overlay .cl-skills-header.cl-manager-header {
+    min-height: 78px !important;
+    padding: 16px 20px !important;
+    gap: 12px !important;
+    border-bottom: 1px solid var(--cl-formal-line) !important;
+    background: var(--cl-formal-surface) !important;
+}
+#character-life-overlay .cl-manager-header::after { display: none !important; }
+#character-life-overlay .cl-manager-header > .cl-brand-mark,
+#character-life-skills-overlay .cl-skills-header > .cl-skills-mark {
+    width: 42px !important;
+    height: 42px !important;
+    min-width: 42px !important;
+    flex: 0 0 42px !important;
+    transform: none !important;
+    border: 1px solid var(--cl-formal-accent) !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+}
+#character-life-overlay .cl-manager-header > .cl-brand-mark i { transform: none !important; }
+#character-life-overlay .cl-manager-header > div:nth-child(3),
+#character-life-skills-overlay .cl-skills-header > div:nth-child(2) {
+    min-width: 0 !important;
+    flex: 1 1 auto !important;
+}
+#character-life-overlay .cl-manager-header small,
+#character-life-skills-overlay .cl-skills-header small {
+    color: var(--cl-formal-muted) !important;
+    font-size: .72em !important;
+    letter-spacing: .14em !important;
+}
+#character-life-overlay .cl-manager-header h2,
+#character-life-skills-overlay .cl-skills-header h2 {
+    margin: 2px 0 0 !important;
+    color: var(--cl-formal-text) !important;
+    font-size: 1.28em !important;
+    font-weight: 500 !important;
+    letter-spacing: .01em !important;
+}
+#character-life-overlay .cl-manager-header > button:last-child,
+#character-life-skills-overlay .cl-skills-header > button {
+    width: 42px !important;
+    min-width: 42px !important;
+    height: 42px !important;
+    min-height: 42px !important;
+    padding: 0 !important;
+    border: 1px solid var(--cl-formal-line) !important;
+    border-radius: 0 !important;
+    color: var(--cl-formal-text) !important;
+    background: transparent !important;
+}
+#character-life-overlay .cl-manager-header > button:last-child:hover,
+#character-life-skills-overlay .cl-skills-header > button:hover {
+    border-color: var(--cl-formal-accent) !important;
+    background: var(--cl-formal-surface-2) !important;
+}
+
+#character-life-overlay .cl-manager-toolbar,
+#character-life-skills-overlay .cl-skills-toolbar.cl-manager-toolbar {
+    display: grid !important;
+    grid-template-columns: auto minmax(0, 1fr) auto !important;
+    align-items: center !important;
+    gap: 10px !important;
+    min-width: 0 !important;
+    padding: 12px 16px !important;
+    border-bottom: 1px solid var(--cl-formal-line) !important;
+    background: var(--cl-formal-surface) !important;
+}
+#character-life-overlay .cl-scope-tabs,
+#character-life-skills-overlay .cl-skill-scope-tabs.cl-scope-tabs {
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(88px, 1fr)) !important;
+    gap: 0 !important;
+    min-width: 0 !important;
+    padding: 0 !important;
+    border: 1px solid var(--cl-formal-line) !important;
+    border-radius: 0 !important;
+    background: var(--cl-formal-bg) !important;
+}
+#character-life-overlay .cl-scope-tabs button,
+#character-life-skills-overlay .cl-skill-scope-tabs button {
+    min-width: 0 !important;
+    min-height: 46px !important;
+    justify-content: flex-start !important;
+    padding: 7px 11px !important;
+    border: 0 !important;
+    border-right: 1px solid var(--cl-formal-line) !important;
+    border-radius: 0 !important;
+    color: var(--cl-formal-muted) !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    white-space: normal !important;
+}
+#character-life-overlay .cl-scope-tabs button:last-child,
+#character-life-skills-overlay .cl-skill-scope-tabs button:last-child { border-right: 0 !important; }
+#character-life-overlay .cl-scope-tabs button:hover,
+#character-life-overlay .cl-scope-tabs button.is-active,
+#character-life-skills-overlay .cl-skill-scope-tabs button:hover,
+#character-life-skills-overlay .cl-skill-scope-tabs button.is-active {
+    color: var(--cl-formal-text) !important;
+    background: var(--cl-formal-surface-2) !important;
+    box-shadow: inset 0 -2px 0 var(--cl-formal-accent) !important;
+}
+#character-life-overlay .cl-scope-tabs b,
+#character-life-skills-overlay .cl-skill-scope-tabs b {
+    min-width: 20px !important;
+    height: auto !important;
+    padding: 0 5px !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    color: var(--cl-formal-text) !important;
+    background: transparent !important;
+    font-size: .78em !important;
+}
+#character-life-overlay .cl-search,
+#character-life-skills-overlay .cl-skill-search.cl-search {
+    min-width: 0 !important;
+    min-height: 46px !important;
+    padding: 0 12px !important;
+    border: 1px solid var(--cl-formal-line) !important;
+    border-radius: 0 !important;
+    background: var(--cl-formal-bg) !important;
+}
+#character-life-overlay .cl-search input,
+#character-life-skills-overlay .cl-skill-search input {
+    min-height: 44px !important;
+    color: var(--cl-formal-text) !important;
+}
+#character-life-overlay .cl-primary,
+#character-life-skills-overlay .cl-skills-toolbar > .cl-primary,
+#character-life-skills-overlay .cl-skills-toolbar > .primary {
+    min-height: 46px !important;
+    padding: 7px 13px !important;
+    border: 1px solid var(--cl-formal-accent) !important;
+    border-radius: 0 !important;
+    color: var(--cl-formal-text) !important;
+    background: transparent !important;
+    box-shadow: none !important;
+}
+#character-life-overlay .cl-primary:hover,
+#character-life-skills-overlay .cl-skills-toolbar > .cl-primary:hover,
+#character-life-skills-overlay .cl-skills-toolbar > .primary:hover { background: var(--cl-formal-surface-2) !important; }
+
+#character-life-overlay .cl-manager-layout,
+#character-life-skills-overlay .cl-skills-layout.cl-manager-layout {
+    display: grid !important;
+    grid-template-columns: minmax(250px, 34%) minmax(0, 1fr) !important;
+    min-width: 0 !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+    background: var(--cl-formal-bg) !important;
+}
+#character-life-overlay .cl-npc-list,
+#character-life-skills-overlay .cl-skills-layout > aside.cl-npc-list {
+    min-width: 0 !important;
+    min-height: 0 !important;
+    overflow-y: auto !important;
+    border-right: 1px solid var(--cl-formal-line) !important;
+    background: var(--cl-formal-bg) !important;
+    -webkit-overflow-scrolling: touch;
+}
+#character-life-overlay .cl-npc-detail,
+#character-life-skills-overlay .cl-skills-layout > main.cl-npc-detail {
+    min-width: 0 !important;
+    min-height: 0 !important;
+    overflow-y: auto !important;
+    padding: 22px !important;
+    color: var(--cl-formal-text) !important;
+    background: var(--cl-formal-bg) !important;
+    -webkit-overflow-scrolling: touch;
+}
+#character-life-overlay .cl-npc-row,
+#character-life-skills-overlay .cl-skill-row {
+    min-height: 68px !important;
+    padding: 11px 14px !important;
+    border: 0 !important;
+    border-bottom: 1px solid var(--cl-formal-line) !important;
+    border-left: 3px solid transparent !important;
+    border-radius: 0 !important;
+    color: var(--cl-formal-text) !important;
+    background: transparent !important;
+}
+#character-life-overlay .cl-npc-row:hover,
+#character-life-overlay .cl-npc-row.is-active,
+#character-life-skills-overlay .cl-skill-row:hover,
+#character-life-skills-overlay .cl-skill-row.is-active {
+    border-left-color: var(--cl-formal-accent) !important;
+    background: var(--cl-formal-surface-2) !important;
+}
+#character-life-overlay .cl-npc-row strong,
+#character-life-skills-overlay .cl-skill-row strong { color: var(--cl-formal-text) !important; font-weight: 500 !important; }
+#character-life-overlay .cl-npc-row small,
+#character-life-skills-overlay .cl-skill-row small { color: var(--cl-formal-muted) !important; }
+#character-life-overlay .cl-library-avatar,
+#character-life-skills-overlay .cl-skill-row-icon,
+#character-life-skills-overlay .cl-skill-editor-preview { border-radius: 0 !important; box-shadow: none !important; }
+#character-life-skills-overlay .cl-skill-row-icon,
+#character-life-skills-overlay .cl-skill-editor-preview { border-color: var(--cl-formal-line) !important; background: var(--cl-formal-surface) !important; }
+
+#character-life-overlay .cl-profile-hero,
+#character-life-overlay .cl-record-view,
+#character-life-overlay .cl-form-card,
+#character-life-overlay .cl-editor-section,
+#character-life-overlay .cl-copy-panel,
+#character-life-skills-overlay .cl-skill-card,
+#character-life-skills-overlay .cl-skill-image-editor,
+#character-life-skills-overlay .cl-skill-editor {
+    border: 1px solid var(--cl-formal-line) !important;
+    border-radius: 0 !important;
+    color: var(--cl-formal-text) !important;
+    background: var(--cl-formal-surface) !important;
+    box-shadow: none !important;
+}
+#character-life-overlay .cl-profile-hero { padding: 16px !important; }
+#character-life-overlay .cl-record-view,
+#character-life-overlay .cl-form-card,
+#character-life-overlay .cl-copy-panel,
+#character-life-skills-overlay .cl-skill-image-editor,
+#character-life-skills-overlay .cl-skill-editor { padding: 14px !important; }
+#character-life-overlay .cl-profile-hero h3,
+#character-life-overlay .cl-section-heading h3,
+#character-life-overlay .cl-detail-heading h3,
+#character-life-skills-overlay .cl-skill-editor h3 { font-weight: 500 !important; overflow-wrap: anywhere; }
+#character-life-overlay .cl-record-view dl { border-top: 1px solid var(--cl-formal-line); border-left: 1px solid var(--cl-formal-line); }
+#character-life-overlay .cl-record-view dl > div { border-right: 1px solid var(--cl-formal-line); border-bottom: 1px solid var(--cl-formal-line); }
+#character-life-overlay .cl-add-files,
+#character-life-overlay .cl-copy-panel button,
+#character-life-overlay .cl-form-actions button,
+#character-life-overlay .cl-editor-back,
+#character-life-skills-overlay .cl-skill-detail-actions button,
+#character-life-skills-overlay .cl-skill-form-actions button,
+#character-life-skills-overlay .cl-skill-image-editor button {
+    border-radius: 0 !important;
+    border-color: var(--cl-formal-line) !important;
+    background: transparent !important;
+    color: var(--cl-formal-text) !important;
+}
+#character-life-overlay .cl-portrait-grid { grid-template-columns: repeat(auto-fill, minmax(136px, 1fr)) !important; gap: 12px !important; }
+#character-life-overlay .cl-form-tile,
+#character-life-overlay .cl-form-tile-image { border-radius: 0 !important; }
+#character-life-overlay .cl-form-tile { padding: 9px !important; border-color: var(--cl-formal-line) !important; background: var(--cl-formal-surface) !important; }
+#character-life-overlay .cl-form-tile:hover,
+#character-life-overlay .cl-form-tile:focus-visible,
+#character-life-overlay .cl-form-tile.is-active { border-color: var(--cl-formal-accent) !important; background: var(--cl-formal-surface-2) !important; }
+
+#character-life-skills-overlay .cl-skill-indication {
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 14px !important;
+    grid-template-columns: 78px minmax(0, 1fr) auto !important;
+    gap: 14px !important;
+    border: 1px solid var(--cl-formal-line) !important;
+    border-radius: 0 !important;
+    color: var(--cl-formal-text) !important;
+    background: var(--cl-formal-surface) !important;
+}
+#character-life-skills-overlay .cl-skill-icon-frame { width: 78px !important; border: 1px solid var(--cl-formal-accent) !important; border-radius: 0 !important; background: var(--cl-formal-bg) !important; }
+#character-life-skills-overlay .cl-skill-copy { gap: 7px !important; padding: 2px 0 8px !important; border-bottom: 1px solid var(--cl-formal-line) !important; }
+#character-life-skills-overlay .cl-skill-eyebrow { color: var(--cl-formal-muted) !important; }
+#character-life-skills-overlay .cl-skill-eyebrow b { color: var(--cl-formal-accent) !important; }
+#character-life-skills-overlay .cl-skill-copy > strong { color: var(--cl-formal-text) !important; font-weight: 500 !important; overflow-wrap: anywhere; }
+#character-life-skills-overlay .cl-skill-copy > small { color: var(--cl-formal-muted) !important; overflow-wrap: anywhere; }
+#character-life-skills-overlay .cl-skill-rule { background: var(--cl-formal-accent) !important; }
+#character-life-skills-overlay .cl-skill-rank { min-width: 70px; padding: 8px; border: 1px solid var(--cl-formal-line) !important; border-radius: 0 !important; background: var(--cl-formal-bg) !important; }
+
+#character-life-overlay .cl-manager-footer,
+#character-life-skills-overlay .cl-skills-manager > footer {
+    min-width: 0 !important;
+    padding: 12px 16px !important;
+    border: 0 !important;
+    border-top: 1px solid var(--cl-formal-line) !important;
+    border-radius: 0 !important;
+    color: var(--cl-formal-muted) !important;
+    background: var(--cl-formal-surface) !important;
+}
+#character-life-skills-overlay .cl-skills-manager > footer { display: grid !important; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+
+@media (max-width: 760px) {
+    #character-life-overlay .cl-manager-header,
+    #character-life-skills-overlay .cl-skills-header.cl-manager-header { min-height: 64px !important; padding: calc(10px + env(safe-area-inset-top)) 12px 10px !important; }
+    #character-life-overlay .cl-manager-header > .cl-brand-mark,
+    #character-life-skills-overlay .cl-skills-header > .cl-skills-mark { width: 38px !important; height: 38px !important; min-width: 38px !important; flex-basis: 38px !important; }
+    #character-life-overlay .cl-manager-header h2,
+    #character-life-skills-overlay .cl-skills-header h2 { font-size: 1.08em !important; white-space: normal !important; }
+    #character-life-overlay .cl-manager-header > button:last-child,
+    #character-life-skills-overlay .cl-skills-header > button { width: 40px !important; min-width: 40px !important; height: 40px !important; min-height: 40px !important; }
+    #character-life-overlay .cl-manager-toolbar,
+    #character-life-skills-overlay .cl-skills-toolbar.cl-manager-toolbar { grid-template-columns: minmax(0, 1fr) auto !important; gap: 8px !important; padding: 8px 10px !important; }
+    #character-life-overlay .cl-scope-tabs,
+    #character-life-skills-overlay .cl-skill-scope-tabs.cl-scope-tabs { grid-column: 1 / -1 !important; width: 100% !important; grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
+    #character-life-overlay .cl-scope-tabs button,
+    #character-life-skills-overlay .cl-skill-scope-tabs button { min-height: 42px !important; justify-content: center !important; padding-inline: 5px !important; font-size: .84em !important; }
+    #character-life-overlay .cl-scope-tabs button i { display: none; }
+    #character-life-overlay .cl-search,
+    #character-life-skills-overlay .cl-skill-search.cl-search { grid-column: 1 !important; width: 100% !important; }
+    #character-life-overlay .cl-primary,
+    #character-life-skills-overlay .cl-skills-toolbar > .cl-primary,
+    #character-life-skills-overlay .cl-skills-toolbar > .primary { grid-column: 2 !important; width: 44px !important; min-width: 44px !important; padding: 8px !important; font-size: 0 !important; }
+    #character-life-overlay .cl-primary i,
+    #character-life-skills-overlay .cl-skills-toolbar > .cl-primary i,
+    #character-life-skills-overlay .cl-skills-toolbar > .primary i { font-size: 15px !important; }
+    #character-life-overlay .cl-manager-layout,
+    #character-life-skills-overlay .cl-skills-layout.cl-manager-layout { display: block !important; }
+    #character-life-overlay .cl-npc-detail,
+    #character-life-skills-overlay .cl-skills-layout > main.cl-npc-detail { padding: 14px 12px calc(18px + env(safe-area-inset-bottom)) !important; }
+    #character-life-overlay .cl-portrait-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 8px !important; }
+    #character-life-skills-overlay .cl-skills-manager > footer { grid-template-columns: 1fr !important; gap: 7px !important; padding: 8px 10px calc(8px + env(safe-area-inset-bottom)) !important; }
+    #character-life-skills-overlay .cl-skill-indication { grid-template-columns: 62px minmax(0, 1fr) !important; gap: 10px !important; padding: 12px !important; }
+    #character-life-skills-overlay .cl-skill-icon-frame { width: 62px !important; }
+    #character-life-skills-overlay .cl-skill-rank { grid-column: 2; justify-self: start; min-width: 0; padding: 4px 0; border: 0 !important; }
+}

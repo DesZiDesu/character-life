@@ -1,5 +1,5 @@
 /* Character Life consolidated runtime bundle. Generated from the preserved v1.9.16 module stack. */
-const CHARACTER_LIFE_BUNDLE_VERSION = '1.14.1';
+const CHARACTER_LIFE_BUNDLE_VERSION = '1.15.0';
 const existingCharacterLifeBundle = globalThis.CharacterLifeBundleRuntimePromise;
 if (existingCharacterLifeBundle) {
     await existingCharacterLifeBundle;
@@ -2157,7 +2157,7 @@ globalThis.CharacterLifeBundleRuntimePromise = (async () => {
             overlay.innerHTML = `<button class="cl-manager-backdrop" type="button" data-action="close" aria-label="Close"></button>
                 <section class="cl-manager" role="dialog" aria-modal="true" aria-labelledby="character-life-title">
                     <header class="cl-manager-header"><button type="button" class="cl-manager-back" data-action="back" aria-label="Back to character list"><i class="fa-solid fa-arrow-left"></i></button><div class="cl-brand-mark"><i class="fa-solid fa-users"></i></div>
-                        <div><small>CHARACTER PROFILES</small><h2 id="character-life-title">Characters</h2></div>
+                        <div><small>NPC ARCHIVE</small><h2 id="character-life-title">Characters</h2></div>
                         <button type="button" class="menu_button menu_button_icon" data-action="close" aria-label="Close"><i class="fa-solid fa-xmark"></i></button></header>
                     <div class="cl-manager-toolbar"><div class="cl-scope-tabs" role="tablist">
                         ${['global', 'character', 'chat'].map(scope => `<button type="button" data-scope="${scope}" role="tab"><i class="fa-solid ${scopeIcon(scope)}"></i><span>${scopeLabel(scope)}</span><b data-count="${scope}">0</b></button>`).join('')}
@@ -6227,7 +6227,6 @@ globalThis.CharacterLifeBundleRuntimePromise = (async () => {
             { id: 'minimal-crest', name: 'Minimal Crest' },
         ];
 
-        let menuObserver = null;
         let settingsObserver = null;
         let syncQueued = false;
 
@@ -6332,7 +6331,7 @@ globalThis.CharacterLifeBundleRuntimePromise = (async () => {
                     <div><small>SKILL INDICATORS</small><strong>Skill Storage</strong></div>
                     <span>v${VERSION}</span>
                 </header>
-                <p>Skill tracking settings live here. The Wand menu now opens Skill Storage as its own interface instead of placing skill controls inside the NPC Library.</p>
+                <p>Skill tracking settings live here. Open the separate Skill Storage interface from the Character Life submenu in the Wand menu or from this button.</p>
                 <div class="cl-skill-settings-actions">
                     <button id="character-life-open-skill-storage" class="menu_button" type="button"><i class="fa-solid fa-wand-sparkles"></i> Open Skill Storage</button>
                 </div>
@@ -6344,7 +6343,6 @@ globalThis.CharacterLifeBundleRuntimePromise = (async () => {
                     <label><span>Skill indication design</span><select id="character-life-skill-design">${DESIGNS.map(item => `<option value="${item.id}"${item.id === cfg.design ? ' selected' : ''}>${item.name}</option>`).join('')}</select></label>
                     <label class="checkbox_label"><input id="character-life-skill-autotrack" type="checkbox"><span>AI auto-track used / learned skills</span></label>
                     <label class="checkbox_label"><input id="character-life-skill-show" type="checkbox"><span>Show skill indication cards in chat</span></label>
-                    <label class="checkbox_label"><input id="character-life-skill-wand" type="checkbox"><span>Show Skill Storage in the Wand menu</span></label>
                 </div>
                 <div id="character-life-skill-live-preview">${previewHtml(cfg.design)}</div>
             </section>`;
@@ -6370,8 +6368,6 @@ globalThis.CharacterLifeBundleRuntimePromise = (async () => {
             if (auto instanceof HTMLInputElement) auto.checked = cfg.autoTrack !== false;
             const show = document.getElementById('character-life-skill-show');
             if (show instanceof HTMLInputElement) show.checked = cfg.showIndicators !== false;
-            const wand = document.getElementById('character-life-skill-wand');
-            if (wand instanceof HTMLInputElement) wand.checked = cfg.showWand !== false;
             renderSettingsPreview();
         }
 
@@ -6399,7 +6395,6 @@ globalThis.CharacterLifeBundleRuntimePromise = (async () => {
                 showIndicators: '[data-cl-skill-show]',
             };
             if (!selectors[key] || !forwardLegacySetting(selectors[key], value)) await persistSettings();
-            if (key === 'showWand') syncSkillStorageLauncher();
             if (key === 'design') renderSettingsPreview();
         }
 
@@ -6430,9 +6425,6 @@ globalThis.CharacterLifeBundleRuntimePromise = (async () => {
             });
             document.getElementById('character-life-skill-show')?.addEventListener('change', event => {
                 void setSkillConfig('showIndicators', Boolean(event.currentTarget?.checked));
-            });
-            document.getElementById('character-life-skill-wand')?.addEventListener('change', event => {
-                void setSkillConfig('showWand', Boolean(event.currentTarget?.checked));
             });
         }
 
@@ -6511,43 +6503,8 @@ globalThis.CharacterLifeBundleRuntimePromise = (async () => {
             });
         }
 
-        function createSkillStorageLauncher() {
-            if (document.getElementById('character-life-skill-storage-launcher')) return true;
-            const menu = document.getElementById('extensionsMenu');
-            if (!menu) return false;
-            const launcher = document.createElement('div');
-            launcher.id = 'character-life-skill-storage-launcher';
-            launcher.className = 'list-group-item flex-container flexGap5 interactable';
-            launcher.tabIndex = 0;
-            launcher.setAttribute('role', 'button');
-            launcher.title = 'Open Character Life Skill Storage';
-            launcher.innerHTML = '<i class="fa-solid fa-wand-sparkles"></i><span>Skill Storage</span>';
-            const activate = event => {
-                if (event.type === 'keydown' && event.key !== 'Enter' && event.key !== ' ') return;
-                event.preventDefault();
-                openSkillStorage();
-            };
-            launcher.addEventListener('click', activate);
-            launcher.addEventListener('keydown', activate);
-            menu.appendChild(launcher);
-            syncSkillStorageLauncher();
-            return true;
-        }
-
-        function syncSkillStorageLauncher() {
-            const launcher = document.getElementById('character-life-skill-storage-launcher');
-            if (launcher) launcher.hidden = skillConfig().showWand === false;
-        }
-
-        function ensureSkillStorageLauncher() {
-            if (createSkillStorageLauncher() || menuObserver) return;
-            menuObserver = new MutationObserver(() => {
-                if (createSkillStorageLauncher()) {
-                    menuObserver.disconnect();
-                    menuObserver = null;
-                }
-            });
-            menuObserver.observe(document.body, { childList: true, subtree: true });
+        function removeStandaloneSkillStorageLauncher() {
+            document.getElementById('character-life-skill-storage-launcher')?.remove();
         }
 
         function queueSync() {
@@ -6559,8 +6516,7 @@ globalThis.CharacterLifeBundleRuntimePromise = (async () => {
                 removeEmbeddedSkillButton();
                 patchSkillStorageOverlay();
                 ensureSettingsPanel();
-                ensureSkillStorageLauncher();
-                syncSkillStorageLauncher();
+                removeStandaloneSkillStorageLauncher();
             });
         }
 
@@ -6604,7 +6560,7 @@ globalThis.CharacterLifeBundleRuntimePromise = (async () => {
             patchPublicVersions();
             patchSkillStorageOverlay();
             removeEmbeddedSkillButton();
-            ensureSkillStorageLauncher();
+            removeStandaloneSkillStorageLauncher();
             observeSettingsDrawer();
             queueSync();
             document.documentElement.setAttribute('data-character-life-version', VERSION);
@@ -7095,7 +7051,7 @@ globalThis.CharacterLifeBundleRuntimePromise = (async () => {
             overlay.setAttribute('aria-hidden', 'true');
             overlay.innerHTML = `<button class="cl-skills-backdrop" type="button" data-cl-skill-close aria-label="Close"></button>
                 <section class="cl-skills-manager" role="dialog" aria-modal="true" aria-labelledby="cl-skills-title">
-                    <header class="cl-skills-header"><div class="cl-skills-mark"><i class="fa-solid fa-wand-sparkles"></i></div><div><small>SKILL LIBRARY</small><h2 id="cl-skills-title">Skills</h2></div>
+                    <header class="cl-skills-header"><div class="cl-skills-mark"><i class="fa-solid fa-wand-sparkles"></i></div><div><small>SKILL REGISTRY</small><h2 id="cl-skills-title">Skill Storage</h2></div>
                     <button type="button" data-cl-skill-close aria-label="Close"><i class="fa-solid fa-xmark"></i></button></header>
                     <div class="cl-skills-toolbar"><div class="cl-skill-scope-tabs">${scopeTabsHtml()}</div>
                     <label class="cl-skill-search"><i class="fa-solid fa-magnifying-glass"></i><input type="search" data-cl-skill-search placeholder="Search skills"></label>
@@ -7526,7 +7482,7 @@ globalThis.CharacterLifeBundleRuntimePromise = (async () => {
         // Presentation/coordination only. Characters and Skills keep ownership of
         // state, persistence, prompts, rendering data, forms, and feature actions.
 
-        const VERSION = '1.9.13';
+        const VERSION = '1.15.0';
         const SURFACES = Object.freeze({
             library: Object.freeze({
                 overlay: '#character-life-overlay',
@@ -7540,7 +7496,7 @@ globalThis.CharacterLifeBundleRuntimePromise = (async () => {
                 overlay: '#character-life-skills-overlay',
                 manager: '.cl-skills-manager',
                 header: '.cl-skills-header',
-                launcher: '#character-life-skill-storage-launcher, #character-life-open-skill-storage',
+                launcher: '#character-life-open-skill-storage',
                 label: 'Skill Storage',
                 icon: 'fa-wand-sparkles',
             }),
@@ -7657,8 +7613,8 @@ globalThis.CharacterLifeBundleRuntimePromise = (async () => {
             }
             const title = q('#cl-skills-title', header);
             const kicker = q('small', header);
-            if (title && title.textContent !== 'Skills') title.textContent = 'Skills';
-            if (kicker && kicker.textContent !== 'SKILL LIBRARY') kicker.textContent = 'SKILL LIBRARY';
+            if (title && title.textContent !== 'Skill Storage') title.textContent = 'Skill Storage';
+            if (kicker && kicker.textContent !== 'SKILL REGISTRY') kicker.textContent = 'SKILL REGISTRY';
             q('[data-cl-skill-close]', header)?.classList.add('menu_button', 'menu_button_icon');
         }
 
@@ -7772,7 +7728,7 @@ globalThis.CharacterLifeBundleRuntimePromise = (async () => {
         function launcherIntent(target) {
             if (!target) return '';
             if (target.closest('#character-life-open, #character-life-new')) return 'library';
-            if (target.closest('#character-life-skill-storage-launcher, #character-life-open-skill-storage')) return 'skills';
+            if (target.closest('#character-life-open-skill-storage')) return 'skills';
             return '';
         }
 
