@@ -937,6 +937,137 @@ body.character-life-open { overflow: hidden; }
     }
 }
 
+/* v1.13.1: compact portrait gallery, single-portrait editor, and clean list header. */
+#character-life-overlay [data-cl-bulk-toggle] {
+    display: none !important;
+}
+#character-life-overlay .cl-manager[data-view="list"] .cl-manager-header {
+    grid-template-columns: 42px minmax(0, 1fr) 42px !important;
+}
+#character-life-overlay .cl-manager[data-view="list"] .cl-manager-header > .cl-brand-mark {
+    grid-column: 1 !important;
+    grid-row: 1 !important;
+}
+#character-life-overlay .cl-manager[data-view="list"] .cl-manager-header > div:nth-child(3) {
+    grid-column: 2 !important;
+    grid-row: 1 !important;
+}
+#character-life-overlay .cl-manager[data-view="list"] .cl-manager-header > .menu_button {
+    grid-column: 3 !important;
+    grid-row: 1 !important;
+}
+#character-life-overlay .cl-portrait-grid {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fill, minmax(124px, 1fr)) !important;
+    gap: 10px !important;
+}
+#character-life-overlay .cl-form-tile {
+    display: grid !important;
+    grid-template-rows: auto minmax(0, auto) !important;
+    gap: 8px !important;
+    min-width: 0 !important;
+    padding: 8px !important;
+    text-align: left !important;
+    color: var(--cl12-text) !important;
+    border: 1px solid var(--cl12-border) !important;
+    border-radius: 9px !important;
+    background: var(--cl12-soft) !important;
+    cursor: pointer;
+}
+#character-life-overlay .cl-form-tile:hover,
+#character-life-overlay .cl-form-tile:focus-visible,
+#character-life-overlay .cl-form-tile.is-active {
+    border-color: color-mix(in srgb, var(--cl12-accent) 56%, var(--cl12-border)) !important;
+    background: var(--cl12-soft-strong) !important;
+    outline: none;
+}
+#character-life-overlay .cl-form-tile-image {
+    display: block;
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    min-width: 0;
+    overflow: hidden;
+    border: 1px solid var(--cl12-border);
+    border-radius: 7px;
+}
+#character-life-overlay .cl-form-tile-image .cl-library-avatar.large {
+    width: 100% !important;
+    height: 100% !important;
+    max-width: none !important;
+    aspect-ratio: auto !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+}
+#character-life-overlay .cl-form-tile-copy {
+    display: grid;
+    gap: 2px;
+    min-width: 0;
+}
+#character-life-overlay .cl-form-tile-copy strong,
+#character-life-overlay .cl-form-tile-copy small {
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+#character-life-overlay .cl-form-tile-copy small {
+    color: var(--cl12-muted);
+    font-size: .72rem;
+}
+#character-life-overlay .cl-portrait-editor-view {
+    display: grid;
+    gap: 12px;
+    min-width: 0;
+}
+#character-life-overlay .cl-portrait-editor-heading {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+#character-life-overlay .cl-editor-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    min-height: 38px;
+    padding: 7px 10px;
+    color: var(--cl12-text);
+    border: 1px solid var(--cl12-border);
+    background: transparent;
+}
+#character-life-overlay .cl-portrait-editor-view .cl-form-card {
+    grid-template-columns: minmax(300px, 460px) minmax(0, 1fr) !important;
+}
+#character-life-overlay .cl-portrait-editor-view .cl-crop-preview,
+#character-life-overlay .cl-portrait-editor-view .cl-crop-preview .cl-library-avatar.large,
+#character-life-overlay .cl-portrait-editor-view .cl-crop-stage {
+    max-width: 460px !important;
+}
+#character-life-overlay .cl-portrait-editor-view .cl-crop-preview .cl-library-avatar.large,
+#character-life-overlay .cl-portrait-editor-view .cl-crop-stage {
+    width: min(100%, 460px) !important;
+}
+
+@media (max-width: 760px) {
+    #character-life-overlay .cl-manager[data-view="list"] .cl-manager-header {
+        grid-template-columns: 38px minmax(0, 1fr) 40px !important;
+    }
+    #character-life-overlay .cl-portrait-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+        gap: 8px !important;
+    }
+    #character-life-overlay .cl-form-tile {
+        padding: 6px !important;
+    }
+    #character-life-overlay .cl-portrait-editor-view .cl-form-card {
+        grid-template-columns: 1fr !important;
+    }
+    #character-life-overlay .cl-portrait-editor-view .cl-crop-preview,
+    #character-life-overlay .cl-portrait-editor-view .cl-crop-preview .cl-library-avatar.large,
+    #character-life-overlay .cl-portrait-editor-view .cl-crop-stage {
+        width: min(100%, 460px) !important;
+        max-width: 460px !important;
+        margin-inline: auto;
+    }
+}
+
 /* Character Life v1.12.0 — direct Wand routing and clean SillyTavern workspace UI.
    This final layer intentionally replaces the colored v1.11 skins while retaining
    every existing engine, form, scope, list/detail state, and persistence contract. */
@@ -6342,8 +6473,15 @@ html.character-life-product-open body {
     #character-life-overlay .cl-form-card .cl-crop-preview .cl-library-avatar.large,
     #character-life-overlay .cl-new-portrait-card .cl-crop-preview .cl-library-avatar.large,
     #character-life-overlay .cl-form-card .cl-crop-stage,
-    #character-life-overlay .cl-new-portrait-card .cl-crop-stage {
+#character-life-overlay .cl-new-portrait-card .cl-crop-stage {
         width: min(100%, 360px) !important;
         max-width: 360px !important;
     }
+}
+
+/* Keep the selected portrait editor larger than the gallery thumbnails. */
+#character-life-overlay .cl-portrait-editor-view .cl-crop-preview .cl-library-avatar.large,
+#character-life-overlay .cl-portrait-editor-view .cl-crop-stage {
+    width: min(100%, 460px) !important;
+    max-width: 460px !important;
 }
