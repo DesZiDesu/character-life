@@ -1,5 +1,5 @@
 /* Character Life consolidated runtime bundle. Generated from the preserved v1.9.16 module stack. */
-const CHARACTER_LIFE_BUNDLE_VERSION = '1.13.0';
+const CHARACTER_LIFE_BUNDLE_VERSION = '1.13.1';
 const existingCharacterLifeBundle = globalThis.CharacterLifeBundleRuntimePromise;
 if (existingCharacterLifeBundle) {
     await existingCharacterLifeBundle;
@@ -1579,6 +1579,7 @@ globalThis.CharacterLifeBundleRuntimePromise = (async () => {
         let activeScope = 'chat';
         let selectedNpcId = '';
         let editorMode = '';
+        let portraitEditorId = '';
         let searchText = '';
         let dbPromise = null;
         let renderTimer = null;
@@ -2566,6 +2567,22 @@ globalThis.CharacterLifeBundleRuntimePromise = (async () => {
                     <button type="button" data-action="delete-form" data-form-id="${escapeHtml(form.id)}"><i class="fa-solid fa-trash"></i>${escapeHtml(tr('Delete'))}</button>
                     <button class="cl-primary" type="submit"><i class="fa-solid fa-crop-simple"></i>${escapeHtml(tr('Save framing'))}</button></div></form></div></article>`;
         }
+
+        function portraitTile(npc, form) {
+            const active = form.id === npc.activeFormId;
+            const previewNpc = { ...npc, activeFormId: form.id, forms: [form] };
+            return `<button type="button" class="cl-form-tile${active ? ' is-active' : ''}" data-action="edit-form" data-form-id="${escapeHtml(form.id)}">
+                <span class="cl-form-tile-image">${npcAvatar(previewNpc, 'large')}</span>
+                <span class="cl-form-tile-copy"><strong>${escapeHtml(form.name)}</strong><small>${active ? escapeHtml(tr('Active portrait')) : escapeHtml(tr('Tap to edit'))}</small></span>
+            </button>`;
+        }
+
+        function portraitEditorView(npc, form) {
+            return `<section class="cl-portrait-editor-view">
+                <header class="cl-detail-heading cl-portrait-editor-heading"><button type="button" class="cl-editor-back" data-action="back-portraits"><i class="fa-solid fa-arrow-left"></i><span>${escapeHtml(tr('Back to portraits'))}</span></button><div><small>${escapeHtml(tr('Edit portrait'))}</small><h3>${escapeHtml(form.name)}</h3></div></header>
+                ${formCard(npc, form)}
+            </section>`;
+        }
         
         function npcRecordView(npc) {
             const fields = [
@@ -2587,7 +2604,7 @@ globalThis.CharacterLifeBundleRuntimePromise = (async () => {
                 ${npc.notes ? `<p class="cl-notes">${escapeHtml(npc.notes)}</p>` : ''}
                 <div class="cl-portrait-section"><div class="cl-section-heading"><div><small>${npc.forms.length} LOCAL IMAGES</small><h3>${escapeHtml(tr('Portrait forms'))}</h3></div>
                     <label class="cl-add-files"><i class="fa-solid fa-images"></i>${escapeHtml(tr('Add portraits'))}<input type="file" data-add-portraits accept="image/*" multiple hidden></label></div>
-                    <div class="cl-form-list">${npc.forms.length ? npc.forms.map(form => formCard(npc, form)).join('') : `<div class="cl-empty-portraits"><i class="fa-solid fa-image"></i>${escapeHtml(tr('Portrait files stay on this device.'))}</div>`}</div></div>
+                    <div class="cl-form-list cl-portrait-grid">${npc.forms.length ? npc.forms.map(form => portraitTile(npc, form)).join('') : `<div class="cl-empty-portraits"><i class="fa-solid fa-image"></i>${escapeHtml(tr('Portrait files stay on this device.'))}</div>`}</div></div>
                 <div class="cl-copy-panel"><label>${escapeHtml(tr('Copy NPC'))}<select data-copy-scope>${scopeOptions(activeScope)}</select></label><button type="button" data-action="copy-npc"><i class="fa-solid fa-copy"></i>${escapeHtml(tr('Copy NPC'))}</button></div></section>`;
         }
         
@@ -2598,7 +2615,10 @@ globalThis.CharacterLifeBundleRuntimePromise = (async () => {
             const npc = currentNpc();
             if (editorMode === 'new') detail.innerHTML = editorForm();
             else if (editorMode === 'edit' && npc) detail.innerHTML = editorForm(npc);
-            else if (npc) detail.innerHTML = detailView(npc);
+            else if (npc && portraitEditorId) {
+                const form = npc.forms.find(entry => entry.id === portraitEditorId);
+                detail.innerHTML = form ? portraitEditorView(npc, form) : detailView(npc);
+            } else if (npc) detail.innerHTML = detailView(npc);
             else detail.innerHTML = `<div class="cl-detail-empty"><i class="fa-solid fa-feather-pointed"></i><strong>${escapeHtml(tr('Select an NPC or create a new one.'))}</strong><p>${escapeHtml(tr('Chat overrides Character, and Character overrides Global.'))}</p></div>`;
             void hydrateLibraryPortraits(detail);
             bindCropStages(detail);
@@ -2617,7 +2637,7 @@ globalThis.CharacterLifeBundleRuntimePromise = (async () => {
             buildManager();
             if (options.scope) activeScope = options.scope;
             if (!scopeAvailable(activeScope)) activeScope = 'global';
-            if (options.newNpc) { editorMode = 'new'; selectedNpcId = ''; }
+            if (options.newNpc) { editorMode = 'new'; selectedNpcId = ''; portraitEditorId = ''; }
             const overlay = document.getElementById('character-life-overlay');
             overlay.classList.add('is-open');
             overlay.setAttribute('aria-hidden', 'false');
@@ -2633,6 +2653,7 @@ globalThis.CharacterLifeBundleRuntimePromise = (async () => {
             document.body.classList.remove('character-life-open');
             document.getElementById('character-life-wand-launcher')?.removeAttribute('data-cl-overlay-open');
             editorMode = '';
+            portraitEditorId = '';
             releasePreviewUrls();
         }
         
@@ -2646,6 +2667,7 @@ globalThis.CharacterLifeBundleRuntimePromise = (async () => {
             }
             selectedNpcId = '';
             editorMode = '';
+            portraitEditorId = '';
             renderManager();
             notify('success', tr('NPC deleted.'));
         }
@@ -2681,6 +2703,7 @@ globalThis.CharacterLifeBundleRuntimePromise = (async () => {
             if (npc.activeFormId === formId) npc.activeFormId = npc.forms[0]?.id || '';
             await saveLibrary(activeScope, getLibrary(activeScope).map(entry => entry.id === npc.id ? npc : entry));
             if (!portraitIsReferenced(form.portraitId)) await portraitDelete(form.portraitId);
+            if (portraitEditorId === formId) portraitEditorId = '';
             renderManager();
         }
         
@@ -2880,9 +2903,11 @@ globalThis.CharacterLifeBundleRuntimePromise = (async () => {
             if (!button) return;
             const action = button.dataset.action;
             if (action === 'close') closeManager();
-            else if (action === 'back') { selectedNpcId = ''; editorMode = ''; renderManager(); }
-            else if (action === 'new') { selectedNpcId = ''; editorMode = 'new'; renderManager(); }
-            else if (action === 'select') { selectedNpcId = button.dataset.id; editorMode = ''; renderManager(); }
+            else if (action === 'back') { selectedNpcId = ''; editorMode = ''; portraitEditorId = ''; renderManager(); }
+            else if (action === 'back-portraits') { portraitEditorId = ''; renderNpcDetail(); }
+            else if (action === 'new') { selectedNpcId = ''; editorMode = 'new'; portraitEditorId = ''; renderManager(); }
+            else if (action === 'select') { selectedNpcId = button.dataset.id; editorMode = ''; portraitEditorId = ''; renderManager(); }
+            else if (action === 'edit-form') { portraitEditorId = button.dataset.formId || ''; renderNpcDetail(); }
             else if (action === 'edit') { editorMode = 'edit'; renderNpcDetail(); }
             else if (action === 'cancel') { editorMode = ''; renderManager(); }
             else if (action === 'delete-npc') await deleteNpc();
@@ -2935,6 +2960,7 @@ globalThis.CharacterLifeBundleRuntimePromise = (async () => {
                 activeScope = targetScope;
                 selectedNpcId = npc.id;
                 editorMode = '';
+                portraitEditorId = '';
                 renderManager();
                 notify('success', tr('NPC saved.'));
             } else if (form.dataset.form === 'framing') {
@@ -3081,6 +3107,7 @@ globalThis.CharacterLifeBundleRuntimePromise = (async () => {
                     activeScope = button.dataset.scope;
                     selectedNpcId = '';
                     editorMode = '';
+                    portraitEditorId = '';
                     renderManager();
                 });
             });
@@ -3431,6 +3458,7 @@ globalThis.CharacterLifeBundleRuntimePromise = (async () => {
             eventSource.on(eventTypes.CHAT_CHANGED, () => {
                 selectedNpcId = '';
                 editorMode = '';
+                portraitEditorId = '';
                 updatePrompt();
                 scheduleRenderAll(120);
                 if (document.getElementById('character-life-overlay')?.classList.contains('is-open')) renderManager();
