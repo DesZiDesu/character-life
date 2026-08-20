@@ -1,5 +1,5 @@
 /* Character Life consolidated runtime bundle. Generated from the preserved v1.9.16 module stack. */
-const CHARACTER_LIFE_BUNDLE_VERSION = '1.9.17';
+const CHARACTER_LIFE_BUNDLE_VERSION = '1.9.18';
 const existingCharacterLifeBundle = globalThis.CharacterLifeBundleRuntimePromise;
 if (existingCharacterLifeBundle) {
     await existingCharacterLifeBundle;
@@ -4728,13 +4728,9 @@ globalThis.CharacterLifeBundleRuntimePromise = (async () => {
             const historyNote = cl190Text(update.history, '', 600);
             if (historyNote && detail.history.at(-1)?.note !== historyNote) detail.history.push({ at: cl190Now(), note: historyNote });
             world.skillDetails[key] = detail;
-            if (cl190Config().carrySkills) {
-                const list = root.skillSystem.characterSkills[cl190CharacterKey()] ||= [];
-                let index = list.findIndex(item => cl190SkillKey(item?.ownerName, item?.name) === key);
-                const existing = index >= 0 ? list[index] : cl190BaseSkill(owner, name);
-                const base = { ...(existing ? cl190Clone(existing) : {}), id: existing?.id || cl190Uid('skill'), ownerType: update.ownerType === 'user' ? 'user' : (existing?.ownerType || 'npc'), ownerName: owner, ownerNpcId: existing?.ownerNpcId || '', name, category: cl190Text(update.category, existing?.category || 'General', 100), rank: cl190Text(update.rank, existing?.rank || 'Unranked', 80), description: cl190Text(update.description, existing?.description || '', 800), accent: existing?.accent || '#C39A62', imageId: existing?.imageId || '', source: existing?.source === 'manual' ? 'manual' : 'continuity-v190', createdAt: existing?.createdAt || cl190Now(), updatedAt: cl190Now() };
-                if (index >= 0) list[index] = base; else list.push(base);
-            }
+            // Continuity skill details are stored separately from Skill Storage.
+            // Never mirror a Chat or Character Life skill into another Skill
+            // Storage scope just because continuity tracking is enabled.
             return true;
         }
         
@@ -4852,12 +4848,8 @@ globalThis.CharacterLifeBundleRuntimePromise = (async () => {
             // skills from their own tags. Promote those durable records after they finish so
             // a new chat cannot silently lose established development.
             setTimeout(async () => {
-                const npcChanged = cl190MigrateCurrentChatToCharacter(); let skillChanged = false;
-                if (cl190Config().carrySkills) {
-                    const chatSkills = cl190Ctx()?.chatMetadata?.[CL190_SKILL_CHAT_KEY]?.skills;
-                    if (Array.isArray(chatSkills)) for (const skill of chatSkills) if (skill?.ownerName && skill?.name && cl190UpsertPersistentSkill({ owner: skill.ownerName, ownerType: skill.ownerType, name: skill.name, category: skill.category, rank: skill.rank, description: skill.description })) skillChanged = true;
-                }
-                if (npcChanged || skillChanged) await cl190Persist({ settings: true });
+                const npcChanged = cl190MigrateCurrentChatToCharacter();
+                if (npcChanged) await cl190Persist({ settings: true });
             }, 260);
             cl190StripVisibleStateBlocks(document);
         }
@@ -4997,7 +4989,6 @@ globalThis.CharacterLifeBundleRuntimePromise = (async () => {
                     source.on(type, id => { if (['CHAT_CHANGED', 'CHAT_LOADED'].includes(key)) void cl190OnChatLoaded(); if (['MESSAGE_RECEIVED', 'MESSAGE_EDITED', 'MESSAGE_SWIPED', 'CHARACTER_MESSAGE_RENDERED'].includes(key)) setTimeout(() => void cl190ProcessMessage(id), key === 'MESSAGE_RECEIVED' ? 90 : 40); cl190SchedulePrompt(100); cl190ScheduleUi(50); });
                 }
             }
-            globalThis.addEventListener('character-life:skill-updated', event => { const skill = event.detail?.skill; if (skill && cl190Config().carrySkills) { cl190UpsertPersistentSkill({ owner: skill.ownerName, ownerType: skill.ownerType, name: skill.name, category: skill.category, rank: skill.rank, description: skill.description }); void cl190Persist({ settings: true }); } });
         }
         
         function cl190BindDom() {
