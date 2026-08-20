@@ -1,5 +1,5 @@
 /* Character Life consolidated runtime bundle. Generated from the preserved v1.9.16 module stack. */
-const CHARACTER_LIFE_BUNDLE_VERSION = '1.15.1';
+const CHARACTER_LIFE_BUNDLE_VERSION = '1.15.2';
 const existingCharacterLifeBundle = globalThis.CharacterLifeBundleRuntimePromise;
 if (existingCharacterLifeBundle) {
     await existingCharacterLifeBundle;
@@ -6347,45 +6347,65 @@ globalThis.CharacterLifeBundleRuntimePromise = (async () => {
             </div>`;
         }
 
-        function responseStyleConfig() {
-            const root = rootSettings();
-            if (!root) return { enabled: false, length: 'situational', focus: 'balanced' };
+        function normalizeResponseStyleConfig(root) {
+            if (!root || typeof root !== 'object') return null;
             root.config ||= {};
             root.config.responseStyleEnabled = root.config.responseStyleEnabled === true;
             if (!['concise', 'short', 'medium', 'long', 'situational'].includes(root.config.responseLength)) root.config.responseLength = 'situational';
             if (!['dialogue', 'narrative', 'balanced'].includes(root.config.responseFocus)) root.config.responseFocus = 'balanced';
-            return { enabled: root.config.responseStyleEnabled, length: root.config.responseLength, focus: root.config.responseFocus };
+            return root.config;
+        }
+
+        function responseStyleConfig() {
+            const config = normalizeResponseStyleConfig(rootSettings());
+            if (!config) return { enabled: false, length: 'situational', focus: 'balanced' };
+            return { enabled: config.responseStyleEnabled, length: config.responseLength, focus: config.responseFocus };
         }
 
         function responseStylePanelHtml() {
             const cfg = responseStyleConfig();
-            return `<details id="character-life-response-style-settings" class="cl-response-style-settings" data-cl-settings-section="response-style">
-                <summary><span><i class="fa-solid fa-sliders"></i><strong>Response Style</strong><small>Optional reply length and dialogue/narrative balance</small></span></summary>
-                <div class="cl-response-style-body">
-                    <label class="checkbox_label"><input id="character-life-response-style-enabled" type="checkbox"${cfg.enabled ? ' checked' : ''}><span><b>Enable response style guidance</b><small>When disabled, Character Life does not influence reply length or focus.</small></span></label>
-                    <div class="cl-response-style-grid">
-                        <label><span>Response length</span><select id="character-life-response-length">
+            return `<details id="character-life-response-style-settings" class="cl-settings-section cl-response-style-settings" data-cl-settings-section="response-style">
+                <summary>
+                    <span class="cl-settings-summary-icon"><i class="fa-solid fa-sliders"></i></span>
+                    <span class="cl-settings-summary-copy"><strong>Response style</strong><small>Choose reply length and the balance between dialogue and narrative</small></span>
+                </summary>
+                <div class="cl-settings-section-body cl-response-style-body">
+                    <label class="checkbox_label cl-response-style-master" for="character-life-response-style-enabled">
+                        <input id="character-life-response-style-enabled" type="checkbox"${cfg.enabled ? ' checked' : ''}>
+                        <span><b>Enable response style guidance</b><small>Applies these preferences to Character Life's existing prompt without another AI request.</small></span>
+                    </label>
+                    <div class="cl-settings-grid cl-response-style-grid">
+                        <label><span>Response length</span><select id="character-life-response-length"${cfg.enabled ? '' : ' disabled'}>
                             <option value="concise"${cfg.length === 'concise' ? ' selected' : ''}>Concise · about 1 paragraph</option>
                             <option value="short"${cfg.length === 'short' ? ' selected' : ''}>Short · 2–3 paragraphs</option>
                             <option value="medium"${cfg.length === 'medium' ? ' selected' : ''}>Medium · normal detail</option>
                             <option value="long"${cfg.length === 'long' ? ' selected' : ''}>Long · highly detailed</option>
                             <option value="situational"${cfg.length === 'situational' ? ' selected' : ''}>Situational · adapts to the scene</option>
                         </select></label>
-                        <label><span>Response focus</span><select id="character-life-response-focus">
+                        <label><span>Response focus</span><select id="character-life-response-focus"${cfg.enabled ? '' : ' disabled'}>
                             <option value="dialogue"${cfg.focus === 'dialogue' ? ' selected' : ''}>Dialogue focus</option>
                             <option value="narrative"${cfg.focus === 'narrative' ? ' selected' : ''}>Narrative focus</option>
                             <option value="balanced"${cfg.focus === 'balanced' ? ' selected' : ''}>Balanced</option>
                         </select></label>
                     </div>
-                    <p class="cl-response-style-note">This uses the existing Character Life prompt and does not make an additional AI request or consume another quota.</p>
+                    <p class="cl-response-style-note">Dialogue focus gives spoken exchanges more weight. Narrative focus gives actions, atmosphere, and scene progression more weight. Balanced keeps them comparable.</p>
                 </div>
             </details>`;
         }
 
         async function persistResponseStyle() {
-            const context = ctx();
-            context?.saveSettingsDebounced?.();
+            const saver = ctx()?.saveSettingsDebounced;
+            if (typeof saver === 'function') {
+                const queued = saver();
+                if (typeof saver.flush === 'function') {
+                    const flushed = saver.flush();
+                    if (flushed && typeof flushed.then === 'function') await flushed;
+                } else if (queued && typeof queued.then === 'function') {
+                    await queued;
+                }
+            }
             globalThis.CharacterLifeReliability?.refresh?.();
+            globalThis.dispatchEvent?.(new CustomEvent('character-life:response-style-change'));
         }
 
         function syncResponseStyleUi() {
@@ -6398,24 +6418,32 @@ globalThis.CharacterLifeBundleRuntimePromise = (async () => {
             if (enabled instanceof HTMLInputElement) enabled.checked = cfg.enabled;
             if (length instanceof HTMLSelectElement) length.value = cfg.length;
             if (focus instanceof HTMLSelectElement) focus.value = cfg.focus;
-            panel.querySelectorAll('select').forEach(control => { control.disabled = !cfg.enabled; });
+            panel.classList.toggle('is-enabled', cfg.enabled);
+            panel.querySelectorAll('select').forEach(control => {
+                control.disabled = !cfg.enabled;
+                control.setAttribute('aria-disabled', String(!cfg.enabled));
+            });
         }
 
         function bindResponseStylePanel(panel) {
             if (!(panel instanceof HTMLElement) || panel.dataset.clResponseStyleBound === 'true') return;
             panel.dataset.clResponseStyleBound = 'true';
             const update = async () => {
-                const cfg = responseStyleConfig();
+                const config = normalizeResponseStyleConfig(rootSettings());
+                if (!config) return;
                 const enabled = panel.querySelector('#character-life-response-style-enabled');
                 const length = panel.querySelector('#character-life-response-length');
                 const focus = panel.querySelector('#character-life-response-focus');
-                cfg.enabled = enabled instanceof HTMLInputElement && enabled.checked;
-                cfg.length = length instanceof HTMLSelectElement ? length.value : cfg.length;
-                cfg.focus = focus instanceof HTMLSelectElement ? focus.value : cfg.focus;
+                config.responseStyleEnabled = enabled instanceof HTMLInputElement && enabled.checked;
+                if (length instanceof HTMLSelectElement && length.value) config.responseLength = length.value;
+                if (focus instanceof HTMLSelectElement && focus.value) config.responseFocus = focus.value;
                 await persistResponseStyle();
                 syncResponseStyleUi();
             };
-            panel.querySelectorAll('input, select').forEach(control => control.addEventListener('change', () => void update()));
+            const handleChange = () => {
+                void update().catch(error => notify('error', error?.message || 'Could not save response style settings.'));
+            };
+            panel.addEventListener('change', handleChange);
             syncResponseStyleUi();
         }
 
@@ -7585,7 +7613,7 @@ globalThis.CharacterLifeBundleRuntimePromise = (async () => {
         // Presentation/coordination only. Characters and Skills keep ownership of
         // state, persistence, prompts, rendering data, forms, and feature actions.
 
-        const VERSION = '1.15.1';
+        const VERSION = '1.15.2';
         const SURFACES = Object.freeze({
             library: Object.freeze({
                 overlay: '#character-life-overlay',
