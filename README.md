@@ -2,7 +2,7 @@
 
 Character Life's is a responsive SillyTavern extension for persistent NPC identities, portraits, speaker presentation, AI-assisted profile updates, cross-chat continuity, and optional skill tracking inside the main role-play chat.
 
-**Current version: 1.13.0**
+**Current version: 1.13.1**
 
 ## Highlights
 
