@@ -1,5 +1,5 @@
 /* Character Life consolidated runtime bundle. Generated from the preserved v1.9.16 module stack. */
-const CHARACTER_LIFE_BUNDLE_VERSION = '1.11.0';
+const CHARACTER_LIFE_BUNDLE_VERSION = '1.12.0';
 const existingCharacterLifeBundle = globalThis.CharacterLifeBundleRuntimePromise;
 if (existingCharacterLifeBundle) {
     await existingCharacterLifeBundle;
@@ -2356,8 +2356,8 @@ globalThis.CharacterLifeBundleRuntimePromise = (async () => {
             overlay.setAttribute('aria-hidden', 'true');
             overlay.innerHTML = `<button class="cl-manager-backdrop" type="button" data-action="close" aria-label="Close"></button>
                 <section class="cl-manager" role="dialog" aria-modal="true" aria-labelledby="character-life-title">
-                    <header class="cl-manager-header"><button type="button" class="cl-manager-back" data-action="back" aria-label="Back to NPC list"><i class="fa-solid fa-arrow-left"></i></button><div class="cl-brand-mark"><i class="fa-solid fa-feather-pointed"></i></div>
-                        <div><small>CHRONICLE REGISTRY</small><h2 id="character-life-title">Character Life's</h2></div>
+                    <header class="cl-manager-header"><button type="button" class="cl-manager-back" data-action="back" aria-label="Back to character list"><i class="fa-solid fa-arrow-left"></i></button><div class="cl-brand-mark"><i class="fa-solid fa-users"></i></div>
+                        <div><small>CHARACTER PROFILES</small><h2 id="character-life-title">Characters</h2></div>
                         <button type="button" class="menu_button menu_button_icon" data-action="close" aria-label="Close"><i class="fa-solid fa-xmark"></i></button></header>
                     <div class="cl-manager-toolbar"><div class="cl-scope-tabs" role="tablist">
                         ${['global', 'character', 'chat'].map(scope => `<button type="button" data-scope="${scope}" role="tab"><i class="fa-solid ${scopeIcon(scope)}"></i><span>${scopeLabel(scope)}</span><b data-count="${scope}">0</b></button>`).join('')}
@@ -3049,70 +3049,93 @@ globalThis.CharacterLifeBundleRuntimePromise = (async () => {
             });
         }
         
+        function wandChildRows() {
+            return [...document.querySelectorAll('[data-cl-wand-child="true"]')];
+        }
+
+        function setWandExpanded(expanded) {
+            const launcher = document.getElementById('character-life-wand-launcher');
+            if (!launcher) return;
+            const next = Boolean(expanded) && !launcher.hidden;
+            launcher.dataset.expanded = String(next);
+            launcher.setAttribute('aria-expanded', String(next));
+            launcher.classList.toggle('is-open', next);
+            wandChildRows().forEach(row => { row.hidden = !next; });
+        }
+
         function syncWandVisibility() {
             const launcher = document.getElementById('character-life-wand-launcher');
-            if (launcher) launcher.hidden = !getConfig().showWand;
+            if (!launcher) return;
+            launcher.hidden = !getConfig().showWand;
+            if (launcher.hidden) setWandExpanded(false);
         }
-        
-        
+
+        function makeWandRow(id, icon, label, extraClass = '') {
+            const row = document.createElement('div');
+            row.id = id;
+            row.className = `list-group-item flex-container flexGap5 interactable ${extraClass}`.trim();
+            row.tabIndex = 0;
+            row.setAttribute('role', 'button');
+            row.innerHTML = `<i class="fa-solid ${icon}" aria-hidden="true"></i><span>${label}</span>`;
+            return row;
+        }
+
+        function bindWandPress(row, handler) {
+            const run = event => {
+                if (event.type === 'keydown' && event.key !== 'Enter' && event.key !== ' ') return;
+                if (event.type === 'keydown') event.preventDefault();
+                event.stopPropagation();
+                handler(event);
+            };
+            row.addEventListener('click', run);
+            row.addEventListener('keydown', run);
+        }
+
         function createWandLauncher() {
-            if (document.getElementById('character-life-wand-launcher')) return true;
+            const current = document.getElementById('character-life-wand-launcher');
+            if (current?.dataset.clWandVersion === CHARACTER_LIFE_BUNDLE_VERSION) return true;
+            current?.remove();
+            wandChildRows().forEach(row => row.remove());
+
             const menu = document.getElementById('extensionsMenu');
             if (!menu) return false;
-            const launcher = document.createElement('div');
-            launcher.id = 'character-life-wand-launcher';
-            launcher.className = 'list-group-item cl-wand-menu-group';
-            launcher.setAttribute('aria-label', 'Character Life tools');
-            launcher.setAttribute('data-expanded', 'false');
-            launcher.innerHTML = `
-                <div class="cl-wand-parent" role="button" tabindex="0" aria-expanded="false" aria-controls="character-life-wand-submenu">
-                    <span class="cl-wand-launcher-icon"><i class="fa-solid fa-feather-pointed" aria-hidden="true"></i></span>
-                    <span class="cl-wand-launcher-copy"><strong>Character Life's</strong><small>Characters · Skill Storage · Continuity</small></span>
-                    <i class="fa-solid fa-chevron-right cl-wand-launcher-arrow" aria-hidden="true"></i>
-                </div>
-                <div id="character-life-wand-submenu" class="cl-wand-submenu" hidden>
-                    <div class="cl-wand-subitem" data-cl-product="library" role="button" tabindex="0" aria-label="Open Characters">
-                        <span class="cl-wand-subitem-branch" aria-hidden="true">↳</span><i class="fa-solid fa-address-book" aria-hidden="true"></i><span>Characters</span>
-                    </div>
-                    <div class="cl-wand-subitem" data-cl-product="skills" role="button" tabindex="0" aria-label="Open Skill Storage">
-                        <span class="cl-wand-subitem-branch" aria-hidden="true">↳</span><i class="fa-solid fa-wand-sparkles" aria-hidden="true"></i><span>Skill Storage</span>
-                    </div>
-                    <div class="cl-wand-subitem" data-cl-product="continuity" role="button" tabindex="0" aria-label="Open Continuity">
-                        <span class="cl-wand-subitem-branch" aria-hidden="true">↳</span><i class="fa-solid fa-timeline" aria-hidden="true"></i><span>Continuity</span>
-                    </div>
-                </div>`;
-            const parent = launcher.querySelector('.cl-wand-parent');
-            const submenu = launcher.querySelector('.cl-wand-submenu');
-            const setExpanded = expanded => {
-                const next = Boolean(expanded);
-                parent?.setAttribute('aria-expanded', String(next));
-                launcher.dataset.expanded = String(next);
-                if (submenu) submenu.hidden = !next;
-            };
-            const toggle = event => {
-                if (event.type === 'keydown' && event.key !== 'Enter' && event.key !== ' ') return;
-                event.preventDefault();
-                event.stopPropagation();
-                setExpanded(submenu?.hidden !== false);
-            };
-            parent?.addEventListener('click', toggle);
-            parent?.addEventListener('keydown', toggle);
-            for (const item of launcher.querySelectorAll('[data-cl-product]')) {
-                item.addEventListener('keydown', event => {
-                    if (event.key !== 'Enter' && event.key !== ' ') return;
-                    event.preventDefault();
-                    item.click();
-                });
-                item.addEventListener('click', () => {
+
+            // Match Novel Generation's proven Wand pattern: one native parent row and
+            // sibling child rows. Children are never nested inside the parent, so a
+            // child press cannot be misread as a press on the Characters launcher.
+            const launcher = makeWandRow('character-life-wand-launcher', 'fa-feather-pointed', "Character Life's", 'cl-wand-parent-row');
+            launcher.dataset.clWandVersion = CHARACTER_LIFE_BUNDLE_VERSION;
+            launcher.dataset.expanded = 'false';
+            launcher.setAttribute('aria-expanded', 'false');
+            launcher.insertAdjacentHTML('beforeend', '<i class="fa-solid fa-chevron-down cl-wand-launcher-arrow" aria-hidden="true"></i>');
+            menu.appendChild(launcher);
+
+            const products = [
+                ['library', 'characters', 'fa-address-book', 'Characters'],
+                ['skills', 'skills', 'fa-wand-sparkles', 'Skill Storage'],
+                ['continuity', 'continuity', 'fa-timeline', 'Continuity'],
+            ];
+            let anchor = launcher;
+            for (const [product, slug, icon, label] of products) {
+                const row = makeWandRow(`character-life-wand-${slug}`, icon, label, 'cl-wand-subitem');
+                row.dataset.clProduct = product;
+                row.dataset.clWandChild = 'true';
+                row.hidden = true;
+                row.setAttribute('aria-label', `Open ${label}`);
+                anchor.insertAdjacentElement('afterend', row);
+                anchor = row;
+                bindWandPress(row, () => {
+                    setWandExpanded(false);
                     const api = {
                         library: globalThis.CharacterLifeNpcLibrary,
                         skills: globalThis.CharacterLifeSkills,
                         continuity: globalThis.CharacterLifeContinuity,
-                    }[item.dataset.clProduct];
+                    }[product];
                     if (typeof api?.open === 'function') api.open();
                 });
             }
-            menu.appendChild(launcher);
+
+            bindWandPress(launcher, () => setWandExpanded(launcher.dataset.expanded !== 'true'));
             syncWandVisibility();
             return true;
         }
@@ -4971,7 +4994,7 @@ globalThis.CharacterLifeBundleRuntimePromise = (async () => {
         function cl190EnsureOverlay() {
             if (document.getElementById('character-life-continuity-overlay')) return;
             const overlay = document.createElement('div'); overlay.id = 'character-life-continuity-overlay'; overlay.className = 'cl190-overlay'; overlay.setAttribute('aria-hidden', 'true');
-            overlay.innerHTML = `<button class="cl190-backdrop" type="button" data-cl190-close aria-label="Close"></button><section class="cl190-manager" role="dialog" aria-modal="true" aria-labelledby="cl190-title"><header><div class="cl190-mark"><i class="fa-solid fa-timeline"></i></div><div><small>CHARACTER LIFE v${CL190_VERSION}</small><h2 id="cl190-title">Continuity Hub</h2></div><button type="button" data-cl190-close aria-label="Close"><i class="fa-solid fa-xmark"></i></button></header><nav class="cl190-tabs"></nav><main class="cl190-body"></main></section>`;
+            overlay.innerHTML = `<button class="cl190-backdrop" type="button" data-cl190-close aria-label="Close"></button><section class="cl190-manager" role="dialog" aria-modal="true" aria-labelledby="cl190-title"><header><div class="cl190-mark"><i class="fa-solid fa-timeline"></i></div><div><small>STORY MEMORY</small><h2 id="cl190-title">Continuity</h2></div><button type="button" data-cl190-close aria-label="Close"><i class="fa-solid fa-xmark"></i></button></header><nav class="cl190-tabs"></nav><main class="cl190-body"></main></section>`;
             document.body.appendChild(overlay);
             overlay.addEventListener('click', event => {
                 const target = event.target instanceof Element ? event.target : null;
@@ -7843,7 +7866,7 @@ globalThis.CharacterLifeBundleRuntimePromise = (async () => {
             overlay.setAttribute('aria-hidden', 'true');
             overlay.innerHTML = `<button class="cl-skills-backdrop" type="button" data-cl-skill-close aria-label="Close"></button>
                 <section class="cl-skills-manager" role="dialog" aria-modal="true" aria-labelledby="cl-skills-title">
-                    <header class="cl-skills-header"><div class="cl-skills-mark"><i class="fa-solid fa-wand-sparkles"></i></div><div><small>CHARACTER LIFE</small><h2 id="cl-skills-title">Skill Registry</h2></div>
+                    <header class="cl-skills-header"><div class="cl-skills-mark"><i class="fa-solid fa-wand-sparkles"></i></div><div><small>SKILL LIBRARY</small><h2 id="cl-skills-title">Skills</h2></div>
                     <button type="button" data-cl-skill-close aria-label="Close"><i class="fa-solid fa-xmark"></i></button></header>
                     <div class="cl-skills-toolbar"><div class="cl-skill-scope-tabs">${scopeTabsHtml()}</div>
                     <label class="cl-skill-search"><i class="fa-solid fa-magnifying-glass"></i><input type="search" data-cl-skill-search placeholder="Search skills"></label>
@@ -8339,6 +8362,16 @@ globalThis.CharacterLifeBundleRuntimePromise = (async () => {
             for (const name of Object.keys(SURFACES)) if (name !== keep) closeSurface(name);
             syncBodyLock();
         }
+
+        function collapseWandMenu() {
+            const launcher = q('#character-life-wand-launcher');
+            if (launcher) {
+                launcher.dataset.expanded = 'false';
+                launcher.setAttribute('aria-expanded', 'false');
+                launcher.classList.remove('is-open');
+            }
+            qa('[data-cl-wand-child="true"]').forEach(row => { row.hidden = true; });
+        }
         
         function syncBodyLock() {
             const open = Object.keys(SURFACES).some(isOpen);
@@ -8394,8 +8427,8 @@ globalThis.CharacterLifeBundleRuntimePromise = (async () => {
             const title = q(name === 'skills' ? '#cl-skills-title' : '#cl190-title', header);
             const kicker = q('small', header);
             const copy = name === 'skills'
-                ? { title: 'Skill Storage', kicker: 'SKILL CODEX' }
-                : { title: 'Continuity', kicker: 'CONTINUITY CHRONICLE' };
+                ? { title: 'Skills', kicker: 'SKILL LIBRARY' }
+                : { title: 'Continuity', kicker: 'STORY MEMORY' };
             if (title && title.textContent !== copy.title) title.textContent = copy.title;
             if (kicker && kicker.textContent !== copy.kicker) kicker.textContent = copy.kicker;
         
@@ -8530,6 +8563,7 @@ globalThis.CharacterLifeBundleRuntimePromise = (async () => {
         function openProduct(name) {
             if (!SURFACES[name]) return false;
             if (isOpen(name)) return true;
+            collapseWandMenu();
             closeOthers(name);
             const opened = ownerOpen(name);
             if (opened) {
@@ -12481,7 +12515,7 @@ globalThis.CharacterLifeBundleRuntimePromise = (async () => {
     const load = key => globalThis.CharacterLifeBundleImport(key);
     await load('../runtime/reliability-v196.js');
     await load('../runtime/entry.js');
-    for (const key of ['../runtime/npc-continuity-v198.js','../runtime/npc-identity-v197.js','../runtime/npc-identity-reveal-v1915.js','../runtime/speaker-run-v1915.js','../runtime/new-chat-transfer-v1915.js','../runtime/touch-interaction-v1914.js','../runtime/feature-shell-v1913.js','../runtime/portrait-framing-v1911.js']) await load(key);
+    for (const key of ['../runtime/npc-continuity-v198.js','../runtime/npc-identity-v197.js','../runtime/npc-identity-reveal-v1915.js','../runtime/speaker-run-v1915.js','../runtime/new-chat-transfer-v1915.js','../runtime/feature-shell-v1913.js','../runtime/portrait-framing-v1911.js']) await load(key);
     try { globalThis.CharacterLifeReliability?.refresh?.(); } catch (error) { console.warn("[Character Life's] Reliability refresh skipped safely.", error); }
     console.info("[Character Life's] consolidated v" + CHARACTER_LIFE_BUNDLE_VERSION + " runtime loaded.");
 })();
