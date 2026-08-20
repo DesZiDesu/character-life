@@ -937,6 +937,599 @@ body.character-life-open { overflow: hidden; }
     }
 }
 
+/* Character Life v1.12.0 — direct Wand routing and clean SillyTavern workspace UI.
+   This final layer intentionally replaces the colored v1.11 skins while retaining
+   every existing engine, form, scope, list/detail state, and persistence contract. */
+
+/* Wand: the same parent + sibling-row pattern used by Novel Generation. */
+#character-life-wand-launcher.cl-wand-parent-row,
+.cl-wand-subitem[data-cl-wand-child="true"] {
+    width: auto !important;
+    min-width: 0 !important;
+    box-sizing: border-box;
+    color: var(--SmartThemeBodyColor, #eee);
+    font: inherit;
+}
+#character-life-wand-launcher.cl-wand-parent-row {
+    position: relative;
+}
+#character-life-wand-launcher.cl-wand-parent-row > span,
+.cl-wand-subitem[data-cl-wand-child="true"] > span {
+    min-width: 0;
+    white-space: normal;
+    overflow-wrap: anywhere;
+}
+#character-life-wand-launcher.cl-wand-parent-row > .cl-wand-launcher-arrow {
+    margin-left: auto;
+    opacity: .55;
+    transition: transform .16s ease;
+}
+#character-life-wand-launcher.cl-wand-parent-row.is-open > .cl-wand-launcher-arrow {
+    transform: rotate(180deg);
+}
+.cl-wand-subitem[data-cl-wand-child="true"] {
+    padding-left: 34px !important;
+    opacity: .94;
+}
+.cl-wand-subitem[data-cl-wand-child="true"][hidden] {
+    display: none !important;
+}
+.cl-wand-subitem[data-cl-wand-child="true"]::before {
+    content: "↳";
+    margin-right: 2px;
+    opacity: .42;
+}
+
+/* Shared neutral workspace. */
+#character-life-overlay .cl-manager,
+#character-life-skills-overlay .cl-skills-manager.cl-feature-manager,
+#character-life-continuity-overlay .cl190-manager.cl-feature-manager {
+    --cl12-bg: var(--SmartThemeBlurTintColor, #171717);
+    --cl12-text: var(--SmartThemeBodyColor, #eee);
+    --cl12-border: var(--SmartThemeBorderColor, rgba(255,255,255,.16));
+    --cl12-soft: color-mix(in srgb, var(--cl12-text) 5%, transparent);
+    --cl12-soft-strong: color-mix(in srgb, var(--cl12-text) 9%, transparent);
+    --cl12-muted: color-mix(in srgb, var(--cl12-text) 62%, transparent);
+    width: min(1120px, calc(100vw - 28px)) !important;
+    height: min(860px, calc(100vh - 28px)) !important;
+    height: min(860px, calc(100dvh - 28px)) !important;
+    max-width: none !important;
+    max-height: none !important;
+    border: 1px solid var(--cl12-border) !important;
+    border-radius: 12px !important;
+    clip-path: none !important;
+    color: var(--cl12-text) !important;
+    background: var(--cl12-bg) !important;
+    box-shadow: 0 18px 60px rgba(0,0,0,.48) !important;
+}
+#character-life-overlay .cl-manager { --cl12-accent: var(--cl-ui-accent, #77a7d9); }
+#character-life-skills-overlay .cl-skills-manager { --cl12-accent: #9b91d9; }
+#character-life-continuity-overlay .cl190-manager { --cl12-accent: #c7a56a; }
+#character-life-overlay .cl-manager::before,
+#character-life-skills-overlay .cl-feature-manager::before,
+#character-life-continuity-overlay .cl-feature-manager::before {
+    display: none !important;
+}
+
+/* Compact product headers. */
+#character-life-overlay .cl-manager-header,
+#character-life-skills-overlay .cl-skills-header.cl-manager-header,
+#character-life-continuity-overlay .cl190-manager > header.cl-manager-header {
+    min-height: 62px !important;
+    box-sizing: border-box;
+    padding: 9px 12px !important;
+    border: 0 !important;
+    border-bottom: 1px solid var(--cl12-border) !important;
+    background: color-mix(in srgb, var(--cl12-bg) 94%, black 6%) !important;
+}
+#character-life-overlay .cl-manager-header {
+    grid-template-columns: auto 38px minmax(0, 1fr) auto !important;
+    gap: 9px !important;
+}
+#character-life-overlay .cl-manager-header::after,
+#character-life-skills-overlay .cl-skills-header::after,
+#character-life-continuity-overlay .cl190-manager > header::after {
+    display: none !important;
+}
+#character-life-overlay .cl-brand-mark,
+#character-life-skills-overlay .cl-skills-mark,
+#character-life-continuity-overlay .cl190-mark {
+    width: 38px !important;
+    min-width: 38px !important;
+    height: 38px !important;
+    border: 1px solid color-mix(in srgb, var(--cl12-accent) 45%, var(--cl12-border)) !important;
+    border-radius: 8px !important;
+    color: var(--cl12-accent) !important;
+    background: color-mix(in srgb, var(--cl12-accent) 10%, transparent) !important;
+    transform: none !important;
+}
+#character-life-overlay .cl-brand-mark i,
+#character-life-skills-overlay .cl-skills-mark i,
+#character-life-continuity-overlay .cl190-mark i {
+    transform: none !important;
+}
+#character-life-overlay .cl-manager-header small,
+#character-life-skills-overlay .cl-skills-header small,
+#character-life-continuity-overlay .cl190-manager > header small {
+    color: var(--cl12-muted) !important;
+    font-size: .66rem !important;
+    font-weight: 600;
+    letter-spacing: .12em !important;
+    line-height: 1.2;
+}
+#character-life-overlay .cl-manager-header h2,
+#character-life-skills-overlay .cl-skills-header h2,
+#character-life-continuity-overlay .cl190-manager > header h2 {
+    margin: 1px 0 0 !important;
+    color: var(--cl12-text) !important;
+    font-size: 1.12rem !important;
+    font-weight: 650 !important;
+    line-height: 1.22;
+    letter-spacing: 0 !important;
+}
+#character-life-overlay .cl-manager-back,
+#character-life-overlay .cl-manager-header > .menu_button,
+#character-life-skills-overlay .cl-skills-header > button,
+#character-life-continuity-overlay .cl190-manager > header > button {
+    width: 40px !important;
+    min-width: 40px !important;
+    height: 40px !important;
+    min-height: 40px !important;
+    padding: 0 !important;
+    border: 1px solid var(--cl12-border) !important;
+    border-radius: 7px !important;
+    color: var(--cl12-text) !important;
+    background: transparent !important;
+    box-shadow: none !important;
+}
+#character-life-overlay .cl-manager-back:hover,
+#character-life-overlay .cl-manager-header > .menu_button:hover,
+#character-life-skills-overlay .cl-skills-header > button:hover,
+#character-life-continuity-overlay .cl190-manager > header > button:hover {
+    background: var(--cl12-soft-strong) !important;
+}
+
+/* Characters and Skills share a clear library workspace, not decorative cards. */
+#character-life-overlay .cl-manager-toolbar,
+#character-life-skills-overlay .cl-skills-toolbar.cl-manager-toolbar {
+    display: grid !important;
+    grid-template-columns: auto minmax(150px, 1fr) auto !important;
+    align-items: center !important;
+    gap: 8px !important;
+    min-width: 0;
+    padding: 8px 10px !important;
+    border: 0 !important;
+    border-bottom: 1px solid var(--cl12-border) !important;
+    background: var(--cl12-bg) !important;
+}
+#character-life-overlay .cl-scope-tabs,
+#character-life-skills-overlay .cl-skill-scope-tabs {
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(0, auto)) !important;
+    gap: 2px !important;
+    min-width: 0;
+    padding: 3px !important;
+    border: 1px solid var(--cl12-border) !important;
+    border-radius: 8px !important;
+    background: color-mix(in srgb, var(--cl12-bg) 91%, black 9%) !important;
+}
+#character-life-overlay .cl-scope-tabs button,
+#character-life-skills-overlay .cl-skill-scope-tabs button {
+    min-width: 0 !important;
+    min-height: 34px !important;
+    padding: 5px 8px !important;
+    border: 0 !important;
+    border-radius: 6px !important;
+    color: var(--cl12-muted) !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    white-space: normal;
+}
+#character-life-overlay .cl-scope-tabs button.is-active,
+#character-life-skills-overlay .cl-skill-scope-tabs button.is-active {
+    color: var(--cl12-text) !important;
+    background: var(--cl12-soft-strong) !important;
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--cl12-accent) 35%, transparent) !important;
+}
+#character-life-overlay .cl-scope-tabs b,
+#character-life-skills-overlay .cl-skill-scope-tabs b {
+    border: 0 !important;
+    color: var(--cl12-muted) !important;
+    background: transparent !important;
+}
+#character-life-overlay .cl-search,
+#character-life-skills-overlay .cl-skill-search {
+    min-width: 0 !important;
+    min-height: 38px !important;
+    border: 1px solid var(--cl12-border) !important;
+    border-radius: 7px !important;
+    background: color-mix(in srgb, var(--cl12-bg) 91%, black 9%) !important;
+}
+#character-life-overlay .cl-search input,
+#character-life-skills-overlay .cl-skill-search input {
+    min-width: 0;
+    min-height: 36px;
+    color: var(--cl12-text) !important;
+}
+#character-life-overlay .cl-primary,
+#character-life-skills-overlay .cl-skills-toolbar > .cl-primary,
+#character-life-skills-overlay .cl-skills-toolbar > .primary {
+    min-height: 38px !important;
+    padding: 7px 11px !important;
+    border: 1px solid color-mix(in srgb, var(--cl12-accent) 62%, var(--cl12-border)) !important;
+    border-radius: 7px !important;
+    color: var(--cl12-text) !important;
+    background: color-mix(in srgb, var(--cl12-accent) 18%, transparent) !important;
+    box-shadow: none !important;
+}
+#character-life-overlay .cl-manager-layout,
+#character-life-skills-overlay .cl-skills-layout.cl-manager-layout {
+    display: grid !important;
+    grid-template-columns: minmax(250px, 30%) minmax(0, 1fr) !important;
+    min-width: 0;
+    min-height: 0;
+    overflow: hidden;
+    background: var(--cl12-bg) !important;
+}
+#character-life-overlay .cl-npc-list,
+#character-life-skills-overlay .cl-skills-layout > aside.cl-npc-list {
+    min-width: 0;
+    min-height: 0;
+    overflow-y: auto;
+    border: 0 !important;
+    border-right: 1px solid var(--cl12-border) !important;
+    background: color-mix(in srgb, var(--cl12-bg) 96%, black 4%) !important;
+    -webkit-overflow-scrolling: touch;
+}
+#character-life-overlay .cl-npc-detail,
+#character-life-skills-overlay .cl-skills-layout > main.cl-npc-detail {
+    min-width: 0;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 18px !important;
+    color: var(--cl12-text) !important;
+    background: var(--cl12-bg) !important;
+    -webkit-overflow-scrolling: touch;
+}
+#character-life-overlay .cl-npc-row,
+#character-life-skills-overlay .cl-skill-row {
+    min-height: 62px !important;
+    box-sizing: border-box;
+    padding: 9px 11px !important;
+    border: 0 !important;
+    border-bottom: 1px solid var(--cl12-border) !important;
+    border-left: 3px solid transparent !important;
+    border-radius: 0 !important;
+    color: var(--cl12-text) !important;
+    background: transparent !important;
+    box-shadow: none !important;
+}
+#character-life-overlay .cl-npc-row:hover,
+#character-life-overlay .cl-npc-row.is-active,
+#character-life-skills-overlay .cl-skill-row:hover,
+#character-life-skills-overlay .cl-skill-row.is-active {
+    border-left-color: var(--cl12-accent) !important;
+    background: var(--cl12-soft) !important;
+}
+#character-life-overlay .cl-npc-row strong,
+#character-life-skills-overlay .cl-skill-row strong {
+    color: var(--cl12-text) !important;
+    font-weight: 600 !important;
+}
+#character-life-overlay .cl-npc-row small,
+#character-life-skills-overlay .cl-skill-row small {
+    color: var(--cl12-muted) !important;
+}
+#character-life-overlay .cl-library-avatar,
+#character-life-skills-overlay .cl-skill-row-icon,
+#character-life-skills-overlay .cl-skill-editor-preview {
+    border: 1px solid var(--cl12-border) !important;
+    border-radius: 9px !important;
+    background: var(--cl12-soft) !important;
+    box-shadow: none !important;
+}
+#character-life-overlay .cl-profile-hero,
+#character-life-overlay .cl-record-view,
+#character-life-overlay .cl-form-card,
+#character-life-overlay .cl-editor-section,
+#character-life-skills-overlay .cl-skill-card,
+#character-life-skills-overlay .cl-skill-image-editor {
+    border: 1px solid var(--cl12-border) !important;
+    border-radius: 9px !important;
+    color: var(--cl12-text) !important;
+    background: var(--cl12-soft) !important;
+    box-shadow: none !important;
+}
+#character-life-overlay .cl-manager-footer,
+#character-life-skills-overlay .cl-skills-manager > footer {
+    min-width: 0;
+    border: 0 !important;
+    border-top: 1px solid var(--cl12-border) !important;
+    background: color-mix(in srgb, var(--cl12-bg) 95%, black 5%) !important;
+}
+
+/* Continuity: compact destination grid and calm readable content. */
+#character-life-continuity-overlay .cl190-tabs.cl-continuity-tabs {
+    display: grid !important;
+    grid-template-columns: repeat(7, minmax(0, 1fr)) !important;
+    gap: 4px !important;
+    min-width: 0 !important;
+    min-height: 0 !important;
+    height: auto !important;
+    padding: 7px 9px !important;
+    overflow: visible !important;
+    border: 0 !important;
+    border-bottom: 1px solid var(--cl12-border) !important;
+    background: var(--cl12-bg) !important;
+}
+#character-life-continuity-overlay .cl190-tabs button {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 6px !important;
+    min-width: 0 !important;
+    min-height: 38px !important;
+    padding: 6px 7px !important;
+    border: 1px solid transparent !important;
+    border-radius: 7px !important;
+    color: var(--cl12-muted) !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    white-space: normal !important;
+    overflow-wrap: anywhere;
+}
+#character-life-continuity-overlay .cl190-tabs button:hover,
+#character-life-continuity-overlay .cl190-tabs button.is-active {
+    color: var(--cl12-text) !important;
+    border-color: color-mix(in srgb, var(--cl12-accent) 36%, var(--cl12-border)) !important;
+    background: var(--cl12-soft-strong) !important;
+}
+#character-life-continuity-overlay .cl-continuity-layout {
+    min-width: 0 !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+    background: var(--cl12-bg) !important;
+}
+#character-life-continuity-overlay .cl190-body.cl-npc-detail {
+    display: grid !important;
+    align-content: start !important;
+    gap: 10px !important;
+    min-width: 0 !important;
+    min-height: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    box-sizing: border-box;
+    padding: 16px !important;
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+    color: var(--cl12-text) !important;
+    background: var(--cl12-bg) !important;
+    -webkit-overflow-scrolling: touch;
+}
+#character-life-continuity-overlay .cl190-card,
+#character-life-continuity-overlay .cl190-stat-grid > div,
+#character-life-continuity-overlay .cl190-scene-grid > div,
+#character-life-continuity-overlay .cl190-empty {
+    border: 1px solid var(--cl12-border) !important;
+    border-radius: 9px !important;
+    color: var(--cl12-text) !important;
+    background: var(--cl12-soft) !important;
+    box-shadow: none !important;
+}
+#character-life-continuity-overlay .cl190-card {
+    padding: 14px 15px !important;
+}
+#character-life-continuity-overlay .cl190-card::before {
+    display: none !important;
+}
+#character-life-continuity-overlay .cl190-card h4 {
+    margin: 0 0 7px !important;
+    color: var(--cl12-text) !important;
+    font-size: .9rem !important;
+    font-weight: 650 !important;
+    letter-spacing: 0 !important;
+    text-transform: none;
+}
+#character-life-continuity-overlay .cl190-card p,
+#character-life-continuity-overlay .cl190-stat-grid span,
+#character-life-continuity-overlay .cl190-scene-grid small {
+    color: var(--cl12-muted) !important;
+}
+#character-life-continuity-overlay .cl190-stat-grid,
+#character-life-continuity-overlay .cl190-scene-grid {
+    gap: 8px !important;
+}
+#character-life-continuity-overlay .cl190-stat-grid > div {
+    min-height: 86px !important;
+    padding: 12px !important;
+}
+#character-life-continuity-overlay .cl190-stat-grid b {
+    color: var(--cl12-text) !important;
+    font-size: 1.55rem !important;
+    font-weight: 600 !important;
+}
+#character-life-continuity-overlay .cl190-kind,
+#character-life-continuity-overlay .cl190-chips span,
+#character-life-continuity-overlay .cl190-skill-meta span {
+    border: 1px solid var(--cl12-border) !important;
+    color: var(--cl12-text) !important;
+    background: var(--cl12-soft) !important;
+}
+
+/* Long values always wrap in all three tools. */
+#character-life-overlay :is(h2,h3,h4,p,span,strong,small,dd,label,button),
+#character-life-skills-overlay :is(h2,h3,h4,p,span,strong,small,label,button),
+#character-life-continuity-overlay :is(h2,h3,h4,p,span,strong,small,label,button) {
+    min-width: 0;
+    overflow-wrap: anywhere;
+    word-break: normal;
+}
+
+/* Phone layout: one viewport, one content scroller, safe-area-aware controls. */
+@media (max-width: 760px) {
+    #character-life-overlay.is-open,
+    #character-life-skills-overlay.is-open,
+    #character-life-continuity-overlay.is-open {
+        display: flex !important;
+        inset: 0 !important;
+        width: 100% !important;
+        height: 100vh !important;
+        height: 100svh !important;
+        height: 100dvh !important;
+        padding: 0 !important;
+        align-items: stretch !important;
+        justify-content: stretch !important;
+    }
+    #character-life-overlay .cl-manager,
+    #character-life-skills-overlay .cl-skills-manager.cl-feature-manager,
+    #character-life-continuity-overlay .cl190-manager.cl-feature-manager {
+        width: 100% !important;
+        height: 100vh !important;
+        height: 100svh !important;
+        height: 100dvh !important;
+        min-height: 0 !important;
+        max-height: none !important;
+        border: 0 !important;
+        border-radius: 0 !important;
+        box-shadow: none !important;
+    }
+    #character-life-overlay .cl-manager-header,
+    #character-life-skills-overlay .cl-skills-header.cl-manager-header,
+    #character-life-continuity-overlay .cl190-manager > header.cl-manager-header {
+        min-height: calc(58px + env(safe-area-inset-top)) !important;
+        padding: calc(8px + env(safe-area-inset-top)) 9px 8px !important;
+    }
+    #character-life-overlay .cl-manager-header {
+        grid-template-columns: auto 36px minmax(0, 1fr) 40px !important;
+        gap: 7px !important;
+    }
+    #character-life-overlay .cl-brand-mark,
+    #character-life-skills-overlay .cl-skills-mark,
+    #character-life-continuity-overlay .cl190-mark {
+        width: 36px !important;
+        min-width: 36px !important;
+        height: 36px !important;
+    }
+    #character-life-overlay .cl-manager-header h2,
+    #character-life-skills-overlay .cl-skills-header h2,
+    #character-life-continuity-overlay .cl190-manager > header h2 {
+        max-width: none !important;
+        font-size: 1rem !important;
+    }
+    #character-life-overlay .cl-manager-toolbar,
+    #character-life-skills-overlay .cl-skills-toolbar.cl-manager-toolbar {
+        grid-template-columns: minmax(0, 1fr) 42px !important;
+        gap: 7px !important;
+        padding: 7px 8px !important;
+    }
+    #character-life-overlay .cl-scope-tabs,
+    #character-life-skills-overlay .cl-skill-scope-tabs {
+        grid-column: 1 / -1;
+        grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+        width: 100%;
+    }
+    #character-life-overlay .cl-scope-tabs button,
+    #character-life-skills-overlay .cl-skill-scope-tabs button {
+        justify-content: center;
+        min-height: 36px !important;
+        padding-inline: 3px !important;
+        font-size: .8rem;
+    }
+    #character-life-overlay .cl-scope-tabs button i,
+    #character-life-skills-overlay .cl-skill-scope-tabs button i {
+        display: none;
+    }
+    #character-life-overlay .cl-search,
+    #character-life-skills-overlay .cl-skill-search {
+        grid-column: 1;
+        width: 100%;
+    }
+    #character-life-overlay .cl-primary,
+    #character-life-skills-overlay .cl-skills-toolbar > .cl-primary,
+    #character-life-skills-overlay .cl-skills-toolbar > .primary {
+        grid-column: 2;
+        width: 42px;
+        min-width: 42px !important;
+        padding: 7px !important;
+        font-size: 0;
+    }
+    #character-life-overlay .cl-primary i,
+    #character-life-skills-overlay .cl-skills-toolbar > .cl-primary i,
+    #character-life-skills-overlay .cl-skills-toolbar > .primary i {
+        font-size: 14px;
+    }
+    #character-life-overlay .cl-manager-layout,
+    #character-life-skills-overlay .cl-skills-layout.cl-manager-layout {
+        display: block !important;
+        min-height: 0 !important;
+        overflow: hidden !important;
+    }
+    #character-life-overlay .cl-manager-layout > aside,
+    #character-life-overlay .cl-manager-layout > main,
+    #character-life-skills-overlay .cl-skills-layout > aside,
+    #character-life-skills-overlay .cl-skills-layout > main {
+        width: 100% !important;
+        height: 100% !important;
+        min-width: 0 !important;
+        max-width: none !important;
+        border-right: 0 !important;
+    }
+    #character-life-overlay .cl-npc-detail,
+    #character-life-skills-overlay .cl-skills-layout > main.cl-npc-detail {
+        padding: 12px 10px calc(14px + env(safe-area-inset-bottom)) !important;
+    }
+    #character-life-overlay .cl-manager-footer {
+        padding: 7px 8px calc(7px + env(safe-area-inset-bottom)) !important;
+    }
+    #character-life-skills-overlay .cl-skills-manager > footer {
+        display: flex !important;
+        gap: 12px !important;
+        padding: 7px 9px calc(7px + env(safe-area-inset-bottom)) !important;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    #character-life-skills-overlay .cl-skills-manager > footer label {
+        flex: 0 0 auto;
+        max-width: min(78vw, 280px);
+        font-size: .76rem;
+    }
+    #character-life-continuity-overlay .cl190-tabs.cl-continuity-tabs {
+        grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+        gap: 3px !important;
+        padding: 5px 6px !important;
+    }
+    #character-life-continuity-overlay .cl190-tabs button {
+        display: grid !important;
+        grid-template-rows: 15px minmax(0, 1fr) !important;
+        gap: 2px !important;
+        min-height: 43px !important;
+        padding: 4px 2px !important;
+        font-size: .66rem;
+        line-height: 1.05;
+    }
+    #character-life-continuity-overlay .cl190-tabs button i {
+        font-size: .78rem;
+    }
+    #character-life-continuity-overlay .cl190-body.cl-npc-detail {
+        padding: 10px 8px calc(14px + env(safe-area-inset-bottom)) !important;
+    }
+    #character-life-continuity-overlay .cl190-stat-grid,
+    #character-life-continuity-overlay .cl190-scene-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    }
+}
+
+@media (max-width: 360px) {
+    #character-life-continuity-overlay .cl190-tabs button {
+        font-size: .61rem;
+    }
+    #character-life-overlay .cl-manager-header small,
+    #character-life-skills-overlay .cl-skills-header small,
+    #character-life-continuity-overlay .cl190-manager > header small {
+        display: none !important;
+    }
+}
+
 /* end styles/style-v172.css */
 
 
@@ -5452,5 +6045,197 @@ html.character-life-product-open body {
     #character-life-continuity-overlay .cl190-manager > header.cl-manager-header {
         min-height: 64px !important;
         padding: calc(10px + env(safe-area-inset-top)) 12px 10px !important;
+    }
+}
+
+/* v1.12.0 final cascade: keep the neutral workspace above every historical skin. */
+#character-life-overlay .cl-manager,
+#character-life-skills-overlay .cl-skills-manager.cl-feature-manager,
+#character-life-continuity-overlay .cl190-manager.cl-feature-manager {
+    width: min(1120px, calc(100vw - 28px)) !important;
+    height: min(860px, calc(100vh - 28px)) !important;
+    height: min(860px, calc(100dvh - 28px)) !important;
+    max-width: none !important;
+    max-height: none !important;
+    border: 1px solid var(--cl12-border) !important;
+    border-radius: 12px !important;
+    color: var(--cl12-text) !important;
+    background: var(--cl12-bg) !important;
+    box-shadow: 0 18px 60px rgba(0,0,0,.48) !important;
+}
+#character-life-overlay .cl-manager-header,
+#character-life-skills-overlay .cl-skills-header.cl-manager-header,
+#character-life-continuity-overlay .cl190-manager > header.cl-manager-header {
+    min-height: 62px !important;
+    padding: 9px 12px !important;
+    border: 0 !important;
+    border-bottom: 1px solid var(--cl12-border) !important;
+    background: color-mix(in srgb, var(--cl12-bg) 94%, black 6%) !important;
+}
+#character-life-overlay .cl-brand-mark,
+#character-life-skills-overlay .cl-skills-mark,
+#character-life-continuity-overlay .cl190-mark {
+    border-color: color-mix(in srgb, var(--cl12-accent) 45%, var(--cl12-border)) !important;
+    border-radius: 8px !important;
+    color: var(--cl12-accent) !important;
+    background: color-mix(in srgb, var(--cl12-accent) 10%, transparent) !important;
+}
+#character-life-overlay .cl-manager-header h2,
+#character-life-skills-overlay .cl-skills-header h2,
+#character-life-continuity-overlay .cl190-manager > header h2 {
+    color: var(--cl12-text) !important;
+    font-size: 1.12rem !important;
+    font-weight: 650 !important;
+    letter-spacing: 0 !important;
+}
+#character-life-overlay .cl-manager-toolbar,
+#character-life-skills-overlay .cl-skills-toolbar.cl-manager-toolbar {
+    grid-template-columns: auto minmax(150px, 1fr) auto !important;
+    gap: 8px !important;
+    padding: 8px 10px !important;
+    border-bottom: 1px solid var(--cl12-border) !important;
+    background: var(--cl12-bg) !important;
+}
+#character-life-overlay .cl-scope-tabs,
+#character-life-skills-overlay .cl-skill-scope-tabs {
+    border-color: var(--cl12-border) !important;
+    border-radius: 8px !important;
+    background: color-mix(in srgb, var(--cl12-bg) 91%, black 9%) !important;
+}
+#character-life-overlay .cl-scope-tabs button.is-active,
+#character-life-skills-overlay .cl-skill-scope-tabs button.is-active {
+    color: var(--cl12-text) !important;
+    background: var(--cl12-soft-strong) !important;
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--cl12-accent) 35%, transparent) !important;
+}
+#character-life-overlay .cl-manager-layout,
+#character-life-skills-overlay .cl-skills-layout.cl-manager-layout {
+    grid-template-columns: minmax(250px, 30%) minmax(0, 1fr) !important;
+    background: var(--cl12-bg) !important;
+}
+#character-life-overlay .cl-npc-list,
+#character-life-skills-overlay .cl-skills-layout > aside.cl-npc-list {
+    border-right: 1px solid var(--cl12-border) !important;
+    background: color-mix(in srgb, var(--cl12-bg) 96%, black 4%) !important;
+}
+#character-life-overlay .cl-npc-detail,
+#character-life-skills-overlay .cl-skills-layout > main.cl-npc-detail {
+    padding: 18px !important;
+    color: var(--cl12-text) !important;
+    background: var(--cl12-bg) !important;
+}
+#character-life-overlay .cl-npc-row,
+#character-life-skills-overlay .cl-skill-row {
+    min-height: 62px !important;
+    border-bottom: 1px solid var(--cl12-border) !important;
+    border-left: 3px solid transparent !important;
+    border-radius: 0 !important;
+    color: var(--cl12-text) !important;
+    background: transparent !important;
+}
+#character-life-overlay .cl-npc-row:hover,
+#character-life-overlay .cl-npc-row.is-active,
+#character-life-skills-overlay .cl-skill-row:hover,
+#character-life-skills-overlay .cl-skill-row.is-active {
+    border-left-color: var(--cl12-accent) !important;
+    background: var(--cl12-soft) !important;
+}
+#character-life-skills-overlay .cl-skills-manager > footer {
+    border-top: 1px solid var(--cl12-border) !important;
+    background: color-mix(in srgb, var(--cl12-bg) 95%, black 5%) !important;
+}
+#character-life-continuity-overlay .cl190-tabs.cl-continuity-tabs {
+    grid-template-columns: repeat(7, minmax(0, 1fr)) !important;
+    gap: 4px !important;
+    min-height: 0 !important;
+    padding: 7px 9px !important;
+    border-bottom: 1px solid var(--cl12-border) !important;
+    background: var(--cl12-bg) !important;
+}
+#character-life-continuity-overlay .cl190-tabs button {
+    display: flex !important;
+    min-height: 38px !important;
+    padding: 6px 7px !important;
+    border-radius: 7px !important;
+    color: var(--cl12-muted) !important;
+    background: transparent !important;
+}
+#character-life-continuity-overlay .cl190-tabs button:hover,
+#character-life-continuity-overlay .cl190-tabs button.is-active {
+    color: var(--cl12-text) !important;
+    border-color: color-mix(in srgb, var(--cl12-accent) 36%, var(--cl12-border)) !important;
+    background: var(--cl12-soft-strong) !important;
+}
+#character-life-continuity-overlay .cl-continuity-layout,
+#character-life-continuity-overlay .cl190-body.cl-npc-detail {
+    background: var(--cl12-bg) !important;
+}
+#character-life-continuity-overlay .cl190-body.cl-npc-detail {
+    padding: 16px !important;
+}
+#character-life-continuity-overlay .cl190-card,
+#character-life-continuity-overlay .cl190-stat-grid > div,
+#character-life-continuity-overlay .cl190-scene-grid > div,
+#character-life-continuity-overlay .cl190-empty {
+    border: 1px solid var(--cl12-border) !important;
+    border-radius: 9px !important;
+    color: var(--cl12-text) !important;
+    background: var(--cl12-soft) !important;
+}
+#character-life-continuity-overlay .cl190-card::before {
+    display: none !important;
+}
+#character-life-continuity-overlay .cl190-card h4 {
+    color: var(--cl12-text) !important;
+    font-size: .9rem !important;
+    letter-spacing: 0 !important;
+}
+
+@media (max-width: 760px) {
+    #character-life-overlay .cl-manager,
+    #character-life-skills-overlay .cl-skills-manager.cl-feature-manager,
+    #character-life-continuity-overlay .cl190-manager.cl-feature-manager {
+        width: 100% !important;
+        height: 100vh !important;
+        height: 100svh !important;
+        height: 100dvh !important;
+        min-height: 0 !important;
+        border: 0 !important;
+        border-radius: 0 !important;
+        box-shadow: none !important;
+    }
+    #character-life-overlay .cl-manager-header,
+    #character-life-skills-overlay .cl-skills-header.cl-manager-header,
+    #character-life-continuity-overlay .cl190-manager > header.cl-manager-header {
+        min-height: calc(58px + env(safe-area-inset-top)) !important;
+        padding: calc(8px + env(safe-area-inset-top)) 9px 8px !important;
+    }
+    #character-life-overlay .cl-manager-toolbar,
+    #character-life-skills-overlay .cl-skills-toolbar.cl-manager-toolbar {
+        grid-template-columns: minmax(0, 1fr) 42px !important;
+        padding: 7px 8px !important;
+    }
+    #character-life-overlay .cl-manager-layout,
+    #character-life-skills-overlay .cl-skills-layout.cl-manager-layout {
+        display: block !important;
+    }
+    #character-life-overlay .cl-npc-detail,
+    #character-life-skills-overlay .cl-skills-layout > main.cl-npc-detail {
+        padding: 12px 10px calc(14px + env(safe-area-inset-bottom)) !important;
+    }
+    #character-life-continuity-overlay .cl190-tabs.cl-continuity-tabs {
+        grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+        gap: 3px !important;
+        padding: 5px 6px !important;
+    }
+    #character-life-continuity-overlay .cl190-tabs button {
+        display: grid !important;
+        grid-template-rows: 15px minmax(0, 1fr) !important;
+        min-height: 43px !important;
+        padding: 4px 2px !important;
+        font-size: .66rem !important;
+    }
+    #character-life-continuity-overlay .cl190-body.cl-npc-detail {
+        padding: 10px 8px calc(14px + env(safe-area-inset-bottom)) !important;
     }
 }
