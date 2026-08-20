@@ -3066,7 +3066,7 @@ globalThis.CharacterLifeBundleRuntimePromise = (async () => {
             launcher.setAttribute('aria-label', "Open Character Life's NPC Library");
             launcher.setAttribute('aria-expanded', 'false');
             launcher.title = "Open Character Life's NPC Library";
-            launcher.innerHTML = \`<span class="cl-wand-launcher-icon"><i class="fa-solid fa-feather-pointed" aria-hidden="true"></i></span><span class="cl-wand-launcher-copy"><strong>Character Life's</strong><small>NPC Library · Skill Storage · Continuity</small></span><i class="fa-solid fa-chevron-right cl-wand-launcher-arrow" aria-hidden="true"></i>\`;
+            launcher.innerHTML = `<span class="cl-wand-launcher-icon"><i class="fa-solid fa-feather-pointed" aria-hidden="true"></i></span><span class="cl-wand-launcher-copy"><strong>Character Life's</strong><small>NPC Library · Skill Storage · Continuity</small></span><i class="fa-solid fa-chevron-right cl-wand-launcher-arrow" aria-hidden="true"></i>`;
             const activate = event => {
                 if (event.type === 'keydown' && event.key !== 'Enter' && event.key !== ' ') return;
                 event.preventDefault();
