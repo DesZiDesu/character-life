@@ -2585,7 +2585,7 @@ globalThis.CharacterLifeBundleRuntimePromise = (async () => {
             overlay.classList.add('is-open');
             overlay.setAttribute('aria-hidden', 'false');
             document.body.classList.add('character-life-open');
-            document.getElementById('character-life-wand-launcher')?.setAttribute('aria-expanded', 'true');
+            document.getElementById('character-life-wand-launcher')?.setAttribute('data-cl-overlay-open', 'library');
             renderManager();
         }
         
@@ -2594,7 +2594,7 @@ globalThis.CharacterLifeBundleRuntimePromise = (async () => {
             overlay?.classList.remove('is-open');
             overlay?.setAttribute('aria-hidden', 'true');
             document.body.classList.remove('character-life-open');
-            document.getElementById('character-life-wand-launcher')?.setAttribute('aria-expanded', 'false');
+            document.getElementById('character-life-wand-launcher')?.removeAttribute('data-cl-overlay-open');
             editorMode = '';
             releasePreviewUrls();
         }
@@ -3054,31 +3054,68 @@ globalThis.CharacterLifeBundleRuntimePromise = (async () => {
             if (launcher) launcher.hidden = !getConfig().showWand;
         }
         
+        
         function createWandLauncher() {
             if (document.getElementById('character-life-wand-launcher')) return true;
             const menu = document.getElementById('extensionsMenu');
             if (!menu) return false;
             const launcher = document.createElement('div');
             launcher.id = 'character-life-wand-launcher';
-            launcher.className = 'list-group-item flex-container flexGap5 interactable cl-wand-launcher';
-            launcher.tabIndex = 0;
-            launcher.setAttribute('role', 'button');
-            launcher.setAttribute('aria-label', "Open Character Life's NPC Library");
-            launcher.setAttribute('aria-expanded', 'false');
-            launcher.title = "Open Character Life's NPC Library";
-            launcher.innerHTML = `<span class="cl-wand-launcher-icon"><i class="fa-solid fa-feather-pointed" aria-hidden="true"></i></span><span class="cl-wand-launcher-copy"><strong>Character Life's</strong><small>NPC Library · Skill Storage · Continuity</small></span><i class="fa-solid fa-chevron-right cl-wand-launcher-arrow" aria-hidden="true"></i>`;
-            const activate = event => {
+            launcher.className = 'list-group-item cl-wand-menu-group';
+            launcher.setAttribute('aria-label', 'Character Life tools');
+            launcher.setAttribute('data-expanded', 'false');
+            launcher.innerHTML = `
+                <div class="cl-wand-parent" role="button" tabindex="0" aria-expanded="false" aria-controls="character-life-wand-submenu">
+                    <span class="cl-wand-launcher-icon"><i class="fa-solid fa-feather-pointed" aria-hidden="true"></i></span>
+                    <span class="cl-wand-launcher-copy"><strong>Character Life's</strong><small>Characters · Skill Storage · Continuity</small></span>
+                    <i class="fa-solid fa-chevron-right cl-wand-launcher-arrow" aria-hidden="true"></i>
+                </div>
+                <div id="character-life-wand-submenu" class="cl-wand-submenu" hidden>
+                    <div class="cl-wand-subitem" data-cl-product="library" role="button" tabindex="0" aria-label="Open Characters">
+                        <span class="cl-wand-subitem-branch" aria-hidden="true">↳</span><i class="fa-solid fa-address-book" aria-hidden="true"></i><span>Characters</span>
+                    </div>
+                    <div class="cl-wand-subitem" data-cl-product="skills" role="button" tabindex="0" aria-label="Open Skill Storage">
+                        <span class="cl-wand-subitem-branch" aria-hidden="true">↳</span><i class="fa-solid fa-wand-sparkles" aria-hidden="true"></i><span>Skill Storage</span>
+                    </div>
+                    <div class="cl-wand-subitem" data-cl-product="continuity" role="button" tabindex="0" aria-label="Open Continuity">
+                        <span class="cl-wand-subitem-branch" aria-hidden="true">↳</span><i class="fa-solid fa-timeline" aria-hidden="true"></i><span>Continuity</span>
+                    </div>
+                </div>`;
+            const parent = launcher.querySelector('.cl-wand-parent');
+            const submenu = launcher.querySelector('.cl-wand-submenu');
+            const setExpanded = expanded => {
+                const next = Boolean(expanded);
+                parent?.setAttribute('aria-expanded', String(next));
+                launcher.dataset.expanded = String(next);
+                if (submenu) submenu.hidden = !next;
+            };
+            const toggle = event => {
                 if (event.type === 'keydown' && event.key !== 'Enter' && event.key !== ' ') return;
                 event.preventDefault();
-                openManager();
+                event.stopPropagation();
+                setExpanded(submenu?.hidden !== false);
             };
-            launcher.addEventListener('click', activate);
-            launcher.addEventListener('keydown', activate);
+            parent?.addEventListener('click', toggle);
+            parent?.addEventListener('keydown', toggle);
+            for (const item of launcher.querySelectorAll('[data-cl-product]')) {
+                item.addEventListener('keydown', event => {
+                    if (event.key !== 'Enter' && event.key !== ' ') return;
+                    event.preventDefault();
+                    item.click();
+                });
+                item.addEventListener('click', () => {
+                    const api = {
+                        library: globalThis.CharacterLifeNpcLibrary,
+                        skills: globalThis.CharacterLifeSkills,
+                        continuity: globalThis.CharacterLifeContinuity,
+                    }[item.dataset.clProduct];
+                    if (typeof api?.open === 'function') api.open();
+                });
+            }
             menu.appendChild(launcher);
             syncWandVisibility();
             return true;
         }
-        
         function observeWandMenu() {
             if (createWandLauncher() || menuObserver) return;
             menuObserver = new MutationObserver(() => {
@@ -4399,6 +4436,12 @@ globalThis.CharacterLifeBundleRuntimePromise = (async () => {
             initialized = true;
             try {
                 ensureDefaults();
+                globalThis.CharacterLifeNpcLibrary = Object.freeze({
+                    version: '1.10.0',
+                    open: openManager,
+                    close: closeManager,
+                    refresh: renderManager,
+                });
                 document.documentElement.setAttribute('data-cl-wand-v172', 'true');
                 document.addEventListener('click', onDocumentClickCapture, true);
                 document.addEventListener('change', onDocumentChangeCapture, true);
@@ -8281,7 +8324,7 @@ globalThis.CharacterLifeBundleRuntimePromise = (async () => {
             if (!overlay) return false;
             if (name === 'library') {
                 try { globalThis.CharacterLifeBulkMove?.cancel?.(); } catch {}
-                q('#character-life-wand-launcher')?.setAttribute('aria-expanded', 'false');
+                q('#character-life-wand-launcher')?.removeAttribute('data-cl-overlay-open');
             }
             overlay.classList.remove('is-open');
             overlay.setAttribute('aria-hidden', 'true');
@@ -8329,20 +8372,13 @@ globalThis.CharacterLifeBundleRuntimePromise = (async () => {
             }
         }
         
-        function ensureProductNav(name) {
-            const manager = managerFor(name);
-            const header = headerFor(name);
-            if (!manager || !header) return false;
-            let nav = q(':scope > [data-cl-product-nav]', manager);
-            if (!nav) {
-                nav = createProductNav();
-                header.insertAdjacentElement('afterend', nav);
-            }
-            syncProductNav(nav, name);
-            return true;
+                function ensureProductNav(name) {
+            // Character, Skills, and Continuity are intentionally separate surfaces.
+            // Keep this compatibility hook, but do not inject a shared product switcher.
+            return Boolean(managerFor(name));
         }
         
-        function normalizeSharedHeader(name) {
+                function normalizeSharedHeader(name) {
             if (name === 'library') return;
             const header = headerFor(name);
             if (!header) return;
@@ -8351,13 +8387,17 @@ globalThis.CharacterLifeBundleRuntimePromise = (async () => {
             const mark = q(name === 'skills' ? '.cl-skills-mark' : '.cl190-mark', header);
             if (mark) {
                 mark.classList.add('cl-brand-mark');
-                if (!mark.querySelector('.fa-feather-pointed')) mark.innerHTML = '<i class="fa-solid fa-feather-pointed"></i>';
+                const icon = q('i', mark);
+                if (icon) icon.className = `fa-solid ${name === 'skills' ? 'fa-wand-sparkles' : 'fa-timeline'}`;
             }
         
             const title = q(name === 'skills' ? '#cl-skills-title' : '#cl190-title', header);
-            if (title && title.textContent !== "Character Life's") title.textContent = "Character Life's";
             const kicker = q('small', header);
-            if (kicker && kicker.textContent !== 'CHRONICLE REGISTRY') kicker.textContent = 'CHRONICLE REGISTRY';
+            const copy = name === 'skills'
+                ? { title: 'Skill Storage', kicker: 'SKILL CODEX' }
+                : { title: 'Continuity', kicker: 'CONTINUITY CHRONICLE' };
+            if (title && title.textContent !== copy.title) title.textContent = copy.title;
+            if (kicker && kicker.textContent !== copy.kicker) kicker.textContent = copy.kicker;
         
             const close = q(name === 'skills' ? '[data-cl-skill-close]' : '[data-cl190-close]', header);
             close?.classList.add('menu_button', 'menu_button_icon');
@@ -8462,7 +8502,11 @@ globalThis.CharacterLifeBundleRuntimePromise = (async () => {
             refreshTimer = setTimeout(decorateAll, delay);
         }
         
-        function ownerOpen(name) {
+                function ownerOpen(name) {
+            if (name === 'library' && typeof globalThis.CharacterLifeNpcLibrary?.open === 'function') {
+                globalThis.CharacterLifeNpcLibrary.open();
+                return true;
+            }
             if (name === 'skills' && typeof globalThis.CharacterLifeSkills?.open === 'function') {
                 globalThis.CharacterLifeSkills.open();
                 return true;
@@ -8498,7 +8542,7 @@ globalThis.CharacterLifeBundleRuntimePromise = (async () => {
         
         function launcherIntent(target) {
             if (!target) return '';
-            if (target.closest('#character-life-wand-launcher, #character-life-open, #character-life-new')) return 'library';
+            if (target.closest('#character-life-open, #character-life-new')) return 'library';
             if (target.closest('#character-life-skill-storage-launcher, #character-life-open-skill-storage')) return 'skills';
             if (target.closest('#character-life-continuity-launcher, #character-life-open-continuity')) return 'continuity';
             return '';
@@ -12290,12 +12334,13 @@ globalThis.CharacterLifeBundleRuntimePromise = (async () => {
             return true;
         }
         
-        function normalizeWandEntry() {
+                function normalizeWandEntry() {
             const launcher = q('#character-life-wand-launcher');
             if (!launcher) return;
-            launcher.title = 'Open Character Life';
-            launcher.setAttribute('aria-label', 'Open Character Life');
-            const label = q('span', launcher);
+            launcher.title = 'Open Character Life tools';
+            launcher.setAttribute('aria-label', 'Character Life tools');
+            launcher.classList.add('cl-wand-menu-group');
+            const label = q('.cl-wand-launcher-copy strong', launcher);
             if (label) label.textContent = "Character Life's";
         }
         
