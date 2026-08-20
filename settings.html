@@ -12,12 +12,16 @@
                 <button id="character-life-new" class="menu_button" type="button"><i class="fa-solid fa-user-plus"></i> Create NPC</button>
             </div>
 
-            <details class="cl-settings-section" data-cl-settings-section="npc-automation" open>
+            <details class="cl-settings-section" data-cl-settings-section="npc-automation">
                 <summary>
                     <span class="cl-settings-summary-icon"><i class="fa-solid fa-user-gear"></i></span>
                     <span class="cl-settings-summary-copy"><strong>NPC &amp; AI behavior</strong><small>Speaker tags, discovery, profile updates, and NPC colors</small></span>
                 </summary>
                 <div class="cl-settings-section-body">
+                    <label class="checkbox_label" for="character-life-enabled">
+                        <input id="character-life-enabled" type="checkbox">
+                        <span>Enable Character Life presentation and tracking</span>
+                    </label>
                     <label class="checkbox_label" for="character-life-wand">
                         <input id="character-life-wand" type="checkbox">
                         <span>Show Character Life's in the Wand menu</span>
