@@ -4768,3 +4768,33 @@ html.character-life-product-open body {
     width: min(100%, 460px) !important;
     max-width: 460px !important;
 }
+
+/* v1.14.1 — Character and Skill Storage are product surfaces, not chat cards. */
+.character-life-overlay,
+.cl-skills-overlay {
+    inset: 0 !important;
+    align-items: stretch !important;
+    justify-content: stretch !important;
+    padding: 0 !important;
+}
+
+.character-life-overlay .cl-manager,
+.cl-skills-overlay .cl-skills-manager {
+    box-sizing: border-box;
+    width: 100% !important;
+    max-width: none !important;
+    height: 100dvh !important;
+    min-height: 100dvh !important;
+    max-height: none !important;
+    border-left: 0 !important;
+    border-right: 0 !important;
+    border-radius: 0 !important;
+    clip-path: none !important;
+    box-shadow: none !important;
+}
+
+.character-life-overlay .cl-manager,
+.cl-skills-overlay .cl-skills-manager {
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+}
