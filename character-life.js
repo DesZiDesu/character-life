@@ -1,5 +1,5 @@
 /* Character Life consolidated runtime bundle. Generated from the preserved v1.9.16 module stack. */
-const CHARACTER_LIFE_BUNDLE_VERSION = '1.9.18';
+const CHARACTER_LIFE_BUNDLE_VERSION = '1.9.19';
 const existingCharacterLifeBundle = globalThis.CharacterLifeBundleRuntimePromise;
 if (existingCharacterLifeBundle) {
     await existingCharacterLifeBundle;
@@ -2585,6 +2585,7 @@ globalThis.CharacterLifeBundleRuntimePromise = (async () => {
             overlay.classList.add('is-open');
             overlay.setAttribute('aria-hidden', 'false');
             document.body.classList.add('character-life-open');
+            document.getElementById('character-life-wand-launcher')?.setAttribute('aria-expanded', 'true');
             renderManager();
         }
         
@@ -2593,6 +2594,7 @@ globalThis.CharacterLifeBundleRuntimePromise = (async () => {
             overlay?.classList.remove('is-open');
             overlay?.setAttribute('aria-hidden', 'true');
             document.body.classList.remove('character-life-open');
+            document.getElementById('character-life-wand-launcher')?.setAttribute('aria-expanded', 'false');
             editorMode = '';
             releasePreviewUrls();
         }
@@ -3058,11 +3060,13 @@ globalThis.CharacterLifeBundleRuntimePromise = (async () => {
             if (!menu) return false;
             const launcher = document.createElement('div');
             launcher.id = 'character-life-wand-launcher';
-            launcher.className = 'list-group-item flex-container flexGap5 interactable';
+            launcher.className = 'list-group-item flex-container flexGap5 interactable cl-wand-launcher';
             launcher.tabIndex = 0;
             launcher.setAttribute('role', 'button');
+            launcher.setAttribute('aria-label', "Open Character Life's NPC Library");
+            launcher.setAttribute('aria-expanded', 'false');
             launcher.title = "Open Character Life's NPC Library";
-            launcher.innerHTML = '<i class="fa-solid fa-feather-pointed"></i><span>Character Life\'s</span>';
+            launcher.innerHTML = \`<span class="cl-wand-launcher-icon"><i class="fa-solid fa-feather-pointed" aria-hidden="true"></i></span><span class="cl-wand-launcher-copy"><strong>Character Life's</strong><small>NPC Library · Skill Storage · Continuity</small></span><i class="fa-solid fa-chevron-right cl-wand-launcher-arrow" aria-hidden="true"></i>\`;
             const activate = event => {
                 if (event.type === 'keydown' && event.key !== 'Enter' && event.key !== ' ') return;
                 event.preventDefault();
@@ -8277,6 +8281,7 @@ globalThis.CharacterLifeBundleRuntimePromise = (async () => {
             if (!overlay) return false;
             if (name === 'library') {
                 try { globalThis.CharacterLifeBulkMove?.cancel?.(); } catch {}
+                q('#character-life-wand-launcher')?.setAttribute('aria-expanded', 'false');
             }
             overlay.classList.remove('is-open');
             overlay.setAttribute('aria-hidden', 'true');

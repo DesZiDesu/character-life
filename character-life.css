@@ -115,7 +115,7 @@ body.character-life-open { overflow: hidden; }
 .cl-npc-row:hover, .cl-npc-row.is-active { background: linear-gradient(90deg, color-mix(in srgb, var(--cl-header-color) 12%, transparent), transparent); }
 .cl-npc-row.is-active::before { background: var(--cl-header-color); }
 .cl-npc-row > span:nth-child(2) { display: grid; gap: 3px; min-width: 0; }
-.cl-npc-row strong, .cl-npc-row small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cl-npc-row strong, .cl-npc-row small { min-width: 0; white-space: normal; overflow-wrap: anywhere; word-break: break-word; }
 .cl-npc-row strong { font-family: inherit; font-weight: 500; }
 .cl-npc-row small { color: var(--cl-muted); }
 .cl-npc-row > i { color: var(--cl-muted); }
@@ -284,13 +284,13 @@ body.character-life-open { overflow: hidden; }
 .mes_text[data-cl-shape="circle"] .cl-chat-portrait { border-radius: 50%; clip-path: none; }
 .mes_text[data-cl-shape="hexagon"] .cl-chat-portrait { border-radius: 0; clip-path: polygon(25% 3%, 75% 3%, 100% 50%, 75% 97%, 25% 97%, 0 50%); }
 .mes_text[data-cl-missing="hidden"] .cl-chat-portrait:not(.has-image) { display: none; }
-.cl-chat-identity { display: grid; gap: 2px; min-width: 0; }
-.cl-chat-identity small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--cl-local-header); font-family: inherit; letter-spacing: .11em; }
+.cl-chat-identity { display: grid; gap: 2px; min-width: 0; flex: 1 1 auto; }
+.cl-chat-identity small { min-width: 0; color: var(--cl-local-header); font-family: inherit; letter-spacing: .11em; white-space: normal; overflow-wrap: anywhere; word-break: break-word; }
 .cl-chat-identity small:empty { display: none; }
-.cl-chat-identity strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: color-mix(in srgb, var(--SmartThemeBodyColor, #eee8dc) 84%, var(--cl-local-header) 16%); font-family: inherit; font-weight: 500; letter-spacing: .04em; }
+.cl-chat-identity strong { min-width: 0; color: color-mix(in srgb, var(--SmartThemeBodyColor, #eee8dc) 84%, var(--cl-local-header) 16%); font-family: inherit; font-weight: 500; letter-spacing: .04em; white-space: normal; overflow-wrap: anywhere; word-break: break-word; }
 .cl-chat-rule { display: none; }
 .cl-chat-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 0 7px; min-width: 0; }
-.cl-chat-meta span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--cl-muted); font-family: inherit; }
+.cl-chat-meta span { min-width: 0; color: var(--cl-muted); font-family: inherit; white-space: normal; overflow-wrap: anywhere; word-break: break-word; }
 .cl-chat-meta span:empty, .cl-chat-meta .cl-chat-gender, .cl-chat-meta .cl-chat-age { display: none; }
 .cl-chat-wing { display: flex; align-items: center; flex: 1; min-width: 12px; color: var(--cl-local-header); }
 .cl-chat-wing span { width: 100%; height: 1px; background: linear-gradient(90deg, transparent, currentColor); }
@@ -1118,9 +1118,10 @@ body.character-life-open { overflow: hidden; }
 .cl-skill-row strong,
 .cl-skill-row small {
     display: block;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    min-width: 0;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    word-break: break-word;
 }
 .cl-skill-row small { color: var(--cl-muted); margin-top: 2px; font-size: .75em; }
 .cl-skill-row-icon,
@@ -2915,7 +2916,9 @@ html.character-life-product-open body {
     background: transparent !important;
     box-shadow: none !important;
     font: inherit;
-    white-space: nowrap;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    word-break: break-word;
     touch-action: manipulation;
 }
 
@@ -3416,9 +3419,10 @@ html.character-life-product-open body {
     #character-life-skills-overlay .cl-skills-header h2,
     #character-life-continuity-overlay .cl190-manager > header h2 {
         font-size: 1em !important;
-        white-space: nowrap !important;
-        overflow: hidden !important;
-        text-overflow: ellipsis !important;
+        white-space: normal !important;
+        overflow: visible !important;
+        overflow-wrap: anywhere !important;
+        word-break: break-word !important;
     }
 
     .cl-product-nav {
@@ -3625,3 +3629,111 @@ html.character-life-product-open body {
 /* Character Life aggregate stylesheet. Release version comes from manifest.json.
  * Legacy Skill/Continuity window skins are intentionally not loaded; v1.9.13+
  * renders both tools through the same visual shell as the NPC Library. */
+
+
+/* Character Life v1.9.19 — approved A voice treatment, safe wrapping, and Wand launcher polish. */
+.mes_text.character-life-rendered .cl-chat-identity,
+.mes_text.character-life-rendered .cl-chat-header-core { min-width: 0; }
+.mes_text.character-life-rendered .cl-chat-label {
+    min-width: 0;
+    flex-wrap: wrap;
+    align-items: baseline;
+    line-height: 1.35;
+}
+.mes_text.character-life-rendered .cl-chat-label strong,
+.mes_text.character-life-rendered .cl-chat-label em,
+.mes_text.character-life-rendered .cl-chat-label i {
+    min-width: 0;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+}
+.mes_text.character-life-rendered .cl-chat-thought .cl-chat-content {
+    display: block;
+    color: color-mix(in srgb, currentColor 82%, transparent);
+    font-family: Georgia, "Times New Roman", serif;
+    font-style: italic;
+    line-height: 1.62;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+}
+.mes_text.character-life-rendered .cl-chat-dialogue .cl-chat-content {
+    position: relative;
+    display: block;
+    padding-left: 1.45em;
+    line-height: 1.62;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+}
+.mes_text.character-life-rendered .cl-chat-dialogue .cl-chat-content::before {
+    content: "“";
+    position: absolute;
+    top: -.18em;
+    left: 0;
+    color: var(--cl-local-dialogue, var(--cl-header-color));
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 2.1em;
+    line-height: 1;
+}
+.cl-skill-copy,
+.cl-skill-copy > strong,
+.cl-skill-copy > small,
+.cl-skill-rank,
+.cl-skill-rank b {
+    min-width: 0;
+    white-space: normal;
+    overflow: visible;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+    text-overflow: clip;
+}
+#character-life-wand-launcher.cl-wand-launcher:not([hidden]) {
+    display: flex !important;
+    align-items: center;
+    gap: 10px;
+    min-height: 52px;
+    padding: 8px 12px;
+    color: var(--SmartThemeBodyColor, #eee8dc);
+    border: 1px solid color-mix(in srgb, var(--cl-header-color, #c39a62) 28%, transparent);
+    background: linear-gradient(90deg, color-mix(in srgb, var(--cl-header-color, #c39a62) 10%, transparent), transparent 74%);
+    transition: background .16s ease, border-color .16s ease;
+}
+#character-life-wand-launcher.cl-wand-launcher:not([hidden]):hover,
+#character-life-wand-launcher.cl-wand-launcher:not([hidden]):focus-visible {
+    border-color: color-mix(in srgb, var(--cl-header-color, #c39a62) 62%, transparent);
+    background: color-mix(in srgb, var(--cl-header-color, #c39a62) 13%, transparent);
+    outline: 0;
+}
+#character-life-wand-launcher .cl-wand-launcher-icon {
+    display: grid;
+    place-items: center;
+    width: 34px;
+    height: 34px;
+    flex: 0 0 34px;
+    color: var(--cl-header-color, #c39a62);
+    border: 1px solid color-mix(in srgb, var(--cl-header-color, #c39a62) 48%, transparent);
+    border-radius: 9px;
+    background: color-mix(in srgb, var(--cl-header-color, #c39a62) 10%, transparent);
+}
+#character-life-wand-launcher .cl-wand-launcher-copy {
+    display: grid;
+    min-width: 0;
+    flex: 1 1 auto;
+    gap: 2px;
+}
+#character-life-wand-launcher .cl-wand-launcher-copy strong,
+#character-life-wand-launcher .cl-wand-launcher-copy small {
+    min-width: 0;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    line-height: 1.25;
+}
+#character-life-wand-launcher .cl-wand-launcher-copy strong { font-weight: 650; }
+#character-life-wand-launcher .cl-wand-launcher-copy small { color: color-mix(in srgb, currentColor 62%, transparent); font-size: .75em; }
+#character-life-wand-launcher .cl-wand-launcher-arrow { color: color-mix(in srgb, currentColor 56%, transparent); }
+@media (max-width: 620px) {
+    #character-life-wand-launcher.cl-wand-launcher:not([hidden]) { min-height: 50px; padding: 8px 10px; }
+    .mes_text.character-life-rendered .cl-chat-label { gap: 6px; letter-spacing: .09em; }
+}
