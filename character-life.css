@@ -6239,3 +6239,111 @@ html.character-life-product-open body {
         padding: 10px 8px calc(14px + env(safe-area-inset-bottom)) !important;
     }
 }
+
+/* v1.13.0: Characters uses the same compact Ability Matrix language as Skills. */
+#character-life-overlay .cl-manager {
+    --cl12-accent: #9b8cff !important;
+    --cl12-bg: #0f0e1c !important;
+    --cl12-text: var(--SmartThemeBodyColor, #eee) !important;
+    --cl12-border: var(--SmartThemeBorderColor, rgba(255, 255, 255, .16)) !important;
+    --cl12-soft: color-mix(in srgb, var(--cl12-text) 5%, transparent) !important;
+    --cl12-soft-strong: color-mix(in srgb, var(--cl12-text) 9%, transparent) !important;
+    --cl12-muted: color-mix(in srgb, var(--cl12-text) 62%, transparent) !important;
+    background: var(--cl12-bg) !important;
+}
+#character-life-overlay .cl-manager-header {
+    background: linear-gradient(90deg, rgba(155, 140, 255, .12), transparent 65%) !important;
+}
+#character-life-overlay .cl-manager-header::after {
+    background: #9b8cff !important;
+}
+#character-life-overlay .cl-brand-mark,
+#character-life-overlay .cl-manager-back,
+#character-life-overlay .cl-manager-header > .menu_button {
+    border-color: rgba(155, 140, 255, .38) !important;
+    color: #cfc9ff !important;
+    background: rgba(155, 140, 255, .08) !important;
+}
+#character-life-overlay .cl-manager-toolbar,
+#character-life-overlay .cl-manager-footer {
+    border-color: var(--cl12-border) !important;
+    background: var(--cl12-bg) !important;
+}
+#character-life-overlay .cl-manager-layout {
+    background: var(--cl12-bg) !important;
+}
+#character-life-overlay .cl-npc-list {
+    border-right-color: var(--cl12-border) !important;
+    background: color-mix(in srgb, var(--cl12-bg) 96%, black 4%) !important;
+}
+#character-life-overlay .cl-npc-row {
+    border-bottom-color: var(--cl12-border) !important;
+    color: var(--cl12-text) !important;
+}
+#character-life-overlay .cl-npc-row:hover,
+#character-life-overlay .cl-npc-row.is-active {
+    border-left-color: var(--cl12-accent) !important;
+    background: var(--cl12-soft) !important;
+}
+#character-life-overlay .cl-npc-detail {
+    color: var(--cl12-text) !important;
+    background: var(--cl12-bg) !important;
+}
+#character-life-overlay .cl-profile-hero,
+#character-life-overlay .cl-record-view,
+#character-life-overlay .cl-form-card,
+#character-life-overlay .cl-editor-section,
+#character-life-overlay .cl-vision-panel,
+#character-life-overlay .cl-adult-panel {
+    border-color: var(--cl12-border) !important;
+    background: var(--cl12-soft) !important;
+}
+#character-life-overlay .cl-form-card,
+#character-life-overlay .cl-new-portrait-card .cl-crop-preview {
+    grid-template-columns: minmax(280px, 360px) minmax(0, 1fr) !important;
+    align-items: start !important;
+}
+#character-life-overlay .cl-form-card .cl-crop-preview,
+#character-life-overlay .cl-new-portrait-card .cl-crop-preview {
+    width: 100% !important;
+    max-width: 360px !important;
+    justify-items: center !important;
+}
+#character-life-overlay .cl-form-card .cl-crop-preview .cl-library-avatar.large,
+#character-life-overlay .cl-new-portrait-card .cl-crop-preview .cl-library-avatar.large,
+#character-life-overlay .cl-form-card .cl-crop-stage,
+#character-life-overlay .cl-new-portrait-card .cl-crop-stage {
+    width: min(100%, 360px) !important;
+    max-width: 360px !important;
+    height: auto !important;
+    aspect-ratio: 1 / 1 !important;
+}
+#character-life-overlay .cl-manager[data-cl-shape="portrait"] .cl-form-card .cl-crop-stage,
+#character-life-overlay .cl-manager[data-cl-shape="portrait"] .cl-new-portrait-card .cl-crop-stage {
+    aspect-ratio: .78 / 1.18 !important;
+}
+#character-life-overlay .cl-form-actions button,
+#character-life-overlay .cl-primary {
+    border-color: rgba(155, 140, 255, .42) !important;
+    color: #f1efff !important;
+    background: #514b87 !important;
+}
+
+@media (max-width: 760px) {
+    #character-life-overlay .cl-form-card,
+    #character-life-overlay .cl-new-portrait-card .cl-crop-preview {
+        grid-template-columns: 1fr !important;
+    }
+    #character-life-overlay .cl-form-card .cl-crop-preview,
+    #character-life-overlay .cl-new-portrait-card .cl-crop-preview {
+        max-width: min(100%, 360px) !important;
+        margin-inline: auto !important;
+    }
+    #character-life-overlay .cl-form-card .cl-crop-preview .cl-library-avatar.large,
+    #character-life-overlay .cl-new-portrait-card .cl-crop-preview .cl-library-avatar.large,
+    #character-life-overlay .cl-form-card .cl-crop-stage,
+    #character-life-overlay .cl-new-portrait-card .cl-crop-stage {
+        width: min(100%, 360px) !important;
+        max-width: 360px !important;
+    }
+}
