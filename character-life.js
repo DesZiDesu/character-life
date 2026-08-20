@@ -1,5 +1,5 @@
 /* Character Life consolidated runtime bundle. Generated from the preserved v1.9.16 module stack. */
-const CHARACTER_LIFE_BUNDLE_VERSION = '1.14.0';
+const CHARACTER_LIFE_BUNDLE_VERSION = '1.14.1';
 const existingCharacterLifeBundle = globalThis.CharacterLifeBundleRuntimePromise;
 if (existingCharacterLifeBundle) {
     await existingCharacterLifeBundle;
@@ -44,7 +44,7 @@ globalThis.CharacterLifeBundleRuntimePromise = (async () => {
         const NPC_CHAT_KEY = 'character_life_npcs';
         const SKILL_CHAT_KEY = 'character_life_skills';
         const SKILL_ENABLED_KEY = 'character_life_skill_indicators_enabled';
-        const SPEAKER_TAG_RE = /\[(?:CL_(?:THOUGHT|HEADER|DIALOGUE)|THINK|CHAR|NPC|SAY)\|/i;
+        const SPEAKER_TAG_RE = /\[(?:CL_(?:THOUGHT|HEADER|DIALOGUE|SKILL)|THINK|CHAR|NPC|SAY)\|/i;
 
         const LEGACY_PROMPT_KEYS = new Set([
             'character_life_speaker_protocol',
@@ -7418,6 +7418,12 @@ globalThis.CharacterLifeBundleRuntimePromise = (async () => {
             queueWandEnhance();
         }
 
+        function scheduleVisibleSkillRender(messageId = null, delay = 0) {
+            const id = Number(messageId);
+            if (Number.isInteger(id)) setTimeout(() => void renderMessage(id), delay);
+            else setTimeout(renderAllVisible, delay);
+        }
+
         function bindContextEvents() {
             const context = ctx();
             const source = context?.eventSource;
@@ -7431,9 +7437,14 @@ globalThis.CharacterLifeBundleRuntimePromise = (async () => {
                 source.on(type, id => {
                     queueWandEnhance();
                     if (['CHAT_CHANGED', 'CHAT_LOADED', 'MESSAGE_RECEIVED'].includes(key)) queueTenseiSync();
-                    if (key === 'CHARACTER_MESSAGE_RENDERED' || key === 'MESSAGE_EDITED' || key === 'MESSAGE_SWIPED') {
+                    if (['CHAT_CHANGED', 'CHAT_LOADED'].includes(key)) {
+                        scheduleVisibleSkillRender(null, 0);
+                        scheduleVisibleSkillRender(null, 180);
+                    }
+                    if (['CHARACTER_MESSAGE_RENDERED', 'MESSAGE_RECEIVED', 'MESSAGE_EDITED', 'MESSAGE_SWIPED'].includes(key)) {
                         const messageId = Number(id);
-                        if (Number.isInteger(messageId)) void renderMessage(messageId);
+                        scheduleVisibleSkillRender(Number.isInteger(messageId) ? messageId : null, 0);
+                        scheduleVisibleSkillRender(Number.isInteger(messageId) ? messageId : null, 180);
                     }
                     updateSkillPrompt();
                 });
@@ -7484,6 +7495,7 @@ globalThis.CharacterLifeBundleRuntimePromise = (async () => {
                 queueTenseiSync();
                 updateSkillPrompt();
                 renderAllVisible();
+                scheduleVisibleSkillRender(null, 350);
             } catch (error) {
                 console.error("[Character Life's] Skill Indication system failed safely.", error);
             }
