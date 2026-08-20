@@ -416,35 +416,26 @@ body.character-life-open { overflow: hidden; }
     .mes_text[data-cl-design^="manga-"] .cl-chat-meta { font-size: .67em; }
 }
 
-/* v1.15.1 — optional response style controls in the Character Life drawer. */
-#character-life-response-style-settings {
-    margin-top: 12px;
-    border: 1px solid var(--cl-line);
-    background: var(--cl-surface);
+/* v1.15.2 — response style settings use the same SillyTavern-style section shell as the other options. */
+#character-life-settings #character-life-response-style-settings { margin: 0; }
+#character-life-response-style-settings .cl-response-style-body { gap: 10px; }
+#character-life-response-style-settings .cl-response-style-master { margin: 0; }
+#character-life-response-style-settings .cl-response-style-master > span { display: grid; gap: 2px; }
+#character-life-response-style-settings .cl-response-style-master small {
+    color: var(--cl-muted);
+    font-size: .8em;
+    line-height: 1.35;
 }
-#character-life-response-style-settings > summary {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    min-height: 52px;
-    padding: 10px 12px;
-    cursor: pointer;
-    list-style: none;
+#character-life-response-style-settings .cl-response-style-grid { margin: 0; }
+#character-life-response-style-settings .cl-response-style-grid select:disabled {
+    cursor: not-allowed;
+    opacity: .56;
 }
-#character-life-response-style-settings > summary::-webkit-details-marker { display: none; }
-#character-life-response-style-settings > summary > span { display: grid; gap: 2px; min-width: 0; }
-#character-life-response-style-settings > summary i { color: var(--cl-header-color); }
-#character-life-response-style-settings > summary strong { font-weight: 500; }
-#character-life-response-style-settings > summary small,
-.cl-response-style-note { color: var(--cl-muted); font-size: .82em; }
-.cl-response-style-body { display: grid; gap: 12px; padding: 0 12px 12px; border-top: 1px solid var(--cl-line); }
-.cl-response-style-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
-.cl-response-style-grid label { display: grid; gap: 6px; min-width: 0; }
-.cl-response-style-grid label > span { color: var(--cl-muted); font-size: .84em; }
-.cl-response-style-grid select { width: 100%; min-height: 40px; }
-.cl-response-style-note { margin: 0; }
-@media (max-width: 600px) {
-    .cl-response-style-grid { grid-template-columns: 1fr; }
+#character-life-response-style-settings .cl-response-style-note {
+    margin: 0;
+    color: var(--cl-muted);
+    font-size: .82em;
+    line-height: 1.4;
 }
 
 @media (max-width: 420px) {
