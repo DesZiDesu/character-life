@@ -1,10 +1,2 @@
-@import url("./style-v184.css");
-@import url("./settings.css?clv=1.9.13");
-@import url("./npc-continuity-v198.css");
-@import url("./feature-shell-v1913.css");
-@import url("./feature-shell-safety-v1913.css");
-@import url("./touch-interaction-v1914.css");
-
-/* Character Life aggregate stylesheet. Release version comes from manifest.json.
- * Legacy Skill/Continuity window skins are intentionally not loaded; v1.9.13+
- * renders both tools through the same visual shell as the NPC Library. */
+/* Compatibility shim for the consolidated Character Life stylesheet. */
+@import url("../character-life.css");

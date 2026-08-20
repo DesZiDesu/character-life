@@ -2,7 +2,7 @@
 
 Character Life's is a responsive SillyTavern extension for persistent NPC identities, portraits, speaker presentation, AI-assisted profile updates, cross-chat continuity, and optional skill tracking inside the main role-play chat.
 
-**Current version: 1.9.4**
+**Current version: 1.9.17**
 
 ## Highlights
 
@@ -74,11 +74,11 @@ character-life/
     └── ...presentation layers...
 ```
 
-The two small root compatibility shims exist only so an iOS/Safari client still caching the v1.9.3 bootstrap can transition safely to the organized paths. Feature-generation filenames may retain historical numbers internally for compatibility; the installed release version comes only from `manifest.json`.
+The repository now ships one consolidated runtime (character-life.js) and one consolidated stylesheet (character-life.css). Small compatibility shims remain at historical paths so cached iOS/Safari installations can transition without changing the UI or losing saved data. The installed release version comes only from manifest.json.
 
 ## Cache-safe updates
 
-`bootstrap.js` reads `manifest.json` with cache disabled and loads the active runtime and release stylesheet with a `clv=<version>` query token. This prevents Safari from continuing to execute an older Character Life entry module after the server repository has already updated.
+The consolidated runtime owns cache busting for both the JavaScript bundle and stylesheet. It also uses a global load sentinel so an old cached bootstrap or duplicate import cannot initialize Character Life twice.
 
 ## Install
 

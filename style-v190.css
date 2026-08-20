@@ -1,2 +1,2 @@
-/* Compatibility shim for cached v1.9.3 bootstrap paths. */
-@import url("./styles/style-v190.css");
+/* Compatibility shim for the consolidated Character Life stylesheet. */
+@import url("./character-life.css");

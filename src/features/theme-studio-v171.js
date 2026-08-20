@@ -1,8 +1,5 @@
-// Character Life v1.9.7 compatibility shim.
-//
-// The historical Wand enhancer imports ./theme-studio-v171.js from the
-// features directory. The actual theme studio is loaded first from src/core by
-// runtime/entry.js, so this module intentionally does not import it a second
-// time. Its presence lets the Wand enhancer finish evaluating instead of being
-// skipped because of a missing relative module.
-export {};
+/* Compatibility shim for the consolidated Character Life runtime. */
+const url = new URL('../../character-life.js', import.meta.url);
+const inherited = new URL(import.meta.url).searchParams.get('clv');
+if (inherited) url.searchParams.set('clv', inherited);
+await import(url.href);

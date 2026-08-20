@@ -1,23 +1,2 @@
-/* Character Life v1.9.13 — first-frame interaction safety.
- * These rules apply before the runtime decorator adds shared shell classes, so
- * the Continuity backdrop can never cover its dialog during initial creation. */
-
-#character-life-skills-overlay > .cl-skills-manager,
-#character-life-continuity-overlay > .cl190-manager {
-    position: relative !important;
-    z-index: 2 !important;
-    pointer-events: auto !important;
-}
-
-#character-life-skills-overlay > .cl-skills-backdrop,
-#character-life-continuity-overlay > .cl190-backdrop {
-    position: absolute !important;
-    inset: 0 !important;
-    z-index: 0 !important;
-}
-
-/* Avoid relying on :has() for the NPC Library's fifth grid row. The runtime
- * sets this data attribute synchronously when it installs product navigation. */
-#character-life-overlay .cl-manager[data-cl-product-manager="library"] {
-    grid-template-rows: auto auto auto minmax(0, 1fr) auto !important;
-}
+/* Compatibility shim for the consolidated Character Life stylesheet. */
+@import url("../character-life.css");
