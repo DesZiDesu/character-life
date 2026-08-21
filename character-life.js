@@ -252,7 +252,7 @@ globalThis.CharacterLifeBundleRuntimePromise = (async () => {
                 '[CL_HEADER|Exact NPC Name|optional-form]',
                 '[CL_DIALOGUE|Exact NPC Name|optional-form]the spoken dialogue[/CL_DIALOGUE]',
                 'A speaker may have multiple CL_DIALOGUE blocks after one header. Repeat CL_HEADER only when the speaker changes or returns after another speaker.',
-                'Optional private thought only when the narration truly gives that NPC''s private thought:',
+                'Optional private thought only when the narration truly gives that NPC\'s private thought:',
                 '[CL_THOUGHT|Exact NPC Name|optional-form]private thought[/CL_THOUGHT]',
                 'Use a saved portrait form only when it clearly matches the scene; otherwise omit the form. Never output image URLs or IDs. Do not replace these tags with Markdown blockquotes or plain quoted speech.'
             ].join('\n');
@@ -297,7 +297,7 @@ globalThis.CharacterLifeBundleRuntimePromise = (async () => {
                     'NPC FACT UPDATES — MACHINE DATA',
                     'Only when the conversation/card/lore establishes a new durable fact or material change, append an update near the END of the reply:',
                     '[CL_NPC_UPDATE|Exact NPC Name|field]factual value[/CL_NPC_UPDATE]',
-                    'Allowed core fields: pronouns, gender, age, species, role, affiliation, appearance, personality, relationship, background, goals, abilities, speechStyle, currentState, notes. Aliases and identityColor are also supported by Character Life''s identity layer. Unknown fields stay empty; never fabricate facts merely to fill the profile.'
+                    'Allowed core fields: pronouns, gender, age, species, role, affiliation, appearance, personality, relationship, background, goals, abilities, speechStyle, currentState, notes. Aliases and identityColor are also supported by Character Life\'s identity layer. Unknown fields stay empty; never fabricate facts merely to fill the profile.'
                 ].join('\n'));
             }
 
@@ -306,10 +306,7 @@ globalThis.CharacterLifeBundleRuntimePromise = (async () => {
             sections.push(finalUnifiedPromptRules());
             return sections.join('\n\n');
         }
-n quoted text. Character Life machine tags are plain text markup, never Markdown code.`;
-        }
 
-        
         function refreshUnifiedPrompt() {
             promptTimer = null;
             diagnostic.promptFallbackUsed = false;
