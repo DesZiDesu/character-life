@@ -218,7 +218,10 @@ globalThis.CharacterLifeBundleRuntimePromise = (async () => {
                 const name = cleanText(skill?.name, '', 140);
                 const category = cleanText(skill?.category, 'General', 80);
                 const rank = cleanText(skill?.rank, 'Unranked', 80);
-                return
+                return '- ' + owner + ': ' + name + ' | category=' + category + ' | rank=' + rank;
+            }).join('\n');
+        }
+
         function promptErrorText(error) {
             return error?.message || error || 'unknown error';
         }
