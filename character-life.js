@@ -1,5 +1,5 @@
 /* Character Life consolidated runtime bundle. Generated from the preserved v1.9.16 module stack. */
-const CHARACTER_LIFE_BUNDLE_VERSION = '1.15.5';
+const CHARACTER_LIFE_BUNDLE_VERSION = '1.15.6';
 const existingCharacterLifeBundle = globalThis.CharacterLifeBundleRuntimePromise;
 if (existingCharacterLifeBundle) {
     await existingCharacterLifeBundle;
@@ -2284,6 +2284,8 @@ function scheduleDiagnosticUi(delay = 80) {
             const overlay = document.createElement('div');
             overlay.id = 'character-life-overlay';
             overlay.className = 'character-life-overlay';
+            overlay.setAttribute('data-vaul-no-drag', '');
+            overlay.setAttribute('data-astra-extension-surface', 'character-life-library');
             overlay.setAttribute('aria-hidden', 'true');
             overlay.innerHTML = `<button class="cl-manager-backdrop" type="button" data-action="close" aria-label="Close"></button>
                 <section class="cl-manager" role="dialog" aria-modal="true" aria-labelledby="character-life-title">
@@ -3051,11 +3053,14 @@ function scheduleDiagnosticUi(delay = 80) {
             return row;
         }
 
-        function bindWandPress(row, handler) {
+        function bindWandPress(row, handler, options = {}) {
             const run = event => {
                 if (event.type === 'keydown' && event.key !== 'Enter' && event.key !== ' ') return;
                 if (event.type === 'keydown') event.preventDefault();
-                event.stopPropagation();
+                // AstraProjecta's extensions drawer closes from a delegated
+                // host click. Product actions must bubble or Astra keeps its
+                // modal focus and scroll guards active over Character Life.
+                if (!options.allowHostClose) event.stopPropagation();
                 handler(event);
             };
             row.addEventListener('click', run);
@@ -3101,7 +3106,7 @@ function scheduleDiagnosticUi(delay = 80) {
                         skills: globalThis.CharacterLifeSkills,
                     }[product];
                     if (typeof api?.open === 'function') api.open();
-                });
+                }, { allowHostClose: true });
             }
 
             bindWandPress(launcher, () => setWandExpanded(launcher.dataset.expanded !== 'true'));
@@ -7305,6 +7310,8 @@ function scheduleDiagnosticUi(delay = 80) {
             const overlay = document.createElement('div');
             overlay.id = 'character-life-skills-overlay';
             overlay.className = 'cl-skills-overlay';
+            overlay.setAttribute('data-vaul-no-drag', '');
+            overlay.setAttribute('data-astra-extension-surface', 'character-life-skills');
             overlay.setAttribute('aria-hidden', 'true');
             overlay.innerHTML = `<button class="cl-skills-backdrop" type="button" data-cl-skill-close aria-label="Close"></button>
                 <section class="cl-skills-manager" role="dialog" aria-modal="true" aria-labelledby="cl-skills-title">
@@ -7739,7 +7746,7 @@ function scheduleDiagnosticUi(delay = 80) {
         // Presentation/coordination only. Characters and Skills keep ownership of
         // state, persistence, prompts, rendering data, forms, and feature actions.
 
-        const VERSION = '1.15.5';
+        const VERSION = '1.15.6';
         const SURFACES = Object.freeze({
             library: Object.freeze({
                 overlay: '#character-life-overlay',
