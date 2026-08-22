@@ -5467,3 +5467,44 @@ html.character-life-product-open body {
         font-size: 16px;
     }
 }
+
+
+/* v1.16.0 — Royal Archivist (Whitewing Seer) header position support. */
+.mes_text.character-life-rendered[data-cl-design="whitewing-seer"][data-cl-position="left"]:not([data-cl-custom="true"]) .cl-chat-identity {
+    text-align: left;
+    justify-items: start;
+}
+.mes_text.character-life-rendered[data-cl-design="whitewing-seer"][data-cl-position="center"]:not([data-cl-custom="true"]) .cl-chat-identity {
+    text-align: center;
+    justify-items: center;
+}
+.mes_text.character-life-rendered[data-cl-design="whitewing-seer"][data-cl-position="right"]:not([data-cl-custom="true"]) .cl-chat-identity {
+    text-align: right;
+    justify-items: end;
+}
+.mes_text.character-life-rendered[data-cl-design="whitewing-seer"][data-cl-position="left"]:not([data-cl-custom="true"]) .cl-chat-meta {
+    justify-content: flex-start;
+}
+.mes_text.character-life-rendered[data-cl-design="whitewing-seer"][data-cl-position="center"]:not([data-cl-custom="true"]) .cl-chat-meta {
+    justify-content: center;
+}
+.mes_text.character-life-rendered[data-cl-design="whitewing-seer"][data-cl-position="right"]:not([data-cl-custom="true"]) .cl-chat-meta {
+    justify-content: flex-end;
+}
+.mes_text.character-life-rendered[data-cl-design="whitewing-seer"][data-cl-position="left"]:not([data-cl-custom="true"]) .cl-chat-affiliation {
+    text-align: left;
+}
+.mes_text.character-life-rendered[data-cl-design="whitewing-seer"][data-cl-position="center"]:not([data-cl-custom="true"]) .cl-chat-affiliation {
+    text-align: center;
+}
+.mes_text.character-life-rendered[data-cl-design="whitewing-seer"][data-cl-position="right"]:not([data-cl-custom="true"]) .cl-chat-affiliation {
+    text-align: right;
+}
+.mes_text.character-life-rendered[data-cl-design="whitewing-seer"][data-cl-position="center"]:not([data-cl-custom="true"]) .cl-chat-rule,
+.mes_text.character-life-rendered[data-cl-design="whitewing-seer"][data-cl-position="center"]:not([data-cl-custom="true"]) .cl-chat-affiliation::after {
+    background: linear-gradient(90deg, transparent, var(--cl-whitewing-accent), transparent);
+}
+.mes_text.character-life-rendered[data-cl-design="whitewing-seer"][data-cl-position="right"]:not([data-cl-custom="true"]) .cl-chat-rule,
+.mes_text.character-life-rendered[data-cl-design="whitewing-seer"][data-cl-position="right"]:not([data-cl-custom="true"]) .cl-chat-affiliation::after {
+    background: linear-gradient(270deg, var(--cl-whitewing-accent), transparent);
+}
