@@ -1790,7 +1790,7 @@ body.character-life-open { overflow: hidden; }
     background: radial-gradient(circle at 50% 45%, color-mix(in srgb, var(--cl-skill-accent) 18%, transparent), #111 72%);
 }
 .cl-skill-indication[data-cl-skill-design="arcane-dossier"] .cl-skill-copy > strong {
-    font-family: Georgia, "Times New Roman", serif;
+    font-family: inherit;
     font-weight: 500;
 }
 .cl-skill-indication[data-cl-skill-design="arcane-dossier"] .cl-skill-rank {
@@ -1812,7 +1812,7 @@ body.character-life-open { overflow: hidden; }
     background: #11161a;
 }
 .cl-skill-indication[data-cl-skill-design="tactical-vector"] .cl-skill-copy > strong {
-    font-family: ui-sans-serif, system-ui, sans-serif;
+    font-family: inherit;
     font-weight: 750;
 }
 .cl-skill-indication[data-cl-skill-design="tactical-vector"] .cl-skill-rule {
@@ -1844,7 +1844,7 @@ body.character-life-open { overflow: hidden; }
     color: var(--SmartThemeBlurTintColor, #111);
 }
 .cl-skill-indication[data-cl-skill-design="manga-panel"] .cl-skill-copy > strong {
-    font-family: Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif;
+    font-family: inherit;
     font-weight: 500;
     letter-spacing: .08em;
 }
@@ -3328,7 +3328,7 @@ html.character-life-product-open body {
 .mes_text.character-life-rendered .cl-chat-thought .cl-chat-content {
     display: block;
     color: color-mix(in srgb, currentColor 82%, transparent);
-    font-family: Georgia, "Times New Roman", serif;
+    font-family: inherit;
     font-style: italic;
     line-height: 1.62;
     white-space: normal;
@@ -3350,7 +3350,7 @@ html.character-life-product-open body {
     top: -.18em;
     left: 0;
     color: var(--cl-local-dialogue, var(--cl-header-color));
-    font-family: Georgia, "Times New Roman", serif;
+    font-family: inherit;
     font-size: 2.1em;
     line-height: 1;
 }
@@ -4821,7 +4821,7 @@ html.character-life-product-open body {
     padding-bottom: env(safe-area-inset-bottom);
 }
 
-/* v1.15.0 — Formal archive interface for Characters and Skill Storage.
+/* v1.15.4 — Formal archive interface for Characters and Skill Storage.
    The existing data, editors, portrait controls, scope handling, and skill
    rendering stay unchanged; this layer replaces the old decorative skins. */
 #character-life-overlay .cl-manager,
@@ -5161,4 +5161,255 @@ html.character-life-product-open body {
     #character-life-skills-overlay .cl-skill-indication { grid-template-columns: 62px minmax(0, 1fr) !important; gap: 10px !important; padding: 12px !important; }
     #character-life-skills-overlay .cl-skill-icon-frame { width: 62px !important; }
     #character-life-skills-overlay .cl-skill-rank { grid-column: 2; justify-self: start; min-width: 0; padding: 4px 0; border: 0 !important; }
+}
+
+/* Whitewing Seer — a borderless, phone-first archive header. */
+.mes_text.character-life-rendered[data-cl-design="whitewing-seer"]:not([data-cl-custom="true"]) {
+    --cl-whitewing-accent: color-mix(in srgb, var(--cl-local-header, var(--cl-header-color)) 78%, #fff 22%);
+}
+
+.mes_text.character-life-rendered[data-cl-design="whitewing-seer"]:not([data-cl-custom="true"]) .cl-chat-wing {
+    display: none !important;
+}
+
+.mes_text.character-life-rendered[data-cl-design="whitewing-seer"]:not([data-cl-custom="true"]) .cl-chat-header {
+    display: block;
+    width: 100%;
+    min-height: calc(var(--cl-portrait-size) + var(--cl-chat-header-extra) + 28px);
+    padding: var(--cl-chat-pad-y) var(--cl-chat-pad-x) calc(var(--cl-chat-pad-y) + 14px);
+    background: transparent !important;
+    border: 0 !important;
+    box-shadow: none !important;
+}
+
+.mes_text.character-life-rendered[data-cl-design="whitewing-seer"]:not([data-cl-custom="true"]) .cl-chat-header::before {
+    content: none !important;
+    display: none !important;
+}
+
+.mes_text.character-life-rendered[data-cl-design="whitewing-seer"]:not([data-cl-custom="true"]) .cl-chat-header::after {
+    content: "" !important;
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    height: 1px;
+    background: color-mix(in srgb, var(--cl-whitewing-accent) 44%, transparent);
+}
+
+.mes_text.character-life-rendered[data-cl-design="whitewing-seer"]:not([data-cl-custom="true"]) .cl-chat-header-core {
+    width: var(--cl-content-rail);
+    max-width: 100%;
+    display: flex;
+    align-items: center;
+    gap: var(--cl-chat-header-gap);
+    margin-left: auto;
+    margin-right: auto;
+    padding: 0;
+    background: transparent !important;
+    border: 0 !important;
+    box-shadow: none !important;
+}
+
+.mes_text.character-life-rendered[data-cl-design="whitewing-seer"][data-cl-position="left"]:not([data-cl-custom="true"]) .cl-chat-header-core {
+    margin-left: 0;
+    margin-right: auto;
+}
+
+.mes_text.character-life-rendered[data-cl-design="whitewing-seer"][data-cl-position="right"]:not([data-cl-custom="true"]) .cl-chat-header-core {
+    margin-left: auto;
+    margin-right: 0;
+}
+
+.mes_text.character-life-rendered[data-cl-design="whitewing-seer"]:not([data-cl-custom="true"]) .cl-chat-portrait {
+    flex: 0 0 var(--cl-portrait-size);
+    width: var(--cl-portrait-size);
+    height: var(--cl-portrait-size);
+    aspect-ratio: 1 / 1;
+    border-radius: 0 !important;
+    clip-path: none !important;
+    background: transparent;
+    border: 1px solid color-mix(in srgb, var(--cl-whitewing-accent) 68%, transparent);
+    box-shadow: none;
+}
+
+.mes_text.character-life-rendered[data-cl-design="whitewing-seer"]:not([data-cl-custom="true"]) .cl-chat-identity {
+    display: grid;
+    align-content: center;
+    gap: 4px;
+    min-width: 0;
+    flex: 1 1 auto;
+}
+
+.mes_text.character-life-rendered[data-cl-design="whitewing-seer"]:not([data-cl-custom="true"]) .cl-chat-role {
+    color: var(--cl-whitewing-accent);
+    font-size: .68em;
+    font-weight: 700;
+    letter-spacing: .13em;
+    line-height: 1.25;
+    white-space: normal;
+    overflow-wrap: anywhere;
+}
+
+.mes_text.character-life-rendered[data-cl-design="whitewing-seer"]:not([data-cl-custom="true"]) .cl-chat-rule {
+    display: block !important;
+    width: 100%;
+    max-width: 100%;
+    height: 1px;
+    margin: 1px 0 2px;
+    background: linear-gradient(90deg, var(--cl-whitewing-accent), transparent);
+    box-shadow: none;
+}
+
+.mes_text.character-life-rendered[data-cl-design="whitewing-seer"]:not([data-cl-custom="true"]) .cl-chat-role:empty + .cl-chat-rule {
+    display: none !important;
+}
+
+.mes_text.character-life-rendered[data-cl-design="whitewing-seer"]:not([data-cl-custom="true"]) .cl-chat-name {
+    color: var(--SmartThemeBodyColor, #eee8dc);
+    font-size: 1.15em;
+    font-weight: 500;
+    letter-spacing: .02em;
+    line-height: 1.2;
+}
+
+.mes_text.character-life-rendered[data-cl-design="whitewing-seer"]:not([data-cl-custom="true"]) .cl-chat-meta {
+    display: flex !important;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px 10px;
+    width: 100%;
+    margin-top: 2px;
+    color: var(--cl-muted);
+    font-size: .68em;
+    line-height: 1.3;
+    letter-spacing: .04em;
+    text-transform: none;
+}
+
+.mes_text.character-life-rendered[data-cl-design="whitewing-seer"]:not([data-cl-custom="true"]) .cl-chat-meta .cl-chat-affiliation {
+    display: block !important;
+    flex: 0 0 100%;
+    min-width: 0;
+    color: var(--cl-whitewing-accent);
+    font-weight: 650;
+}
+
+.mes_text.character-life-rendered[data-cl-design="whitewing-seer"]:not([data-cl-custom="true"]) .cl-chat-meta .cl-chat-affiliation::after {
+    content: "";
+    display: block;
+    width: 100%;
+    height: 1px;
+    margin-top: 4px;
+    background: linear-gradient(90deg, var(--cl-whitewing-accent), transparent);
+}
+
+.mes_text.character-life-rendered[data-cl-design="whitewing-seer"]:not([data-cl-custom="true"]) .cl-chat-meta :is(.cl-chat-gender, .cl-chat-age, .cl-chat-species) {
+    display: inline-flex !important;
+    min-height: 0;
+    padding: 0;
+    color: var(--cl-muted);
+    background: none !important;
+    box-shadow: none !important;
+    font-weight: 600;
+    letter-spacing: .04em;
+}
+
+.mes_text.character-life-rendered[data-cl-design="whitewing-seer"]:not([data-cl-custom="true"]) .cl-chat-meta .cl-chat-age { order: 1; }
+.mes_text.character-life-rendered[data-cl-design="whitewing-seer"]:not([data-cl-custom="true"]) .cl-chat-meta .cl-chat-gender { order: 2; }
+.mes_text.character-life-rendered[data-cl-design="whitewing-seer"]:not([data-cl-custom="true"]) .cl-chat-meta .cl-chat-species { order: 3; }
+.mes_text.character-life-rendered[data-cl-design="whitewing-seer"]:not([data-cl-custom="true"]) .cl-chat-meta span:empty { display: none !important; }
+
+.mes_text.character-life-rendered[data-cl-design="whitewing-seer"]:not([data-cl-custom="true"]) .cl-chat-thought {
+    padding: calc(var(--cl-chat-pad-y) + 8px) var(--cl-chat-pad-x);
+    text-align: center;
+    background: transparent;
+    border: 0;
+    border-bottom: 1px solid color-mix(in srgb, var(--cl-whitewing-accent) 24%, transparent);
+}
+
+.mes_text.character-life-rendered[data-cl-design="whitewing-seer"]:not([data-cl-custom="true"]) .cl-chat-thought .cl-chat-label,
+.mes_text.character-life-rendered[data-cl-design="whitewing-seer"]:not([data-cl-custom="true"]) .cl-chat-dialogue .cl-chat-label {
+    justify-content: center;
+    color: var(--cl-whitewing-accent);
+}
+
+.mes_text.character-life-rendered[data-cl-design="whitewing-seer"]:not([data-cl-custom="true"]) .cl-chat-thought .cl-chat-content {
+    color: color-mix(in srgb, currentColor 82%, transparent);
+    font-style: italic;
+    line-height: 1.62;
+}
+
+.mes_text.character-life-rendered[data-cl-design="whitewing-seer"]:not([data-cl-custom="true"]) .cl-chat-dialogue {
+    padding: calc(var(--cl-chat-pad-y) + 10px) var(--cl-chat-pad-x) calc(var(--cl-chat-pad-y) + 5px);
+    text-align: center;
+    background: transparent;
+    border: 0;
+    border-top: 1px solid color-mix(in srgb, var(--cl-whitewing-accent) 24%, transparent);
+    border-bottom: 3px solid var(--cl-whitewing-accent);
+}
+
+.mes_text.character-life-rendered[data-cl-design="whitewing-seer"]:not([data-cl-custom="true"]) .cl-chat-dialogue .cl-chat-label > span {
+    display: none;
+}
+
+.mes_text.character-life-rendered[data-cl-design="whitewing-seer"]:not([data-cl-custom="true"]) .cl-chat-dialogue .cl-chat-content {
+    padding-left: 0 !important;
+    color: var(--SmartThemeBodyColor, #eee8dc);
+    line-height: 1.7;
+    text-align: center;
+}
+
+/* The quotation glyph is not part of Character Life's semantic dialogue. */
+.mes_text.character-life-rendered .cl-chat-dialogue .cl-chat-content {
+    padding-left: 0 !important;
+}
+
+.mes_text.character-life-rendered .cl-chat-dialogue .cl-chat-content::before {
+    content: none !important;
+    display: none !important;
+}
+
+/* Built-in designs and skill cards inherit SillyTavern's active font. */
+.mes_text.character-life-rendered .cl-chat-block,
+.mes_text.character-life-rendered .cl-chat-label,
+.mes_text.character-life-rendered .cl-chat-content,
+.mes_text.character-life-rendered .cl-chat-identity,
+.mes_text.character-life-rendered .cl-chat-identity small,
+.mes_text.character-life-rendered .cl-chat-identity strong,
+.mes_text.character-life-rendered .cl-chat-meta,
+.mes_text.character-life-rendered .cl-chat-meta span,
+.cl-design-preview .cl-chat-block,
+.cl-design-preview .cl-chat-label,
+.cl-design-preview .cl-chat-content,
+.cl-design-preview .cl-chat-identity,
+.cl-design-preview .cl-chat-meta,
+.cl-skill-indication,
+.cl-skill-indication .cl-skill-eyebrow,
+.cl-skill-indication .cl-skill-copy,
+.cl-skill-indication .cl-skill-copy > strong,
+.cl-skill-indication .cl-skill-copy > small,
+.cl-skill-indication .cl-skill-rank,
+.cl-skill-indication .cl-skill-rank small,
+.cl-skill-indication .cl-skill-rank b {
+    font-family: inherit !important;
+}
+
+@media (max-width: 420px) {
+    .mes_text.character-life-rendered[data-cl-design="whitewing-seer"]:not([data-cl-custom="true"]) .cl-chat-header-core {
+        gap: 8px;
+    }
+
+    .mes_text.character-life-rendered[data-cl-design="whitewing-seer"]:not([data-cl-custom="true"]) .cl-chat-role {
+        font-size: .6em;
+    }
+
+    .mes_text.character-life-rendered[data-cl-design="whitewing-seer"]:not([data-cl-custom="true"]) .cl-chat-name {
+        font-size: 1.04em;
+    }
+
+    .mes_text.character-life-rendered[data-cl-design="whitewing-seer"]:not([data-cl-custom="true"]) .cl-chat-meta {
+        gap: 3px 7px;
+        font-size: .62em;
+    }
 }
