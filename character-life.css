@@ -4821,7 +4821,7 @@ html.character-life-product-open body {
     padding-bottom: env(safe-area-inset-bottom);
 }
 
-/* v1.15.4 — Formal archive interface for Characters and Skill Storage.
+/* v1.15.5 — Formal archive interface for Characters and Skill Storage.
    The existing data, editors, portrait controls, scope handling, and skill
    rendering stay unchanged; this layer replaces the old decorative skins. */
 #character-life-overlay .cl-manager,
@@ -5165,7 +5165,7 @@ html.character-life-product-open body {
 
 /* Whitewing Seer — a borderless, phone-first archive header. */
 .mes_text.character-life-rendered[data-cl-design="whitewing-seer"]:not([data-cl-custom="true"]) {
-    --cl-whitewing-accent: color-mix(in srgb, var(--cl-local-header, var(--cl-header-color)) 78%, #fff 22%);
+    --cl-whitewing-accent: var(--cl-unified-color, var(--cl-header-color));
 }
 
 .mes_text.character-life-rendered[data-cl-design="whitewing-seer"]:not([data-cl-custom="true"]) .cl-chat-wing {
@@ -5173,6 +5173,7 @@ html.character-life-product-open body {
 }
 
 .mes_text.character-life-rendered[data-cl-design="whitewing-seer"]:not([data-cl-custom="true"]) .cl-chat-header {
+    --cl-whitewing-accent: var(--cl-local-header, var(--cl-unified-color, var(--cl-header-color)));
     display: block;
     width: 100%;
     min-height: calc(var(--cl-portrait-size) + var(--cl-chat-header-extra) + 28px);
@@ -5321,6 +5322,7 @@ html.character-life-product-open body {
 .mes_text.character-life-rendered[data-cl-design="whitewing-seer"]:not([data-cl-custom="true"]) .cl-chat-meta span:empty { display: none !important; }
 
 .mes_text.character-life-rendered[data-cl-design="whitewing-seer"]:not([data-cl-custom="true"]) .cl-chat-thought {
+    --cl-whitewing-accent: var(--cl-local-thought, var(--cl-unified-color, var(--cl-thought-color)));
     padding: calc(var(--cl-chat-pad-y) + 8px) var(--cl-chat-pad-x);
     text-align: center;
     background: transparent;
@@ -5341,6 +5343,7 @@ html.character-life-product-open body {
 }
 
 .mes_text.character-life-rendered[data-cl-design="whitewing-seer"]:not([data-cl-custom="true"]) .cl-chat-dialogue {
+    --cl-whitewing-accent: var(--cl-local-dialogue, var(--cl-unified-color, var(--cl-dialogue-color)));
     padding: calc(var(--cl-chat-pad-y) + 10px) var(--cl-chat-pad-x) calc(var(--cl-chat-pad-y) + 5px);
     text-align: center;
     background: transparent;
@@ -5411,5 +5414,56 @@ html.character-life-product-open body {
     .mes_text.character-life-rendered[data-cl-design="whitewing-seer"]:not([data-cl-custom="true"]) .cl-chat-meta {
         gap: 3px 7px;
         font-size: .62em;
+    }
+}
+
+/* v1.15.5 — make portrait-use instructions part of every portrait form. */
+#character-life-overlay .cl-form-copy label.cl-portrait-usage-field {
+    display: grid;
+    grid-template-columns: 1fr;
+    align-items: stretch;
+    gap: 6px;
+    margin-top: 4px;
+    color: var(--cl-muted);
+}
+
+#character-life-overlay .cl-form-copy label.cl-portrait-usage-field > span {
+    color: var(--cl-ink);
+    font-weight: 650;
+}
+
+#character-life-overlay .cl-form-copy label.cl-portrait-usage-field textarea {
+    width: 100%;
+    min-height: 82px;
+    box-sizing: border-box;
+    padding: 9px 10px;
+    color: var(--cl-ink);
+    background: color-mix(in srgb, var(--cl-surface-strong) 86%, transparent);
+    border: 1px solid var(--cl-line);
+    border-radius: 6px;
+    resize: vertical;
+    font: inherit;
+    line-height: 1.4;
+}
+
+#character-life-overlay .cl-form-copy label.cl-portrait-usage-field textarea:focus {
+    outline: 2px solid color-mix(in srgb, var(--cl-header-color) 62%, transparent);
+    outline-offset: 1px;
+}
+
+#character-life-overlay .cl-form-copy label.cl-portrait-usage-field small {
+    color: var(--cl-muted);
+    font-size: .78em;
+    line-height: 1.4;
+}
+
+#character-life-overlay .cl-portrait-ai-panel > div {
+    grid-column: 1 / -1;
+}
+
+@media (max-width: 760px) {
+    #character-life-overlay .cl-form-copy label.cl-portrait-usage-field textarea {
+        min-height: 96px;
+        font-size: 16px;
     }
 }

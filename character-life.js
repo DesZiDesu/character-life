@@ -1,5 +1,5 @@
 /* Character Life consolidated runtime bundle. Generated from the preserved v1.9.16 module stack. */
-const CHARACTER_LIFE_BUNDLE_VERSION = '1.15.4';
+const CHARACTER_LIFE_BUNDLE_VERSION = '1.15.5';
 const existingCharacterLifeBundle = globalThis.CharacterLifeBundleRuntimePromise;
 if (existingCharacterLifeBundle) {
     await existingCharacterLifeBundle;
@@ -1611,6 +1611,7 @@ function scheduleDiagnosticUi(delay = 80) {
                 id: cleanText(value.id, uid('form'), 120),
                 name: cleanText(value.name, 'Default', 100),
                 portraitId: cleanText(value.portraitId, '', 160),
+                usageHint: cleanText(value.usageHint || value.description || value.hint, '', 320),
                 x: clamp(value.x, 50, 0, 100),
                 y: clamp(value.y, 18, 0, 100),
                 zoom: clamp(value.zoom, 1, 1, 3),
@@ -2332,6 +2333,12 @@ function scheduleDiagnosticUi(delay = 80) {
             return `<span class="cl-library-avatar ${extraClass}" data-portrait-id="${escapeHtml(active?.portraitId || '')}" data-x="${active?.x ?? 50}" data-y="${active?.y ?? 18}" data-zoom="${active?.zoom ?? 1}"${interactive ? ' data-crop-stage tabindex="0"' : ''} style="--npc-accent:${escapeHtml(npcPalette(npc).header)}"><span>${escapeHtml(npc.name.charAt(0).toUpperCase())}</span><img alt="" hidden></span>`;
         }
 
+        function portraitUsageHint(form) {
+            const stored = getConfig().aiPortraitHints?.[form?.portraitId];
+            return cleanText(form?.usageHint, '', 320)
+                || cleanText(typeof stored === 'string' ? stored : stored?.description, '', 320);
+        }
+
         async function hydrateLibraryPortraits(root) {
             for (const frame of root.querySelectorAll('[data-portrait-id]')) {
                 const id = frame.dataset.portraitId;
@@ -2454,6 +2461,7 @@ function scheduleDiagnosticUi(delay = 80) {
                     <label>${escapeHtml(tr('Horizontal'))}<input type="range" name="x" min="0" max="100" value="${form.x}"><output>${Math.round(form.x)}%</output></label>
                     <label>${escapeHtml(tr('Vertical'))}<input type="range" name="y" min="0" max="100" value="${form.y}"><output>${Math.round(form.y)}%</output></label>
                     <label>${escapeHtml(tr('Zoom'))}<input type="range" name="zoom" min="1" max="3" step="0.05" value="${form.zoom}"><output>${form.zoom.toFixed(2)}×</output></label>
+                    <label class="cl-portrait-usage-field"><span>${escapeHtml(tr('Use this portrait when'))}</span><textarea name="usageHint" rows="3" maxlength="320" data-cl-portrait-hint data-cl-portrait-id="${escapeHtml(form.portraitId)}" placeholder="${escapeHtml(tr('Example: formal court scenes, archive duties, or white ceremonial robes.'))}">${escapeHtml(portraitUsageHint(form))}</textarea><small>${escapeHtml(tr('Tell the AI which scene, outfit, age, or role this image represents.'))}</small></label>
                     <div><button type="button" data-action="activate-form" data-form-id="${escapeHtml(form.id)}"><i class="fa-solid fa-star"></i>${escapeHtml(tr('Set active'))}</button>
                     <button type="button" data-action="reset-crop"><i class="fa-solid fa-crosshairs"></i>${escapeHtml(tr('Reset framing'))}</button>
                     <button type="button" data-action="delete-form" data-form-id="${escapeHtml(form.id)}"><i class="fa-solid fa-trash"></i>${escapeHtml(tr('Delete'))}</button>
@@ -2861,11 +2869,18 @@ function scheduleDiagnosticUi(delay = 80) {
                 if (!npc || !portraitForm) return;
                 const data = new FormData(form);
                 portraitForm.name = cleanText(data.get('name'), portraitForm.name, 100);
+                const usageHint = cleanText(data.get('usageHint'), '', 320);
+                portraitForm.usageHint = usageHint;
                 portraitForm.x = clamp(data.get('x'), portraitForm.x, 0, 100);
                 portraitForm.y = clamp(data.get('y'), portraitForm.y, 0, 100);
                 portraitForm.zoom = clamp(data.get('zoom'), portraitForm.zoom, 1, 3);
                 portraitForm.updatedAt = new Date().toISOString();
+                const config = getConfig();
+                config.aiPortraitHints ||= {};
+                if (usageHint) config.aiPortraitHints[portraitForm.portraitId] = { description: usageHint, updatedAt: portraitForm.updatedAt };
+                else delete config.aiPortraitHints[portraitForm.portraitId];
                 await saveLibrary(activeScope, getLibrary(activeScope).map(entry => entry.id === npc.id ? npc : entry));
+                SillyTavern.getContext().saveSettingsDebounced?.();
                 renderManager();
             }
         }
@@ -4211,8 +4226,7 @@ function scheduleDiagnosticUi(delay = 80) {
             const panel = document.createElement('div');
             panel.className = 'cl-portrait-ai-panel';
             panel.dataset.portraitId = portraitId;
-            panel.innerHTML = `<label><span>Scene / appearance hint</span><textarea rows="2" maxlength="260" data-cl-portrait-hint placeholder="Example: Ranoa Academy uniform; use for university classes and campus scenes.">${escapeHtml(hintForPortrait(portraitId))}</textarea></label>
-                <div><button type="button" data-cl-action="analyze-portrait"><i class="fa-solid fa-eye"></i><span>AI analyze portrait</span></button><small>Helps the main roleplay AI choose between ${escapeHtml(formName)} and other saved portraits. It can only select images already saved for this NPC.</small></div>`;
+            panel.innerHTML = `<div><button type="button" data-cl-action="analyze-portrait"><i class="fa-solid fa-eye"></i><span>AI fill use-case</span></button><small>Fills the “Use this portrait when” field with visible clothing, age/form, equipment, and setting clues.</small><small>Helps the main roleplay AI choose between ${escapeHtml(formName)} and other saved portraits. It can only select images already saved for this NPC.</small></div>`;
             host.append(panel);
             card.dataset.clAiPortraitEnhanced = 'true';
         }
@@ -4250,7 +4264,8 @@ function scheduleDiagnosticUi(delay = 80) {
         async function analyzePortrait(button) {
             const panel = button.closest('.cl-portrait-ai-panel');
             const portraitId = cleanText(panel?.dataset.portraitId, '', 180);
-            const textarea = panel?.querySelector('[data-cl-portrait-hint]');
+            const textarea = panel?.querySelector('[data-cl-portrait-hint]')
+                || panel?.closest('.cl-form-card')?.querySelector('textarea[name="usageHint"]');
             if (!portraitId || !textarea) return;
             const blob = await portraitBlob(portraitId);
             if (!blob) throw new Error('This portrait image is not available on this device.');
@@ -4347,7 +4362,8 @@ function scheduleDiagnosticUi(delay = 80) {
                 const described = forms.map(form => {
                     const formSlug = slug(form.name);
                     const stored = hints[form.portraitId];
-                    const hint = cleanText(typeof stored === 'string' ? stored : stored?.description, '', 220);
+                    const hint = cleanText(form.usageHint, '', 220)
+                        || cleanText(typeof stored === 'string' ? stored : stored?.description, '', 220);
                     return `${formSlug} = ${hint || cleanText(form.name, formSlug, 100)}`;
                 });
                 const record = `- ${cleanText(npc.name, 'NPC', 120)}: ${described.join('; ')}`;
@@ -4390,7 +4406,10 @@ function scheduleDiagnosticUi(delay = 80) {
             if (form && target.matches('[data-cl-color-layout]')) syncColorEditor(form);
             if (target.matches('[data-cl-portrait-hint]')) {
                 const panel = target.closest('.cl-portrait-ai-panel');
-                savePortraitHint(cleanText(panel?.dataset.portraitId, '', 180), target.value);
+                const portraitId = target.dataset.clPortraitId
+                    || panel?.dataset.portraitId
+                    || target.closest('.cl-form-card')?.querySelector('[data-portrait-id]')?.dataset.portraitId;
+                savePortraitHint(cleanText(portraitId, '', 180), target.value);
             }
             queueEnhance();
             queueMicrotask(updateDirectorPrompt);
@@ -7720,7 +7739,7 @@ function scheduleDiagnosticUi(delay = 80) {
         // Presentation/coordination only. Characters and Skills keep ownership of
         // state, persistence, prompts, rendering data, forms, and feature actions.
 
-        const VERSION = '1.15.4';
+        const VERSION = '1.15.5';
         const SURFACES = Object.freeze({
             library: Object.freeze({
                 overlay: '#character-life-overlay',
