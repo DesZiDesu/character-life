@@ -6,7 +6,7 @@
     "dependencies": [],
     "js": "character-life.js",
     "author": "DesZiDesu",
-    "version": "1.17.0",
+    "version": "1.17.1",
     "homePage": "https://github.com/DesZiDesu/character-life",
     "auto_update": true
 }
