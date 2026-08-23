@@ -2,7 +2,7 @@
 
 Character Life's is a responsive SillyTavern extension for persistent NPC identities, portraits, speaker presentation, AI-assisted profile updates, and optional skill tracking inside the main role-play chat.
 
-**Current version: 1.14.1**
+**Current version: 1.17.0**
 
 ## Highlights
 
@@ -63,6 +63,8 @@ character-life/
 ```
 
 The repository now ships one consolidated runtime (character-life.js) and one consolidated stylesheet (character-life.css). Small compatibility shims remain at historical paths so cached iOS/Safari installations can transition without changing the UI or losing saved data. The installed release version comes only from manifest.json.
+
+Character Life 1.17 adds immutable Original profile snapshots for Global and Character NPCs. AI profile updates are stored as chat-local overrides, so a new chat starts from the saved Original data. NPC life status is also tracked: dead Chat NPC records are removed, while Global and Character records are visibly marked dead and can be revived from their detail view or through the role-play status protocol.
 
 ## Cache-safe updates
 

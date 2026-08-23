@@ -5508,3 +5508,110 @@ html.character-life-product-open body {
 .mes_text.character-life-rendered[data-cl-design="whitewing-seer"][data-cl-position="right"]:not([data-cl-custom="true"]) .cl-chat-affiliation::after {
     background: linear-gradient(270deg, var(--cl-whitewing-accent), transparent);
 }
+
+/* v1.17.0 — NPC life state and mobile-safe library controls. */
+#character-life-overlay .cl-npc-row.is-dead {
+    color: #777 !important;
+    background: #050505 !important;
+    filter: grayscale(1) !important;
+}
+#character-life-overlay .cl-npc-row.is-dead:hover,
+#character-life-overlay .cl-npc-row.is-dead.is-active {
+    border-left-color: #6b6b6b !important;
+    background: #0b0b0b !important;
+}
+#character-life-overlay .cl-npc-row.is-dead strong {
+    color: #a4a4a4 !important;
+}
+#character-life-overlay .cl-npc-row.is-dead small,
+#character-life-overlay .cl-npc-row.is-dead > i {
+    color: #707070 !important;
+}
+#character-life-overlay .cl-library-avatar.is-dead {
+    border-color: #252525 !important;
+    color: #777 !important;
+    background: #050505 !important;
+    filter: grayscale(1) brightness(.62) !important;
+}
+#character-life-overlay .cl-profile.is-dead .cl-profile-hero {
+    color: #8d8d8d !important;
+    border-color: #292929 !important;
+    background: #070707 !important;
+}
+#character-life-overlay .cl-profile.is-dead .cl-profile-hero h3,
+#character-life-overlay .cl-profile.is-dead .cl-profile-hero p,
+#character-life-overlay .cl-profile.is-dead .cl-profile-hero small {
+    color: #999 !important;
+}
+#character-life-overlay .cl-life-banner {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    margin: 12px 0;
+    padding: 11px 13px;
+    border: 1px solid #303030 !important;
+    color: #a2a2a2 !important;
+    background: #050505 !important;
+}
+#character-life-overlay .cl-life-banner i {
+    color: #777 !important;
+}
+#character-life-overlay .cl-life-banner span {
+    overflow-wrap: anywhere;
+    color: #6f6f6f !important;
+}
+#character-life-overlay .cl-original-note {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    margin: 10px 0 14px;
+    color: var(--cl-formal-muted, #888) !important;
+    font-size: .86em;
+}
+#character-life-overlay .cl-original-note i {
+    flex: 0 0 auto;
+    color: var(--cl-formal-accent, #c39a62) !important;
+}
+.mes_text.character-life-rendered .cl-chat-block.cl-chat-dead {
+    filter: grayscale(1) !important;
+    opacity: .62 !important;
+}
+
+@media (max-width: 760px) {
+    /* The mobile layout is a block inside a fixed grid row. Constrain the list so
+       the footer remains inside the viewport instead of being pushed below it. */
+    #character-life-overlay .cl-manager {
+        grid-template-rows: auto auto minmax(0, 1fr) auto !important;
+        overflow: hidden !important;
+    }
+    #character-life-overlay .cl-manager-layout {
+        display: block !important;
+        height: 100% !important;
+        min-height: 0 !important;
+        overflow: hidden !important;
+    }
+    #character-life-overlay .cl-manager[data-view="list"] .cl-npc-list {
+        height: 100% !important;
+        max-height: none !important;
+        overflow-y: auto !important;
+        -webkit-overflow-scrolling: touch;
+    }
+    #character-life-overlay .cl-manager-footer {
+        display: flex !important;
+        flex: 0 0 auto !important;
+        min-height: 60px !important;
+        padding: 8px 10px max(8px, env(safe-area-inset-bottom)) !important;
+    }
+    #character-life-overlay .cl-manager-footer > div {
+        display: flex !important;
+        width: 100% !important;
+        gap: 7px !important;
+    }
+    #character-life-overlay .cl-manager-footer button {
+        flex: 1 1 0 !important;
+        min-width: 0 !important;
+        min-height: 42px !important;
+        padding-inline: 6px !important;
+        white-space: nowrap !important;
+    }
+}
