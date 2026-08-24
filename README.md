@@ -2,7 +2,7 @@
 
 Character Life's is a responsive SillyTavern extension for persistent NPC identities, portraits, speaker presentation, AI-assisted profile updates, and optional skill tracking inside the main role-play chat.
 
-**Current version: 1.20.0**
+**Current version: 1.20.1**
 
 ## Highlights
 
@@ -101,7 +101,7 @@ The portrait form is optional. Automatic profile updates may also use Character 
 [CL_NPC_UPDATE|Avery|relationship]They now trust the user with restricted research notes.[/CL_NPC_UPDATE]
 ```
 
-Character Life processes its supported machine-control records and removes them from visible chat.
+Character Life processes its supported machine-control records and removes them from visible chat, including compact `CL_NPC_UPDATE` fallbacks emitted by models.
 
 ## Storage notes
 

@@ -1,5 +1,5 @@
 /* Character Life consolidated runtime bundle. Generated from the preserved v1.9.16 module stack. */
-const CHARACTER_LIFE_BUNDLE_VERSION = '1.20.0';
+const CHARACTER_LIFE_BUNDLE_VERSION = '1.20.1';
 const existingCharacterLifeBundle = globalThis.CharacterLifeBundleRuntimePromise;
 if (existingCharacterLifeBundle) {
     await existingCharacterLifeBundle;
@@ -485,6 +485,7 @@ function schedulePrompt(delay = 40) {
             let dialogueNumber = 0;
             let source = String(raw || '');
             source = source.replace(/\[CL_NPC_UPDATE\|[^\]]+\][\s\S]*?\[\/CL_NPC_UPDATE\]/gi, '');
+            source = source.replace(/\[CL_NPC_UPDATE\|[^|\]\r\n]+\|[^|\]\r\n]+\|[^\]\r\n]+\]/gi, '');
             source = source.replace(/\[CL_NPC_STATUS\|[^\]]+\][\s\S]*?\[\/CL_NPC_STATUS\]/gi, '');
             source = source.replace(/\[CL_NPC_(?:DEATH|REVIVE|RESURRECT)\|[^\]]+\][\s\S]*?\[\/CL_NPC_(?:DEATH|REVIVE|RESURRECT)\]/gi, '');
             source = source.replace(/\[CL_NPC_(?:PARTNER|PARTNER_REMOVE)\|[^\]]+\]/gi, '');
@@ -2431,20 +2432,23 @@ function scheduleDiagnosticUi(delay = 80) {
                 if (sourceNpc && targetNpc) partnerEvents.push({ source: sourceNpc, target: targetNpc, remove: true });
                 return '';
             });
-            html = html.replace(/\[CL_NPC_UPDATE\|([^|\]]+)\|([^\]]+)\]([\s\S]*?)\[\/CL_NPC_UPDATE\]/gi,
-                (_match, name, field, value) => {
-                    const normalizedFieldName = cleanText(stripMarkup(field), '', 80).toLowerCase();
-                    const normalizedValue = cleanText(stripMarkup(value), '', 4000);
-                    const normalizedName = cleanText(stripMarkup(name), '', 120);
-                    if (['status', 'lifestatus', 'life-status', 'life_status'].includes(normalizedFieldName)) {
-                        const normalizedStatus = normalizeLifeStatus(normalizedValue);
-                        if (normalizedStatus && normalizedName) lifeEvents.push({ name: normalizedName, status: normalizedStatus, reason: normalizedStatus === 'dead' ? normalizedValue : '' });
-                        return '';
-                    }
-                    const normalizedField = NPC_UPDATE_FIELDS.get(normalizedFieldName);
-                    if (normalizedField && normalizedValue && normalizedName) updates.push({ name: normalizedName, field: normalizedField, value: normalizedValue });
+            const captureNpcUpdate = (_match, name, field, value) => {
+                const normalizedFieldName = cleanText(stripMarkup(field), '', 80).toLowerCase();
+                const normalizedValue = cleanText(stripMarkup(value), '', 4000);
+                const normalizedName = cleanText(stripMarkup(name), '', 120);
+                if (['status', 'lifestatus', 'life-status', 'life_status'].includes(normalizedFieldName)) {
+                    const normalizedStatus = normalizeLifeStatus(normalizedValue);
+                    if (normalizedStatus && normalizedName) lifeEvents.push({ name: normalizedName, status: normalizedStatus, reason: normalizedStatus === 'dead' ? normalizedValue : '' });
                     return '';
-                });
+                }
+                const normalizedField = NPC_UPDATE_FIELDS.get(normalizedFieldName);
+                if (normalizedField && normalizedValue && normalizedName) updates.push({ name: normalizedName, field: normalizedField, value: normalizedValue });
+                return '';
+            };
+            html = html.replace(/\[CL_NPC_UPDATE\|([^|\]]+)\|([^\]]+)\]([\s\S]*?)\[\/CL_NPC_UPDATE\]/gi, captureNpcUpdate);
+            // Some models collapse the value into the opening tag. Accept and remove
+            // that compact form as a compatibility fallback so protocol text never leaks.
+            html = html.replace(/\[CL_NPC_UPDATE\|([^|\]\r\n]+)\|([^|\]\r\n]+)\|([^\]\r\n]+)\]/gi, captureNpcUpdate);
             return { html, updates, lifeEvents, partnerEvents };
         }
 
@@ -5370,6 +5374,7 @@ Never infer gender identity or exact age from appearance alone. For an existing 
         const CL182_CHAT = 'character_life_npcs';
         const CL182_PROMPT = 'character_life_npc_profile_director_v182';
         const CL182_UPDATE = /\[CL_NPC_UPDATE\|([^|\]]+)\|([^\]]+)\]([\s\S]*?)\[\/CL_NPC_UPDATE\]/gi;
+        const CL182_UPDATE_COMPACT = /\[CL_NPC_UPDATE\|([^|\]\r\n]+)\|([^|\]\r\n]+)\|([^\]\r\n]+)\]/gi;
         const CL182_FIELDS = ['pronouns','gender','age','species','role','affiliation','appearance','personality','relationshipToUser','relationship','background','goals','abilities','speechStyle','currentState','notes'];
         let cl182ColorTimer = null;
         let cl182PromptTimer = null;
@@ -5474,8 +5479,18 @@ Never infer gender identity or exact age from appearance alone. For an existing 
             if (scopes.has('character') || scopes.has('global')) { const s = c.saveSettingsDebounced; if (typeof s === 'function') { const q = s(); if (typeof s.flush === 'function') { const f = s.flush(); if (f?.then) await f; } else if (q?.then) await q; } }
         }
         function cl182Extract(raw) {
-            if (typeof raw !== 'string' || !raw.includes('[CL_NPC_UPDATE|')) return []; const out = []; CL182_UPDATE.lastIndex = 0; let m;
-            while ((m = CL182_UPDATE.exec(raw))) { const f = cl182Text(m[2], '', 80).toLocaleLowerCase().replace(/[\s_]+/g,'-'); if (f === 'aliases') out.push({name:cl182Text(m[1],'',120),field:'aliases',value:cl182Text(m[3],'',1200)}); else if (['identitycolor','identity-color','themecolor','theme-color','color'].includes(f)) out.push({name:cl182Text(m[1],'',120),field:'identityColor',value:cl182Text(m[3],'',1200)}); }
+            if (typeof raw !== 'string' || !raw.includes('[CL_NPC_UPDATE|')) return [];
+            const out = [];
+            const collect = m => {
+                const f = cl182Text(m[2], '', 80).toLocaleLowerCase().replace(/[\s_]+/g,'-');
+                if (f === 'aliases') out.push({name:cl182Text(m[1],'',120),field:'aliases',value:cl182Text(m[3],'',1200)});
+                else if (['identitycolor','identity-color','themecolor','theme-color','color'].includes(f)) out.push({name:cl182Text(m[1],'',120),field:'identityColor',value:cl182Text(m[3],'',1200)});
+            };
+            for (const pattern of [CL182_UPDATE, CL182_UPDATE_COMPACT]) {
+                pattern.lastIndex = 0;
+                let m;
+                while ((m = pattern.exec(raw))) collect(m);
+            }
             return out.filter(x => x.name && x.value);
         }
         async function cl182ApplySupplemental(records) {
@@ -5845,6 +5860,7 @@ Never infer gender identity or exact age from appearance alone. For an existing 
         const PARTNER_OPEN = '[CL_NPC_PARTNER|';
         const PARTNER_REMOVE_OPEN = '[CL_NPC_PARTNER_REMOVE|';
         const UPDATE_PATTERN = /\[CL_NPC_UPDATE\|([^|\]]+)\|([^\]]+)\]([\s\S]*?)\[\/CL_NPC_UPDATE\]/gi;
+        const UPDATE_COMPACT_PATTERN = /\[CL_NPC_UPDATE\|([^|\]\r\n]+)\|([^|\]\r\n]+)\|([^\]\r\n]+)\]/gi;
         const STATUS_PATTERN = /\[CL_NPC_STATUS\|([^|\]]+)\|([^\]]+)\]([\s\S]*?)\[\/CL_NPC_STATUS\]/gi;
         const DEATH_PATTERN = /\[CL_NPC_DEATH\|([^|\]]+)\]([\s\S]*?)\[\/CL_NPC_DEATH\]/gi;
         const REVIVE_PATTERN = /\[CL_NPC_(?:REVIVE|RESURRECT)\|([^|\]]+)\]([\s\S]*?)\[\/CL_NPC_(?:REVIVE|RESURRECT)\]/gi;
@@ -5876,6 +5892,7 @@ Never infer gender identity or exact age from appearance alone. For an existing 
             if (!hasUpdateTags(source)) return { text: source, changed: false };
 
             UPDATE_PATTERN.lastIndex = 0;
+            UPDATE_COMPACT_PATTERN.lastIndex = 0;
             STATUS_PATTERN.lastIndex = 0;
             DEATH_PATTERN.lastIndex = 0;
             REVIVE_PATTERN.lastIndex = 0;
@@ -5883,6 +5900,7 @@ Never infer gender identity or exact age from appearance alone. For an existing 
             PARTNER_REMOVE_PATTERN.lastIndex = 0;
             const text = source
                 .replace(UPDATE_PATTERN, '')
+                .replace(UPDATE_COMPACT_PATTERN, '')
                 .replace(STATUS_PATTERN, '')
                 .replace(DEATH_PATTERN, '')
                 .replace(REVIVE_PATTERN, '')
