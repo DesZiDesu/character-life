@@ -5363,6 +5363,14 @@ html.character-life-product-open body {
     text-align: center;
 }
 
+/* v1.19.2 — Consecutive Whitewing speech panels share one flush divider. */
+.mes_text.character-life-rendered[data-cl-design="whitewing-seer"]:not([data-cl-custom="true"])
+    .cl-chat-block:is(.cl-chat-thought, .cl-chat-dialogue)
+    + .cl-chat-block:is(.cl-chat-thought, .cl-chat-dialogue) {
+    margin-top: calc(-1 * var(--cl-chat-block-gap));
+    border-top: 0;
+}
+
 /* The quotation glyph is not part of Character Life's semantic dialogue. */
 .mes_text.character-life-rendered .cl-chat-dialogue .cl-chat-content {
     padding-left: 0 !important;
