@@ -2,11 +2,12 @@
 
 Character Life's is a responsive SillyTavern extension for persistent NPC identities, portraits, speaker presentation, AI-assisted profile updates, and optional skill tracking inside the main role-play chat.
 
-**Current version: 1.18.3**
+**Current version: 1.19.1**
 
 ## Highlights
 
 - Global, per-character/group, and per-chat NPC libraries with Chat → Character → Global priority.
+- Chat-local AI overrides stay visually attached to their Global/Character source; the Chat tab lists only genuinely chat-scoped NPCs instead of duplicate source records.
 - Rich NPC profiles with sparse/unknown fields, aliases, portraits/forms, framing controls, and bulk scope movement.
 - One-call **Generate Full NPC** workflow with optional image reference and multimodal appearance guidance.
 - Chronicle-style Thought, Header, and Dialogue rendering with seven built-in designs plus an independent theme creator.
@@ -17,6 +18,7 @@ Character Life's is a responsive SillyTavern extension for persistent NPC identi
 - NPCs can be enabled or disabled in Global and Character scopes without deleting their original data; death and revive controls are visible in the profile.
 - Each NPC can keep a short relationship-to-user label, while Partner links can connect NPCs from Global, Character, or Chat to each other or to the user. Partner links are chat-local and can be carried through a backup.
 - Dedicated Skill Storage with persistent images, optional AI tracking, per-chat enable state, and a Tensei System bridge.
+- Tretaresia RPG bridge for scoped NPC identity lookup, portrait/form reuse, and shared Skill Storage data without an additional model request.
 - English and Thai interface support.
 
 ## Extensions drawer
@@ -39,6 +41,7 @@ Each section remembers whether it was open or closed on that browser.
 Character Life uses its own `character_life` settings/metadata namespace and its own prompt keys. It is designed to coexist with other SillyTavern extensions rather than overwrite their storage.
 
 - **Tensei System:** intentionally supported. Character Life can read Tensei's `tensei_system_state` and bridge skill information into Skill Storage.
+- **Tretaresia RPG System:** intentionally supported. RPG NPCs can link to Character Life by stable ID/scope or exact name/alias, reuse the active portrait and framing, read Skill Storage entries, and write RPG-tracked skills back through the local Character Life API.
 - **Pocket Phone Optimized:** no shared Character Life storage namespace. Both extensions can add structured main-response instructions, so very large combined prompts can increase formatting/token pressure even though they do not directly overwrite each other.
 - **Smart Memory Optimized:** long-term memory is handled by the separate Smart Memory Optimized extension rather than Character Life.
 

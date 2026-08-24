@@ -1,5 +1,5 @@
 /* Character Life consolidated runtime bundle. Generated from the preserved v1.9.16 module stack. */
-const CHARACTER_LIFE_BUNDLE_VERSION = '1.18.3';
+const CHARACTER_LIFE_BUNDLE_VERSION = '1.19.1';
 const existingCharacterLifeBundle = globalThis.CharacterLifeBundleRuntimePromise;
 if (existingCharacterLifeBundle) {
     await existingCharacterLifeBundle;
@@ -2964,6 +2964,45 @@ Never infer gender identity or exact age from appearance alone. For an existing 
             return getLibrary(activeScope).find(npc => npc.id === selectedNpcId) || null;
         }
 
+        function npcIdentityMatches(left, right) {
+            const leftKeys = new Set([left?.name, ...(Array.isArray(left?.aliases) ? left.aliases : [])]
+                .map(value => cleanText(value, '', 120).toLocaleLowerCase()).filter(Boolean));
+            return [right?.name, ...(Array.isArray(right?.aliases) ? right.aliases : [])]
+                .map(value => cleanText(value, '', 120).toLocaleLowerCase()).filter(Boolean)
+                .some(value => leftKeys.has(value));
+        }
+
+        function sourceForChatOverride(npc) {
+            if (!npc) return null;
+            if (npc.sourceScope && npc.sourceId) {
+                const source = getLibrary(npc.sourceScope).find(entry => entry.id === npc.sourceId);
+                if (source) return { npc: source, scope: npc.sourceScope };
+            }
+            for (const scope of ['character', 'global']) {
+                const source = getLibrary(scope).find(entry => npcIdentityMatches(entry, npc));
+                if (source) return { npc: source, scope };
+            }
+            return null;
+        }
+
+        function managerLibrary(scope = activeScope) {
+            const raw = getLibrary(scope);
+            const chat = hasChat() ? getLibrary('chat') : [];
+            if (scope === 'chat') return raw.filter(npc => !sourceForChatOverride(npc));
+            if (!['global', 'character'].includes(scope) || !chat.length) return raw;
+            return raw.map(source => {
+                const override = chat.find(candidate => {
+                    const resolved = sourceForChatOverride(candidate);
+                    return resolved?.scope === scope && resolved.npc.id === source.id;
+                });
+                return override ? { ...source, ...override, id: source.id, sourceScope: scope, sourceId: source.id, __chatOverrideId: override.id } : source;
+            });
+        }
+
+        function currentDisplayNpc() {
+            return managerLibrary(activeScope).find(npc => npc.id === selectedNpcId) || currentNpc();
+        }
+
         function renderScopeTabs() {
             const overlay = document.getElementById('character-life-overlay');
             overlay?.querySelectorAll('[data-scope]').forEach(button => {
@@ -2973,7 +3012,7 @@ Never infer gender identity or exact age from appearance alone. For an existing 
                 button.setAttribute('aria-selected', String(active));
                 button.disabled = !scopeAvailable(scope);
                 const count = button.querySelector('b');
-                if (count) count.textContent = String(getLibrary(scope).length);
+                if (count) count.textContent = String(managerLibrary(scope).length);
             });
         }
 
@@ -3009,7 +3048,7 @@ Never infer gender identity or exact age from appearance alone. For an existing 
             const list = document.querySelector('#character-life-overlay [data-list]');
             if (!list) return;
             const query = searchText.toLocaleLowerCase();
-            const npcs = getLibrary(activeScope).filter(npc => !query || [npc.name, ...npc.aliases, npc.role, npc.affiliation, ...NPC_PROFILE_FIELDS.map(field => npc[field]), npc.notes].join(' ').toLocaleLowerCase().includes(query));
+            const npcs = managerLibrary(activeScope).filter(npc => !query || [npc.name, ...npc.aliases, npc.role, npc.affiliation, ...NPC_PROFILE_FIELDS.map(field => npc[field]), npc.notes].join(' ').toLocaleLowerCase().includes(query));
             list.innerHTML = npcs.length ? npcs.map(npc => `<button type="button" class="cl-npc-row${npc.id === selectedNpcId ? ' is-active' : ''}${npc.isDead ? ' is-dead' : ''}${npc.enabled === false ? ' is-disabled' : ''}" data-action="select" data-id="${escapeHtml(npc.id)}">
                 ${npcAvatar(npc)}<span><strong>${escapeHtml(npc.name)}</strong><small>${escapeHtml(npc.isDead ? `${tr('Dead')}${npc.deathReason ? ` — ${npc.deathReason}` : ''}` : npc.enabled === false ? `${tr('Disabled')} — ${npc.role || npc.affiliation || ''}` : (npc.role || npc.affiliation || `${npc.forms.length} portrait forms`))}</small></span><i class="fa-solid ${npc.isDead ? 'fa-skull-crossbones' : npc.enabled === false ? 'fa-toggle-off' : 'fa-chevron-right'}"></i></button>`).join('')
                 : `<div class="cl-empty-state"><i class="fa-solid fa-address-book"></i><strong>${escapeHtml(tr('No NPCs in this scope.'))}</strong><button type="button" data-action="new">${escapeHtml(tr('Create NPC'))}</button></div>`;
@@ -3197,7 +3236,7 @@ Never infer gender identity or exact age from appearance alone. For an existing 
             const detail = document.querySelector('#character-life-overlay [data-detail]');
             if (!detail) return;
             releasePreviewUrls();
-            const npc = currentNpc();
+            const npc = currentDisplayNpc();
             if (editorMode === 'new') detail.innerHTML = editorForm();
             else if (editorMode === 'edit' && npc) detail.innerHTML = editorForm(npc);
             else if (npc && portraitEditorId) {
@@ -3651,6 +3690,12 @@ Never infer gender identity or exact age from appearance alone. For an existing 
                 const existing = cleanText(data.get('id')) ? currentNpc() : null;
                 const previousNpc = existing ? clone(existing) : null;
                 const previousScope = activeScope;
+                const attachedOverrideIds = new Set(existing && previousScope !== 'chat'
+                    ? getLibrary('chat').filter(candidate => {
+                        const resolved = sourceForChatOverride(candidate);
+                        return resolved?.scope === previousScope && resolved.npc.id === existing.id;
+                    }).map(candidate => candidate.id)
+                    : []);
                 const adultProfile = data.has('adultProfile');
                 if (adultProfile && explicitlyIdentifiesMinor(data.get('age'))) throw new Error('Adult-only profiles cannot be enabled when the age field identifies the NPC as a minor.');
                 const npc = normalizeNpc({
@@ -3685,6 +3730,9 @@ Never infer gender identity or exact age from appearance alone. For an existing 
                 const target = getLibrary(targetScope).filter(entry => entry.id !== npc.id && entry.name.toLocaleLowerCase() !== npc.name.toLocaleLowerCase());
                 target.push(npc);
                 await saveLibrary(targetScope, target);
+                if (targetScope !== 'chat' && attachedOverrideIds.size) {
+                    await saveLibrary('chat', getLibrary('chat').filter(entry => !attachedOverrideIds.has(entry.id)));
+                }
                 await syncPartnerEndpoint(previousNpc, previousScope, npc, targetScope);
                 activeScope = targetScope;
                 selectedNpcId = npc.id;
@@ -10333,6 +10381,102 @@ Never infer gender identity or exact age from appearance alone. For an existing 
     await load('../runtime/reliability-v196.js');
     await load('../runtime/entry.js');
     for (const key of ['../runtime/npc-identity-v197.js','../runtime/npc-identity-reveal-v1915.js','../runtime/speaker-run-v1915.js','../runtime/feature-shell-v1913.js','../runtime/portrait-framing-v1911.js']) await load(key);
+    const installRpgBridge = () => {
+        const clean = (value, fallback = '', max = 2000) => typeof value === 'string' ? value.trim().slice(0, max) : fallback;
+        const cloneValue = value => value == null ? value
+            : globalThis.structuredClone ? structuredClone(value) : JSON.parse(JSON.stringify(value));
+        const context = () => globalThis.SillyTavern?.getContext?.() || null;
+        const characterKey = ctx => {
+            const group = ctx?.groupId ?? ctx?.group?.id;
+            if (group !== undefined && group !== null && group !== '') return `group:${group}`;
+            const id = ctx?.characterId ?? ctx?.character?.id;
+            const character = ctx?.character || (Array.isArray(ctx?.characters) ? ctx.characters[id] : null);
+            const avatar = clean(character?.avatar, '', 180);
+            return `character:${avatar || id || clean(ctx?.name2 || character?.name, 'unknown', 180)}`;
+        };
+        const libraries = () => {
+            const ctx = context();
+            const root = ctx?.extensionSettings?.character_life;
+            if (!root || typeof root !== 'object') return [];
+            return [
+                ['global', Array.isArray(root.globalNpcs) ? root.globalNpcs : []],
+                ['character', Array.isArray(root.characterNpcs?.[characterKey(ctx)]) ? root.characterNpcs[characterKey(ctx)] : []],
+                ['chat', Array.isArray(ctx?.chatMetadata?.character_life_npcs?.npcs) ? ctx.chatMetadata.character_life_npcs.npcs : []],
+            ];
+        };
+        const listNpcs = ({ includeDisabled = false, includeDead = false } = {}) => {
+            const merged = new Map();
+            const scopedLibraries = libraries();
+            for (const [scope, list] of scopedLibraries) {
+                for (const raw of list) {
+                    const view = globalThis.CharacterLifeNpcLifecycle?.forChat?.(raw, scope) || raw;
+                    const sourceList = scope === 'chat' && view?.sourceScope
+                        ? scopedLibraries.find(([candidateScope]) => candidateScope === view.sourceScope)?.[1] : null;
+                    const source = Array.isArray(sourceList) && view?.sourceId
+                        ? sourceList.find(candidate => candidate?.id === view.sourceId) : null;
+                    const enabled = view?.enabled !== false && (!view?.sourceScope || Boolean(source && source.enabled !== false));
+                    const dead = view?.isDead === true || view?.lifeStatus === 'dead'
+                        || source?.isDead === true || source?.lifeStatus === 'dead';
+                    const name = clean(view?.name, '', 120);
+                    if (!name || (!includeDisabled && !enabled) || (!includeDead && dead)) continue;
+                    const key = name.toLocaleLowerCase();
+                    const previous = merged.get(key);
+                    const aliases = [...new Set([
+                        ...(Array.isArray(previous?.aliases) ? previous.aliases : []),
+                        ...(Array.isArray(view?.aliases) ? view.aliases : []),
+                    ].map(value => clean(value, '', 120)).filter(Boolean))];
+                    merged.set(key, { ...(previous || {}), ...cloneValue(view), aliases, enabled, isDead: dead, lifeStatus: dead ? 'dead' : 'alive', scope });
+                }
+            }
+            return [...merged.values()];
+        };
+        const findNpc = (query = {}) => {
+            const id = clean(query.id || query.npcId, '', 120);
+            const scope = clean(query.scope, '', 20);
+            const name = clean(query.name || query.npcName, '', 120).toLocaleLowerCase();
+            return listNpcs({ includeDisabled: true, includeDead: true }).find(npc => (
+                id && npc.id === id && (!scope || npc.scope === scope)
+            )) || listNpcs({ includeDisabled: true, includeDead: true }).find(npc => {
+                const names = [npc.name, ...(Array.isArray(npc.aliases) ? npc.aliases : [])]
+                    .map(value => clean(value, '', 120).toLocaleLowerCase()).filter(Boolean);
+                return Boolean(name && names.includes(name));
+            }) || null;
+        };
+        const listSkills = owner => {
+            const skills = globalThis.CharacterLifeSkills?.list?.() || [];
+            const ownerName = clean(typeof owner === 'string' ? owner : owner?.name || owner?.ownerName, '', 120).toLocaleLowerCase();
+            const ownerId = clean(typeof owner === 'object' ? owner?.id || owner?.ownerNpcId : '', '', 160);
+            return skills.filter(skill => !ownerName && !ownerId
+                || ownerId && skill?.ownerNpcId === ownerId
+                || ownerName && clean(skill?.ownerName, '', 120).toLocaleLowerCase() === ownerName).map(cloneValue);
+        };
+        const portrait = async query => {
+            const npc = findNpc(query);
+            if (!npc) return null;
+            const forms = Array.isArray(npc.forms) ? npc.forms : [];
+            const form = forms.find(entry => entry?.id === npc.activeFormId) || forms[0];
+            const portraitId = clean(form?.portraitId, '', 180);
+            if (!portraitId || typeof globalThis.CharacterLifeMedia?.ensure !== 'function') return null;
+            const media = await globalThis.CharacterLifeMedia.ensure(portraitId);
+            if (!media?.blob) return null;
+            return {
+                blob: media.blob, path: media.path || '', portraitId,
+                frame: { x: Number(form?.x) || 50, y: Number(form?.y) || 18, zoom: Number(form?.zoom) || 1 },
+                npc: cloneValue(npc), scope: npc.scope,
+            };
+        };
+        globalThis.CharacterLifeRpgBridge = Object.freeze({
+            version: CHARACTER_LIFE_BUNDLE_VERSION,
+            listNpcs,
+            findNpc: query => cloneValue(findNpc(query)),
+            listSkills,
+            portrait,
+            openNpcLibrary: () => globalThis.CharacterLifeNpcLibrary?.open?.(),
+            openSkillStorage: () => globalThis.CharacterLifeSkills?.open?.(),
+        });
+        globalThis.dispatchEvent(new CustomEvent('character-life:rpg-bridge-ready', { detail: { version: CHARACTER_LIFE_BUNDLE_VERSION } }));
+    };
+    installRpgBridge();
     try { globalThis.CharacterLifeReliability?.refresh?.(); } catch (error) { console.warn("[Character Life's] Reliability refresh skipped safely.", error); }
     console.info("[Character Life's] consolidated v" + CHARACTER_LIFE_BUNDLE_VERSION + " runtime loaded.");
 })();
