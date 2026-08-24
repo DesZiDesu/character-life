@@ -2,7 +2,7 @@
 
 Character Life's is a responsive SillyTavern extension for persistent NPC identities, portraits, speaker presentation, AI-assisted profile updates, and optional skill tracking inside the main role-play chat.
 
-**Current version: 1.18.1**
+**Current version: 1.18.2**
 
 ## Highlights
 
@@ -11,6 +11,7 @@ Character Life's is a responsive SillyTavern extension for persistent NPC identi
 - One-call **Generate Full NPC** workflow with optional image reference and multimodal appearance guidance.
 - Chronicle-style Thought, Header, and Dialogue rendering with seven built-in designs plus an independent theme creator.
 - Main-chat NPC profile updates, stable NPC identity colors, native Character Life notifications, and responsive mobile/desktop UI.
+- Compact SVG backup controls stay beside the close button in the Characters header on desktop and mobile.
 - New NPCs receive an identity bootstrap for role, affiliation, gender, age, and species/race; unavailable values use explicit visible fallbacks until established.
 - NPCs can be enabled or disabled in Global and Character scopes without deleting their original data; death and revive controls are visible in the profile.
 - Each NPC can keep a short relationship-to-user label, while Partner links can connect NPCs from Global, Character, or Chat to each other or to the user. Partner links are chat-local and can be carried through a backup.

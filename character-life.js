@@ -1,5 +1,5 @@
 /* Character Life consolidated runtime bundle. Generated from the preserved v1.9.16 module stack. */
-const CHARACTER_LIFE_BUNDLE_VERSION = '1.18.1';
+const CHARACTER_LIFE_BUNDLE_VERSION = '1.18.2';
 const existingCharacterLifeBundle = globalThis.CharacterLifeBundleRuntimePromise;
 if (existingCharacterLifeBundle) {
     await existingCharacterLifeBundle;
@@ -2904,15 +2904,16 @@ Never infer gender identity or exact age from appearance alone. For an existing 
                 <section class="cl-manager" role="dialog" aria-modal="true" aria-labelledby="character-life-title">
                     <header class="cl-manager-header"><button type="button" class="cl-manager-back" data-action="back" aria-label="Back to character list"><i class="fa-solid fa-arrow-left"></i></button><div class="cl-brand-mark"><i class="fa-solid fa-users"></i></div>
                         <div><small>NPC ARCHIVE</small><h2 id="character-life-title">Characters</h2></div>
-                        <button type="button" class="menu_button menu_button_icon" data-action="close" aria-label="Close"><i class="fa-solid fa-xmark"></i></button></header>
+                        <div class="cl-manager-header-actions">
+                            <button type="button" class="cl-header-backup-action" data-action="export" aria-label="${escapeHtml(tr('Export backup'))}" title="${escapeHtml(tr('Export backup'))}"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 3v12m0 0 4-4m-4 4-4-4M5 18v2h14v-2"/></svg></button>
+                            <button type="button" class="cl-header-backup-action" data-action="import" aria-label="${escapeHtml(tr('Import backup'))}" title="${escapeHtml(tr('Import backup'))}"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 21V9m0 0 4 4m-4-4-4 4M5 6V4h14v2"/></svg></button>
+                            <button type="button" class="menu_button menu_button_icon" data-action="close" aria-label="Close"><i class="fa-solid fa-xmark"></i></button>
+                        </div></header>
                     <div class="cl-manager-toolbar"><div class="cl-scope-tabs" role="tablist">
                         ${['global', 'character', 'chat'].map(scope => `<button type="button" data-scope="${scope}" role="tab"><i class="fa-solid ${scopeIcon(scope)}"></i><span>${scopeLabel(scope)}</span><b data-count="${scope}">0</b></button>`).join('')}
                         </div><label class="cl-search"><i class="fa-solid fa-magnifying-glass"></i><input type="search" data-search placeholder="${escapeHtml(tr('Search NPCs'))}"></label>
                         <button type="button" class="cl-primary" data-action="new"><i class="fa-solid fa-user-plus"></i>${escapeHtml(tr('Create NPC'))}</button></div>
                     <div class="cl-manager-layout"><aside class="cl-npc-list" data-list></aside><main class="cl-npc-detail" data-detail></main></div>
-                    <footer class="cl-manager-footer"><span><i class="fa-solid fa-layer-group"></i>${escapeHtml(tr('Library priority'))}: Chat → Character → Global</span>
-                        <div><button type="button" data-action="export"><i class="fa-solid fa-file-export"></i>${escapeHtml(tr('Export backup'))}</button>
-                        <button type="button" data-action="import"><i class="fa-solid fa-file-import"></i>${escapeHtml(tr('Import backup'))}</button></div></footer>
                     <input type="file" accept="application/json" data-backup-input hidden>
                 </section>`;
             document.body.appendChild(overlay);

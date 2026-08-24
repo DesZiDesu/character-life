@@ -5737,3 +5737,88 @@ html.character-life-product-open body {
     #character-life-overlay .cl-profile-actions .cl-life-action { flex-basis: 100%; width: auto; }
     #character-life-overlay .cl-partner-form > div button { flex: 1 1 100%; }
 }
+
+/* ---------- Persistent header backup controls ---------- */
+#character-life-overlay .cl-manager {
+    grid-template-rows: auto auto minmax(0, 1fr) !important;
+}
+#character-life-overlay .cl-manager-header {
+    grid-template-columns: 42px minmax(0, 1fr) auto !important;
+}
+#character-life-overlay .cl-manager-header-actions {
+    display: flex !important;
+    align-items: center;
+    justify-content: flex-end;
+    justify-self: end;
+    gap: 5px;
+    min-width: 0;
+}
+#character-life-overlay .cl-manager-header-actions > button {
+    display: grid !important;
+    place-items: center;
+    width: 40px !important;
+    min-width: 40px !important;
+    height: 40px !important;
+    min-height: 40px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: 1px solid var(--cl-formal-line, var(--cl-line)) !important;
+    border-radius: 0 !important;
+    color: var(--cl-formal-text, var(--cl-ink)) !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    cursor: pointer;
+}
+#character-life-overlay .cl-manager-header-actions > .cl-header-backup-action {
+    width: 38px !important;
+    min-width: 38px !important;
+    height: 38px !important;
+    min-height: 38px !important;
+}
+#character-life-overlay .cl-manager-header-actions > button:hover,
+#character-life-overlay .cl-manager-header-actions > button:focus-visible {
+    border-color: var(--cl-formal-accent, var(--cl-header-color)) !important;
+    background: var(--cl-formal-surface-2, color-mix(in srgb, var(--cl-surface) 82%, transparent)) !important;
+}
+#character-life-overlay .cl-manager-header-actions svg {
+    width: 17px;
+    height: 17px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    pointer-events: none;
+}
+
+@media (max-width: 760px) {
+    #character-life-overlay .cl-manager {
+        grid-template-rows: auto auto minmax(0, 1fr) !important;
+    }
+    #character-life-overlay .cl-manager-header {
+        grid-template-columns: 38px minmax(0, 1fr) auto !important;
+        gap: 8px !important;
+    }
+    #character-life-overlay .cl-manager[data-view="detail"] {
+        grid-template-rows: auto minmax(0, 1fr) !important;
+    }
+    #character-life-overlay .cl-manager[data-view="detail"] .cl-manager-header {
+        grid-template-columns: 40px 38px minmax(0, 1fr) auto !important;
+    }
+    #character-life-overlay .cl-manager-header-actions {
+        gap: 4px;
+    }
+    #character-life-overlay .cl-manager-header-actions > button,
+    #character-life-overlay .cl-manager-header-actions > .cl-header-backup-action {
+        width: 36px !important;
+        min-width: 36px !important;
+        height: 36px !important;
+        min-height: 36px !important;
+    }
+    #character-life-overlay .cl-manager-header-actions > button[data-action="close"] {
+        width: 40px !important;
+        min-width: 40px !important;
+        height: 40px !important;
+        min-height: 40px !important;
+    }
+}
