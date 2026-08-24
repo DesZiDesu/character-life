@@ -1,5 +1,5 @@
 /* Character Life consolidated runtime bundle. Generated from the preserved v1.9.16 module stack. */
-const CHARACTER_LIFE_BUNDLE_VERSION = '1.18.0';
+const CHARACTER_LIFE_BUNDLE_VERSION = '1.18.1';
 const existingCharacterLifeBundle = globalThis.CharacterLifeBundleRuntimePromise;
 if (existingCharacterLifeBundle) {
     await existingCharacterLifeBundle;
@@ -161,7 +161,8 @@ globalThis.CharacterLifeBundleRuntimePromise = (async () => {
                     if (npc?.enabled === false || view?.enabled === false) continue;
                     if (scope === 'chat' && view?.sourceScope && view?.sourceId) {
                         const sourceList = lists.find(([candidateScope]) => candidateScope === view.sourceScope)?.[1] || [];
-                        if (sourceList.some(source => source?.id === view.sourceId && source?.enabled === false)) continue;
+                        const source = sourceList.find(candidate => candidate?.id === view.sourceId);
+                        if (!source || source.enabled === false || source.isDead === true || source.lifeStatus === 'dead') continue;
                     }
                     const name = cleanText(view?.name, '', 120);
                     if (name) map.set(name.toLocaleLowerCase(), view);
@@ -178,6 +179,14 @@ globalThis.CharacterLifeBundleRuntimePromise = (async () => {
             const link = links.find(item => [item?.a, item?.b].some(endpoint => cleanText(endpoint?.name, '', 120).toLocaleLowerCase() === name));
             if (!link) return null;
             const other = cleanText(link?.a?.name, '', 120).toLocaleLowerCase() === name ? link?.b : link?.a;
+            if (other?.type !== 'user') {
+                const root = rootSettings(context);
+                const list = other?.scope === 'global' ? root?.globalNpcs
+                    : other?.scope === 'character' ? root?.characterNpcs?.[characterKey(context)]
+                        : other?.scope === 'chat' ? context?.chatMetadata?.[NPC_CHAT_KEY]?.npcs : null;
+                const target = Array.isArray(list) ? list.find(candidate => candidate?.id === other?.id) : null;
+                if (!target || target.enabled === false || target.isDead === true || target.lifeStatus === 'dead') return null;
+            }
             return other?.name ? `${cleanText(other.name, 'User', 120)} (${cleanText(link.label, 'Partner', 80)})` : null;
         }
 
@@ -1956,7 +1965,7 @@ function scheduleDiagnosticUi(delay = 80) {
             if (scope !== 'chat' || !npc.sourceScope || !npc.sourceId) return true;
             const sourceList = libraries?.get?.(npc.sourceScope) || getLibrary(npc.sourceScope);
             const source = sourceList.find(entry => entry.id === npc.sourceId);
-            return source?.enabled !== false;
+            return Boolean(source && source.enabled !== false && !source.isDead);
         }
 
         function disabledSourceMatchesName(name) {
@@ -2430,6 +2439,14 @@ function scheduleDiagnosticUi(delay = 80) {
             return { link, partner: partnerEndpointKey(link.a) === key ? link.b : link.a };
         }
 
+        function partnerEndpointAvailable(endpoint) {
+            const normalized = normalizePartnerEndpoint(endpoint);
+            if (normalized?.type === 'user') return true;
+            if (!normalized || !scopeAvailable(normalized.scope)) return false;
+            const npc = getLibrary(normalized.scope).find(entry => entry.id === normalized.id);
+            return Boolean(npc && !npc.isDead && npcEnabledForRuntime(npc, normalized.scope));
+        }
+
         function partnerCandidates(excludeNpc = null, excludeScope = activeScope) {
             const candidates = new Map();
             if (hasChat()) candidates.set('user', { key: 'user', endpoint: { type: 'user', key: 'user', name: 'User' }, name: 'User', scope: 'user' });
@@ -2453,6 +2470,27 @@ function scheduleDiagnosticUi(delay = 80) {
             const resolved = findNpcInLibraries(cleaned, libraries);
             if (!resolved || resolved.npc.isDead) return null;
             return partnerEndpointForNpc(resolved.npc, resolved.scope);
+        }
+
+        async function syncPartnerEndpoint(previousNpc, previousScope, nextNpc, nextScope) {
+            if (!hasChat() || !previousNpc || !nextNpc) return;
+            const previous = partnerEndpointForNpc(previousNpc, previousScope);
+            const next = partnerEndpointForNpc(nextNpc, nextScope);
+            const previousKey = partnerEndpointKey(previous);
+            const nextKey = partnerEndpointKey(next);
+            if (!previousKey || !nextKey) return;
+            const state = chatState(true);
+            let changed = false;
+            state.partnerLinks = state.partnerLinks.map(link => {
+                const updated = { ...link };
+                if (partnerEndpointKey(link.a) === previousKey) { updated.a = clone(next); changed = true; }
+                if (partnerEndpointKey(link.b) === previousKey) { updated.b = clone(next); changed = true; }
+                return updated;
+            });
+            if (!changed) return;
+            state.partnerLinks = normalizePartnerLinks(state.partnerLinks);
+            SillyTavern.getContext().chatMetadata[CHAT_KEY] = state;
+            await SillyTavern.getContext().saveMetadata();
         }
 
         async function applyNpcPartnerEvents(partnerEvents) {
@@ -2797,7 +2835,7 @@ function scheduleDiagnosticUi(delay = 80) {
                 const missingIdentity = ['role', 'affiliation', 'gender', 'age', 'species'].filter(field => !promptValue(npc[field]) || /^unknown\s/i.test(promptValue(npc[field])));
                 if (missingIdentity.length) fields.push(`missingIdentity: ${missingIdentity.join(', ')}`);
                 const partner = partnerLinkForNpc(npc, npc.scope);
-                if (partner) fields.push(`partner: ${promptValue(partner.partner.name, 120)} (${promptValue(partner.link.label, 80)})`);
+                if (partner && partnerEndpointAvailable(partner.partner)) fields.push(`partner: ${promptValue(partner.partner.name, 120)} (${promptValue(partner.link.label, 80)})`);
                 const record = `- ${npc.name}${fields.length ? ` | ${fields.join(' | ')}` : ''}`;
                 if (length + record.length > 18000) break;
                 records.push(record);
@@ -3004,7 +3042,7 @@ Never infer gender identity or exact age from appearance alone. For an existing 
                         <label>${aiFieldTitle('Species / race', 'species')}<input name="species" required maxlength="120" value="${escapeHtml(value.species)}" placeholder="Human, spirit, android, custom species…"></label>
                         <label>${aiFieldTitle('Role / title', 'role')}<input name="role" required maxlength="160" value="${escapeHtml(value.role)}" placeholder="Occupation, rank, or narrative role"></label>
                         <label>${aiFieldTitle('Affiliation', 'affiliation')}<input name="affiliation" required maxlength="160" value="${escapeHtml(value.affiliation)}" placeholder="Faction, organization, household, or none"></label>
-                        <label class="cl-enabled-toggle"><span>${escapeHtml(tr('Enabled'))}</span><span><input type="checkbox" name="enabled" value="1"${value.enabled !== false ? ' checked' : ''}> ${escapeHtml(tr('Enable NPC'))}</span></label>
+                        <label class="cl-enabled-toggle" data-enabled-toggle${activeScope === 'chat' ? ' hidden' : ''}><span>${escapeHtml(tr('Enabled'))}</span><span><input type="checkbox" name="enabled" value="1"${value.enabled !== false ? ' checked' : ''}> ${escapeHtml(tr('Enable NPC'))}</span></label>
                         <label><span>${escapeHtml(tr('Theme mode'))}</span><select name="themeMode"><option value="auto"${value.themeMode !== 'custom' ? ' selected' : ''}>${escapeHtml(tr('Automatic from portrait'))}</option><option value="custom"${value.themeMode === 'custom' ? ' selected' : ''}>${escapeHtml(tr('Custom NPC colors'))}</option></select></label>
                         <label><span>${escapeHtml(tr('Header accent'))}</span><input name="headerAccent" type="color" value="${escapeHtml(palette.header)}"></label>
                         <label><span>${escapeHtml(tr('Thought accent'))}</span><input name="thoughtAccent" type="color" value="${escapeHtml(palette.thought)}"></label>
@@ -3090,11 +3128,12 @@ Never infer gender identity or exact age from appearance alone. For an existing 
                 const label = option.scope === 'user' ? tr('User') : `${scopeLabel(option.scope)} — ${option.name}`;
                 return `<option value="${escapeHtml(option.key)}"${option.key === currentKey ? ' selected' : ''}>${escapeHtml(label)}</option>`;
             }).join('');
+            const canSave = options.length > 0;
             return `<section class="cl-partner-panel"><header><div><i class="fa-solid fa-link"></i><strong>${escapeHtml(tr('Partner'))}</strong><small>${escapeHtml(tr('Partner data is chat-local and resets in a new chat unless carried over.'))}</small></div></header>
                 ${current ? `<p class="cl-current-partner"><span>${escapeHtml(current.partner.name)}</span><em>${escapeHtml(current.link.label)}</em></p>` : `<p class="cl-current-partner is-empty">${escapeHtml(tr('No partner'))}</p>`}
                 <form data-form="partner" class="cl-partner-form"><label><span>${escapeHtml(tr('Partner'))}</span><select name="partnerKey" required>${optionMarkup || `<option value="">${escapeHtml(tr('No partner'))}</option>`}</select></label>
                     <label><span>${escapeHtml(tr('Partner type'))}</span><input name="label" maxlength="100" value="${escapeHtml(current?.link.label || 'Partner')}" placeholder="dating, spouse, partner…"></label>
-                    <div><button type="button" data-action="remove-partner"${current ? '' : ' disabled'}><i class="fa-solid fa-link-slash"></i>${escapeHtml(tr('Remove partner'))}</button><button class="cl-primary" type="submit"><i class="fa-solid fa-link"></i>${escapeHtml(tr('Save partner'))}</button></div>
+                    <div><button type="button" data-action="remove-partner"${current ? '' : ' disabled'}><i class="fa-solid fa-link-slash"></i>${escapeHtml(tr('Remove partner'))}</button><button class="cl-primary" type="submit"${canSave ? '' : ' disabled'}><i class="fa-solid fa-link"></i>${escapeHtml(tr('Save partner'))}</button></div>
                 </form></section>`;
         }
 
@@ -3198,6 +3237,15 @@ Never infer gender identity or exact age from appearance alone. For an existing 
             } else {
                 setNpcLifeStatus(npc, 'dead', 'Marked dead by user');
                 await saveLibrary(activeScope, getLibrary(activeScope).map(entry => entry.id === npc.id ? npc : entry));
+                if (hasChat()) {
+                    const state = chatState(true);
+                    const nextChatNpcs = state.npcs.filter(entry => !(entry.sourceScope === activeScope && entry.sourceId === npc.id));
+                    if (nextChatNpcs.length !== state.npcs.length) {
+                        state.npcs = nextChatNpcs;
+                        SillyTavern.getContext().chatMetadata[CHAT_KEY] = state;
+                        await SillyTavern.getContext().saveMetadata();
+                    }
+                }
             }
             renderManager();
             updatePrompt();
@@ -3264,6 +3312,29 @@ Never infer gender identity or exact age from appearance alone. For an existing 
         async function deleteNpc() {
             const npc = currentNpc();
             if (!npc || !confirm(`Delete ${npc.name}?`)) return;
+            if (hasChat()) {
+                const endpointKey = partnerEndpointKey(partnerEndpointForNpc(npc, activeScope));
+                const state = chatState(true);
+                let chatChanged = false;
+                if (activeScope !== 'chat') {
+                    const nextNpcs = state.npcs.filter(entry => !(entry.sourceScope === activeScope && entry.sourceId === npc.id));
+                    if (nextNpcs.length !== state.npcs.length) {
+                        state.npcs = nextNpcs;
+                        chatChanged = true;
+                    }
+                }
+                if (endpointKey) {
+                    const nextLinks = state.partnerLinks.filter(link => ![partnerEndpointKey(link.a), partnerEndpointKey(link.b)].includes(endpointKey));
+                    if (nextLinks.length !== state.partnerLinks.length) {
+                        state.partnerLinks = nextLinks;
+                        chatChanged = true;
+                    }
+                }
+                if (chatChanged) {
+                    SillyTavern.getContext().chatMetadata[CHAT_KEY] = state;
+                    await SillyTavern.getContext().saveMetadata();
+                }
+            }
             const npcs = getLibrary(activeScope).filter(entry => entry.id !== npc.id);
             await saveLibrary(activeScope, npcs);
             for (const form of npc.forms) {
@@ -3542,6 +3613,8 @@ Never infer gender identity or exact age from appearance alone. For an existing 
                 const data = new FormData(form);
                 const targetScope = data.get('scope');
                 const existing = cleanText(data.get('id')) ? currentNpc() : null;
+                const previousNpc = existing ? clone(existing) : null;
+                const previousScope = activeScope;
                 const adultProfile = data.has('adultProfile');
                 if (adultProfile && explicitlyIdentifiesMinor(data.get('age'))) throw new Error('Adult-only profiles cannot be enabled when the age field identifies the NPC as a minor.');
                 const npc = normalizeNpc({
@@ -3551,7 +3624,7 @@ Never infer gender identity or exact age from appearance alone. For an existing 
                     goals: data.get('goals'), abilities: data.get('abilities'), speechStyle: data.get('speechStyle'), currentState: data.get('currentState'),
                     adultProfile, adultAppearance: adultProfile ? data.get('adultAppearance') : '', notes: data.get('notes'),
                     themeMode: data.get('themeMode'), customPalette: { header: data.get('headerAccent'), thought: data.get('thoughtAccent'), dialogue: data.get('dialogueAccent') },
-                    enabled: data.has('enabled'), createdAt: existing?.createdAt || new Date().toISOString(), updatedAt: new Date().toISOString(), forms: existing?.forms || [], activeFormId: existing?.activeFormId || '',
+                    enabled: targetScope === 'chat' ? existing?.enabled !== false : data.has('enabled'), createdAt: existing?.createdAt || new Date().toISOString(), updatedAt: new Date().toISOString(), forms: existing?.forms || [], activeFormId: existing?.activeFormId || '',
                 });
                 const files = form.querySelector('[name="portraits"]')?.files;
                 if (files?.length) {
@@ -3565,6 +3638,10 @@ Never infer gender identity or exact age from appearance alone. For an existing 
                     npc.activeFormId ||= created[0]?.id || '';
                     if (npc.themeMode !== 'custom') npc.autoPalette = await paletteFromImage(files[0], npc.name);
                 }
+                if (targetScope !== 'chat') {
+                    npc.sourceScope = '';
+                    npc.sourceId = '';
+                }
                 refreshNpcOriginal(npc, targetScope);
                 if (existing && targetScope !== activeScope) {
                     await saveLibrary(activeScope, getLibrary(activeScope).filter(entry => entry.id !== existing.id));
@@ -3572,6 +3649,7 @@ Never infer gender identity or exact age from appearance alone. For an existing 
                 const target = getLibrary(targetScope).filter(entry => entry.id !== npc.id && entry.name.toLocaleLowerCase() !== npc.name.toLocaleLowerCase());
                 target.push(npc);
                 await saveLibrary(targetScope, target);
+                await syncPartnerEndpoint(previousNpc, previousScope, npc, targetScope);
                 activeScope = targetScope;
                 selectedNpcId = npc.id;
                 editorMode = '';
@@ -3714,6 +3792,9 @@ Never infer gender identity or exact age from appearance alone. For an existing 
             if (event.target.matches('[name="adultProfile"]')) {
                 const panel = event.target.closest('[data-form="npc"]')?.querySelector('[data-adult-fields]');
                 if (panel) panel.hidden = !event.target.checked;
+            } else if (event.target.matches('[data-form="npc"] [name="scope"]')) {
+                const enabledToggle = event.target.closest('[data-form="npc"]')?.querySelector('[data-enabled-toggle]');
+                if (enabledToggle) enabledToggle.hidden = event.target.value === 'chat';
             } else if (event.target.matches('[name="portraits"]')) {
                 renderNewPortraitPreviews(event.target);
             } else if (event.target.matches('[data-add-portraits]')) {
@@ -9208,6 +9289,25 @@ Never infer gender identity or exact age from appearance alone. For an existing 
                 .map(value => text(value, '', 120))
                 .filter(value => value && keyOf(value) !== keyOf(newName)))].slice(0, 30);
             canonical.npc.updatedAt = now();
+
+            const partnerState = chatNpcState();
+            const partnerScope = canonical.scope === 'chat' && canonical.npc.sourceScope && canonical.npc.sourceId
+                ? canonical.npc.sourceScope : canonical.scope;
+            const partnerId = canonical.scope === 'chat' && canonical.npc.sourceScope && canonical.npc.sourceId
+                ? canonical.npc.sourceId : canonical.npc.id;
+            let partnerChanged = false;
+            if (Array.isArray(partnerState?.partnerLinks) && partnerScope && partnerId) {
+                for (const link of partnerState.partnerLinks) {
+                    for (const side of ['a', 'b']) {
+                        const endpoint = link?.[side];
+                        if (endpoint?.type !== 'npc' || endpoint.scope !== partnerScope || endpoint.id !== partnerId || endpoint.name === newName) continue;
+                        endpoint.name = newName;
+                        link.updatedAt = now();
+                        partnerChanged = true;
+                    }
+                }
+            }
+            if (partnerChanged) scopes.add('chat');
 
             await saveChanges(scopes);
             try { globalThis.CharacterLifeNpcDirector?.refreshPrompt?.(); } catch {}
