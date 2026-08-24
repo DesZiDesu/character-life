@@ -2,11 +2,12 @@
 
 Character Life's is a responsive SillyTavern extension for persistent NPC identities, portraits, speaker presentation, AI-assisted profile updates, and optional skill tracking inside the main role-play chat.
 
-**Current version: 1.19.2**
+**Current version: 1.20.0**
 
 ## Highlights
 
 - Global, per-character/group, and per-chat NPC libraries with Chat → Character → Global priority.
+- Automatic same-character/group carry-over moves chat NPCs, AI overrides, relationships, partner links, Skill Storage, and the per-chat skill switch into a new chat.
 - Chat-local AI overrides stay visually attached to their Global/Character source; the Chat tab lists only genuinely chat-scoped NPCs instead of duplicate source records.
 - Rich NPC profiles with sparse/unknown fields, aliases, portraits/forms, framing controls, and bulk scope movement.
 - One-call **Generate Full NPC** workflow with optional image reference and multimodal appearance guidance.
@@ -42,6 +43,7 @@ Character Life uses its own `character_life` settings/metadata namespace and its
 
 - **Tensei System:** intentionally supported. Character Life can read Tensei's `tensei_system_state` and bridge skill information into Skill Storage.
 - **Tretaresia RPG System:** intentionally supported. RPG NPCs can link to Character Life by stable ID/scope or exact name/alias, reuse the active portrait and framing, read Skill Storage entries, and write RPG-tracked skills back through the local Character Life API.
+- **Start New Chat With Summary:** intentionally supported. Character Life captures its own chat metadata before the Nutho extension starts a new chat, restores it after `CHAT_CHANGED`, and leaves the summary/memory metadata untouched.
 - **Pocket Phone Optimized:** no shared Character Life storage namespace. Both extensions can add structured main-response instructions, so very large combined prompts can increase formatting/token pressure even though they do not directly overwrite each other.
 - **Smart Memory Optimized:** long-term memory is handled by the separate Smart Memory Optimized extension rather than Character Life.
 
@@ -105,6 +107,6 @@ Character Life processes its supported machine-control records and removes them 
 
 - Global NPC metadata is available across chats on the current SillyTavern installation.
 - Character NPC metadata is keyed to the current character/group.
-- Chat NPC metadata is saved only in the current chat.
+- Chat NPC metadata belongs to its chat and is also cached per character/group when automatic continuity is enabled, allowing a new chat to inherit it.
 - Portrait and skill media are handled by Character Life's persistent-media layer.
 - Character Life does not require a separate API key; it uses SillyTavern's configured generation/caption capabilities when AI assistance is requested.

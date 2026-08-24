@@ -1,5 +1,5 @@
 /* Character Life consolidated runtime bundle. Generated from the preserved v1.9.16 module stack. */
-const CHARACTER_LIFE_BUNDLE_VERSION = '1.19.2';
+const CHARACTER_LIFE_BUNDLE_VERSION = '1.20.0';
 const existingCharacterLifeBundle = globalThis.CharacterLifeBundleRuntimePromise;
 if (existingCharacterLifeBundle) {
     await existingCharacterLifeBundle;
@@ -1439,6 +1439,7 @@ function scheduleDiagnosticUi(delay = 80) {
             injectPrompt: true,
             autoDiscover: true,
             autoProfileUpdates: true,
+            autoContinuity: true,
             design: 'signature',
             position: 'center',
             portraitShape: 'rounded',
@@ -1722,6 +1723,7 @@ function scheduleDiagnosticUi(delay = 80) {
             config.injectPrompt = Boolean(config.injectPrompt);
             config.autoDiscover = Boolean(config.autoDiscover);
             config.autoProfileUpdates = Boolean(config.autoProfileUpdates);
+            config.autoContinuity = config.autoContinuity !== false;
             return config;
         }
 
@@ -4196,6 +4198,10 @@ Never infer gender identity or exact age from appearance alone. For an existing 
             bindSetting('character-life-inject', 'injectPrompt', updatePrompt);
             bindSetting('character-life-discover', 'autoDiscover');
             bindSetting('character-life-profile-updates', 'autoProfileUpdates', updatePrompt);
+            bindSetting('character-life-auto-continuity', 'autoContinuity', () => {
+                if (getConfig().autoContinuity) globalThis.CharacterLifeContinuity?.capture?.();
+                else globalThis.CharacterLifeContinuity?.clear?.();
+            });
             populateDesignSelect();
             bindSetting('character-life-design', 'design', () => {
                 const preset = findCustomDesign(getConfig().design);
@@ -10477,6 +10483,161 @@ Never infer gender identity or exact age from appearance alone. For an existing 
         globalThis.dispatchEvent(new CustomEvent('character-life:rpg-bridge-ready', { detail: { version: CHARACTER_LIFE_BUNDLE_VERSION } }));
     };
     installRpgBridge();
+    const installNewChatContinuity = () => {
+        const FORMAT = 'character-life-chat-continuity';
+        const STORAGE_PREFIX = 'character-life:continuity:';
+        const OWNED_METADATA_KEYS = Object.freeze([
+            'character_life_npcs',
+            'character_life_skills',
+            'character_life_skill_indicators_enabled',
+        ]);
+        const NEW_CHAT_TARGETS = '#option_start_new_chat, #st_new_chat_with_summary_wand_button';
+        let restoring = false;
+        let captureTimer = null;
+
+        const context = () => globalThis.SillyTavern?.getContext?.() || null;
+        const cloneValue = value => value == null ? value
+            : globalThis.structuredClone ? structuredClone(value) : JSON.parse(JSON.stringify(value));
+        const enabled = ctx => ctx?.extensionSettings?.character_life?.config?.autoContinuity !== false;
+        const identityKey = ctx => {
+            const group = ctx?.groupId ?? ctx?.selectedGroup ?? ctx?.group?.id;
+            if (group !== undefined && group !== null && group !== '') return `group:${group}`;
+            const id = ctx?.characterId ?? ctx?.chid ?? ctx?.character?.id;
+            const character = ctx?.character || (Array.isArray(ctx?.characters) ? ctx.characters[id] : null);
+            const identity = String(character?.avatar || character?.filename || character?.name || ctx?.name2 || id || '').trim().slice(0, 240);
+            return identity ? `character:${identity}` : '';
+        };
+        const storageKey = ctx => {
+            const identity = identityKey(ctx);
+            return identity ? `${STORAGE_PREFIX}${encodeURIComponent(identity)}` : '';
+        };
+        const hasUserReply = ctx => Array.isArray(ctx?.chat)
+            && ctx.chat.some(message => message?.is_user && !message?.is_system);
+        const hasOwnedMetadata = metadata => OWNED_METADATA_KEYS.some(key => Object.hasOwn(metadata || {}, key));
+        const readOwnedMetadata = ctx => {
+            const result = {};
+            for (const key of OWNED_METADATA_KEYS) {
+                if (Object.hasOwn(ctx?.chatMetadata || {}, key)) result[key] = cloneValue(ctx.chatMetadata[key]);
+            }
+            return result;
+        };
+
+        const capture = () => {
+            const ctx = context();
+            const chatId = ctx?.getCurrentChatId?.();
+            const key = storageKey(ctx);
+            if (!enabled(ctx) || !chatId || !key) return false;
+            const metadata = readOwnedMetadata(ctx);
+            if (!Object.keys(metadata).length) return false;
+            const record = {
+                format: FORMAT,
+                version: 1,
+                characterKey: identityKey(ctx),
+                sourceChatId: chatId,
+                savedAt: new Date().toISOString(),
+                metadata,
+            };
+            try {
+                globalThis.localStorage?.setItem(key, JSON.stringify(record));
+                globalThis.dispatchEvent(new CustomEvent('character-life:continuity-captured', {
+                    detail: { sourceChatId: chatId, characterKey: record.characterKey },
+                }));
+                return true;
+            } catch (error) {
+                console.warn("[Character Life's] Could not cache new-chat continuity.", error);
+                return false;
+            }
+        };
+
+        const clear = () => {
+            const key = storageKey(context());
+            if (!key) return false;
+            try { globalThis.localStorage?.removeItem(key); return true; }
+            catch { return false; }
+        };
+
+        const refreshAfterRestore = () => {
+            try { globalThis.CharacterLifeNpcDirector?.refreshPrompt?.(); } catch {}
+            try { globalThis.CharacterLifeNpcDirector?.refreshColors?.(); } catch {}
+            try { globalThis.CharacterLifeNpcIdentity?.reconcile?.(); } catch {}
+            try { globalThis.CharacterLifeReliability?.refresh?.(); } catch {}
+        };
+
+        const restore = async () => {
+            const ctx = context();
+            const chatId = ctx?.getCurrentChatId?.();
+            const key = storageKey(ctx);
+            if (!enabled(ctx) || restoring || !chatId || !key || hasUserReply(ctx) || hasOwnedMetadata(ctx.chatMetadata)) return false;
+            let record;
+            try { record = JSON.parse(globalThis.localStorage?.getItem(key) || 'null'); }
+            catch { return false; }
+            if (record?.format !== FORMAT || record.version !== 1 || record.sourceChatId === chatId
+                || record.characterKey !== identityKey(ctx) || !record.metadata || !hasOwnedMetadata(record.metadata)) return false;
+
+            restoring = true;
+            try {
+                ctx.chatMetadata ||= {};
+                for (const keyName of OWNED_METADATA_KEYS) {
+                    if (Object.hasOwn(record.metadata, keyName)) ctx.chatMetadata[keyName] = cloneValue(record.metadata[keyName]);
+                }
+                if (typeof ctx.saveMetadata === 'function') await ctx.saveMetadata();
+                else if (typeof ctx.saveChat === 'function') await ctx.saveChat();
+                capture();
+                refreshAfterRestore();
+                globalThis.dispatchEvent(new CustomEvent('character-life:continuity-restored', {
+                    detail: { sourceChatId: record.sourceChatId, targetChatId: chatId, characterKey: record.characterKey, summaryExtensionCompatible: true },
+                }));
+                const thai = ctx.extensionSettings?.character_life?.config?.language === 'th';
+                globalThis.toastr?.success?.(
+                    thai ? 'นำข้อมูล Character Life ไปยังแชตใหม่แล้ว' : 'Character Life state continued into the new chat.',
+                    "Character Life's",
+                );
+                return true;
+            } catch (error) {
+                console.warn("[Character Life's] Could not restore new-chat continuity.", error);
+                return false;
+            } finally {
+                restoring = false;
+            }
+        };
+
+        const scheduleCapture = (delay = 300) => {
+            clearTimeout(captureTimer);
+            captureTimer = setTimeout(() => { captureTimer = null; capture(); }, delay);
+        };
+
+        document.addEventListener('click', event => {
+            const target = event.target instanceof Element ? event.target.closest(NEW_CHAT_TARGETS) : null;
+            if (target) capture();
+        }, true);
+
+        const ctx = context();
+        const source = ctx?.eventSource;
+        const types = ctx?.eventTypes || {};
+        if (source?.on && types.CHAT_CHANGED) {
+            source.on(types.CHAT_CHANGED, async () => {
+                const restored = await restore();
+                if (!restored) scheduleCapture(500);
+            });
+        }
+        if (source?.on) {
+            for (const name of ['MESSAGE_RECEIVED', 'MESSAGE_EDITED', 'MESSAGE_SWIPED']) {
+                if (types[name]) source.on(types[name], () => scheduleCapture(500));
+            }
+        }
+        globalThis.addEventListener('character-life:skill-used', () => scheduleCapture(150));
+
+        globalThis.CharacterLifeContinuity = Object.freeze({
+            version: CHARACTER_LIFE_BUNDLE_VERSION,
+            summaryExtension: 'nutho-start-new-chat-with-summary',
+            capture,
+            restore,
+            clear,
+        });
+
+        void restore().then(restored => { if (!restored) scheduleCapture(900); });
+    };
+    installNewChatContinuity();
     try { globalThis.CharacterLifeReliability?.refresh?.(); } catch (error) { console.warn("[Character Life's] Reliability refresh skipped safely.", error); }
     console.info("[Character Life's] consolidated v" + CHARACTER_LIFE_BUNDLE_VERSION + " runtime loaded.");
 })();
