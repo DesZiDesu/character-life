@@ -1,5 +1,5 @@
 /* Character Life consolidated runtime bundle. Generated from the preserved v1.9.16 module stack. */
-const CHARACTER_LIFE_BUNDLE_VERSION = '1.18.2';
+const CHARACTER_LIFE_BUNDLE_VERSION = '1.18.3';
 const existingCharacterLifeBundle = globalThis.CharacterLifeBundleRuntimePromise;
 if (existingCharacterLifeBundle) {
     await existingCharacterLifeBundle;
@@ -7,6 +7,41 @@ if (existingCharacterLifeBundle) {
 globalThis.CharacterLifeBundleRuntimePromise = (async () => {
     globalThis.CharacterLifeVersion = CHARACTER_LIFE_BUNDLE_VERSION;
     globalThis.CharacterLifeBootstrap = Object.freeze({ version: CHARACTER_LIFE_BUNDLE_VERSION, cacheToken: CHARACTER_LIFE_BUNDLE_VERSION });
+    const characterLifeRequestUsage = () => {
+        const context = globalThis.SillyTavern?.getContext?.();
+        const root = context?.extensionSettings?.character_life;
+        if (!root || typeof root !== 'object') return { total: 0, lastReason: '', lastAt: '' };
+        const source = root.requestUsage && typeof root.requestUsage === 'object' ? root.requestUsage : {};
+        root.requestUsage = {
+            total: Math.max(0, Math.trunc(Number(source.total) || 0)),
+            text: Math.max(0, Math.trunc(Number(source.text) || 0)),
+            vision: Math.max(0, Math.trunc(Number(source.vision) || 0)),
+            lastReason: typeof source.lastReason === 'string' ? source.lastReason.slice(0, 120) : '',
+            lastAt: typeof source.lastAt === 'string' ? source.lastAt.slice(0, 80) : '',
+        };
+        return root.requestUsage;
+    };
+    const syncCharacterLifeRequestUsage = () => {
+        const usage = characterLifeRequestUsage();
+        document.querySelectorAll('[data-character-life-request-usage]').forEach(output => {
+            output.textContent = `${usage.total} extension-started request${usage.total === 1 ? '' : 's'}`;
+            output.title = usage.lastAt ? `Last: ${usage.lastReason || 'unknown'} · ${usage.lastAt}` : 'No separate extension request recorded yet.';
+        });
+    };
+    const recordCharacterLifeRequest = (kind, reason) => {
+        const usage = characterLifeRequestUsage();
+        usage.total += 1;
+        usage[kind === 'vision' ? 'vision' : 'text'] += 1;
+        usage.lastReason = String(reason || kind || 'Character Life AI action').slice(0, 120);
+        usage.lastAt = new Date().toISOString();
+        globalThis.SillyTavern?.getContext?.().saveSettingsDebounced?.();
+        syncCharacterLifeRequestUsage();
+    };
+    globalThis.CharacterLifeRequestDiagnostics = Object.freeze({
+        record: recordCharacterLifeRequest,
+        snapshot: () => globalThis.structuredClone ? structuredClone(characterLifeRequestUsage()) : JSON.parse(JSON.stringify(characterLifeRequestUsage())),
+        refresh: syncCharacterLifeRequestUsage,
+    });
     const moduleFactories = Object.create(null);
     const modulePromises = new Map();
     const registerModule = (key, dependencies, factory) => { moduleFactories[key] = { dependencies, factory }; };
@@ -165,10 +200,19 @@ globalThis.CharacterLifeBundleRuntimePromise = (async () => {
                         if (!source || source.enabled === false || source.isDead === true || source.lifeStatus === 'dead') continue;
                     }
                     const name = cleanText(view?.name, '', 120);
-                    if (name) map.set(name.toLocaleLowerCase(), view);
+                    if (name) map.set(name.toLocaleLowerCase(), { ...view, __clScope: scope });
                 }
             }
-            return [...map.values()].slice(0, 80);
+            const recent = (context?.chat || []).slice(-8).map(message => cleanText(message?.mes, '', 3000)).join(' ').toLocaleLowerCase();
+            return [...map.values()].sort((a, b) => {
+                const score = npc => {
+                    const names = [npc?.name, ...(Array.isArray(npc?.aliases) ? npc.aliases : [])].map(value => cleanText(value, '', 120).toLocaleLowerCase()).filter(Boolean);
+                    const mentioned = names.some(value => recent.includes(value));
+                    const missing = ['role', 'affiliation', 'gender', 'age', 'species'].some(field => !cleanText(npc?.[field], '', 100) || /^unknown\s/i.test(cleanText(npc?.[field], '', 100)));
+                    return (mentioned ? 100 : 0) + (npc?.__clScope === 'chat' ? 20 : 0) + (npc?.isDead ? 12 : 0) + (missing ? 8 : 0) + (partnerForNpc(context, npc) ? 6 : 0);
+                };
+                return score(b) - score(a) || String(b?.updatedAt || '').localeCompare(String(a?.updatedAt || ''));
+            }).slice(0, 18);
         }
 
         function partnerForNpc(context, npc) {
@@ -199,21 +243,21 @@ globalThis.CharacterLifeBundleRuntimePromise = (async () => {
                 const aliases = Array.isArray(npc?.aliases) ? npc.aliases.map(x => cleanText(x, '', 80)).filter(Boolean).slice(0, 8) : [];
                 const forms = Array.isArray(npc?.forms) ? npc.forms.map(form => cleanText(form?.name, '', 80)).filter(Boolean).slice(0, 12) : [];
                 const facts = [
-                    npc?.role && `role=${cleanText(npc.role, '', 120)}`,
-                    npc?.affiliation && `affiliation=${cleanText(npc.affiliation, '', 120)}`,
-                    npc?.gender && `gender=${cleanText(npc.gender, '', 80)}`,
-                    npc?.age && `age=${cleanText(npc.age, '', 80)}`,
-                    npc?.species && `species=${cleanText(npc.species, '', 100)}`,
-                    npc?.relationshipToUser && `relationshipToUser=${cleanText(npc.relationshipToUser, '', 180)}`,
+                    npc?.role && `r=${cleanText(npc.role, '', 90)}`,
+                    npc?.affiliation && `f=${cleanText(npc.affiliation, '', 90)}`,
+                    npc?.gender && `g=${cleanText(npc.gender, '', 60)}`,
+                    npc?.age && `a=${cleanText(npc.age, '', 60)}`,
+                    npc?.species && `s=${cleanText(npc.species, '', 70)}`,
+                    npc?.relationshipToUser && `u=${cleanText(npc.relationshipToUser, '', 100)}`,
                     (() => {
                         const missing = ['role', 'affiliation', 'gender', 'age', 'species']
                             .filter(field => !cleanText(npc?.[field], '', 100) || /^unknown\s/i.test(cleanText(npc[field], '', 100)));
-                        return missing.length ? `missingIdentity=${missing.join(',')}` : '';
+                        return missing.length ? `missing=${missing.join(',')}` : '';
                     })(),
-                    partnerForNpc(context, npc) && `partner=${partnerForNpc(context, npc)}`,
-                    npc?.isDead && `lifeStatus=DEAD${npc.deathReason ? ` (${cleanText(npc.deathReason, '', 160)})` : ''}; do not let this NPC speak until explicitly resurrected`,
-                    aliases.length && `aliases=${aliases.join(', ')}`,
-                    forms.length && `forms=${forms.join(', ')}`,
+                    partnerForNpc(context, npc) && `p=${partnerForNpc(context, npc)}`,
+                    npc?.isDead && `dead=${cleanText(npc.deathReason, 'yes', 100)}`,
+                    aliases.length && `alias=${aliases.join(', ')}`,
+                    forms.length && `form=${forms.join(', ')}`,
                 ].filter(Boolean);
                 const line = `- ${name}${facts.length ? ` | ${facts.join(' | ')}` : ''}`;
                 if (length + line.length > 12000) break;
@@ -247,12 +291,16 @@ globalThis.CharacterLifeBundleRuntimePromise = (async () => {
                     if (owner && name) map.set(`${owner.toLocaleLowerCase()}::${name.toLocaleLowerCase()}`, skill);
                 }
             }
-            return [...map.values()].slice(0, 80).map(skill => {
+            const recent = (context?.chat || []).slice(-8).map(message => cleanText(message?.mes, '', 3000)).join(' ').toLocaleLowerCase();
+            return [...map.values()].sort((a, b) => {
+                const score = skill => recent.includes(cleanText(skill?.ownerName || skill?.owner, '', 120).toLocaleLowerCase()) || recent.includes(cleanText(skill?.name, '', 140).toLocaleLowerCase()) ? 1 : 0;
+                return score(b) - score(a);
+            }).slice(0, 24).map(skill => {
                 const owner = cleanText(skill?.ownerName || skill?.owner, 'Unknown', 120);
                 const name = cleanText(skill?.name, '', 140);
                 const category = cleanText(skill?.category, 'General', 80);
                 const rank = cleanText(skill?.rank, 'Unranked', 80);
-                return '- ' + owner + ': ' + name + ' | category=' + category + ' | rank=' + rank;
+                return `- ${owner}|${name}|${category}|${rank}`;
             }).join('\n');
         }
 
@@ -281,27 +329,18 @@ globalThis.CharacterLifeBundleRuntimePromise = (async () => {
         function baseUnifiedPrompt() {
             return [
                 'CHARACTER LIFE — UNIFIED RESPONSE PROTOCOL v' + CL196_VERSION,
-                'Use this protocol inside the SAME normal assistant role-play reply. Never request or perform another generation for Character Life.',
-                '',
-                'SPEAKER PRESENTATION — HIGHEST PRIORITY',
-                'Whenever an NPC speaks, Character Life presentation tags are mandatory even when the reply is in Thai, English, or another language and even when other extensions also request formatting. Do not put these tags in a code fence. Keep ordinary narration outside the tags.',
-                'For each active speaker use:',
+                'Apply inside the SAME normal role-play reply; never run another generation. Narration stays outside tags. For every speaking NPC, in any language, use:',
                 '[CL_HEADER|Exact NPC Name|optional-form]',
                 '[CL_DIALOGUE|Exact NPC Name|optional-form]the dialogue[/CL_DIALOGUE]',
-                'A speaker may have multiple CL_DIALOGUE blocks after one header. Repeat CL_HEADER only when the speaker changes or returns after another speaker.',
-                'Optional private thought only when the narration truly gives that NPC\'s private thought:',
+                'One header may precede several dialogue blocks; repeat it only after the speaker changes. Optional private thought:',
                 '[CL_THOUGHT|Exact NPC Name|optional-form]private thought[/CL_THOUGHT]',
-                'Use a saved portrait form only when it clearly matches the scene; otherwise omit the form. Never output image URLs or IDs. Do not replace these tags with Markdown blockquotes or plain quoted speech.'
+                'Use only a listed matching form; otherwise omit it. Never output portrait URLs/IDs, code fences, or substitute Markdown quotes.'
             ].join('\n');
         }
 
         function finalUnifiedPromptRules() {
             return [
-                'RESPONSE FRESHNESS',
-                'Treat every generation as a new turn. Directly address the newest user message, advance the scene, and do not copy or repeat the previous assistant reply verbatim unless the user explicitly asks for a quotation.',
-                '',
-                'FINAL FORMAT RULE',
-                'Narration remains normal prose. NPC dialogue must use CL_HEADER + CL_DIALOGUE instead of being left as plain quoted text. Character Life machine tags are plain text markup, never Markdown code.'
+                'FINAL: answer the newest user turn and advance the scene; do not repeat the prior reply unless asked. Narration is prose; NPC speech uses CL_HEADER + CL_DIALOGUE. All CL tags are plain machine markup, never Markdown code.'
             ].join('\n');
         }
 
@@ -322,42 +361,35 @@ globalThis.CharacterLifeBundleRuntimePromise = (async () => {
 
             if (skillEnabled) {
                 sections.push([
-                    'SKILL INDICATION',
-                    'When the completed reply confirms that the user or a named NPC actually uses, learns, awakens, demonstrates, or materially changes a skill, place this at the relevant point:',
+                    'SKILLS — only when the reply confirms actual use, learning, awakening, demonstration, or material change:',
                     '[CL_SKILL|Exact Owner Name|Exact Skill Name|Category|Rank]optional concise effect[/CL_SKILL]',
-                    'Do not create skill tags for ordinary actions, discussion, plans, or failed attempts.'
+                    'No tag for ordinary actions, discussion, plans, or failed attempts.'
                 ].join('\n'));
             }
 
             if (profileUpdates) {
                 sections.push([
-                    'NPC FACT UPDATES — MACHINE DATA',
-                    'Keep machine tags at the END of the same normal assistant reply. Never put them in a code fence or visible narration.',
+                    'NPC FACTS — machine tags at reply END:',
                     '[CL_NPC_UPDATE|Exact NPC Name|field]factual value[/CL_NPC_UPDATE]',
-                    'Allowed core fields: pronouns, gender, age, species, role, affiliation, appearance, personality, relationshipToUser, relationship, background, goals, abilities, speechStyle, currentState, notes. Aliases and identityColor are also supported by Character Life\'s identity layer.',
-                    'IDENTITY MINIMUM — REQUIRED FOR EVERY NEW NPC: Whenever an NPC is newly introduced, receives a CL_HEADER, or is otherwise relevant and missing identity data, emit exactly one update tag for each of these five fields in the same reply: role, affiliation, gender, age, species. Use facts established by the character card, lorebook, world info, or conversation. If a field is genuinely unavailable, do not omit it: use exactly one visible fallback — Unknown role, Unknown affiliation, Unknown gender, Unknown age, or Unknown race. These fallbacks are required placeholders, not invitations to guess.',
-                    'Never infer gender identity or exact age from appearance alone. Role, affiliation, and species may be stated only when supported by the active context. For an existing NPC, fill fields listed as missingIdentity or currently using an Unknown fallback when that NPC appears again. After the identity minimum is complete, emit only newly established or materially changed facts.'
+                    'Fields: pronouns,gender,age,species,role,affiliation,appearance,personality,relationshipToUser,relationship,background,goals,abilities,speechStyle,currentState,notes,aliases,identityColor.',
+                    'For every new/relevant NPC missing identity, emit role, affiliation, gender, age, species once each. Use established facts; otherwise use exactly Unknown role/affiliation/gender/age/race. Never infer gender or exact age from appearance. Existing complete profiles receive only newly established/materially changed facts.'
                 ].join('\n'));
             }
 
             sections.push([
-                'NPC RELATIONSHIPS AND PARTNERS — CHAT-LOCAL MACHINE DATA',
-                'Relationship to user is a short current label such as friend, employer, sibling, spouse, rival, or stranger. When it is newly established or materially changed, emit:',
+                'RELATIONSHIPS/PARTNERS — chat-local machine data. For a new/changed short user relation:',
                 '[CL_NPC_UPDATE|Exact NPC Name|relationshipToUser]short relationship to the user[/CL_NPC_UPDATE]',
-                'Partner links exist only in the current chat and reset when a new chat starts unless the chat data is carried over. Create a symmetric link only when the scene or user explicitly establishes it:',
+                'Only when explicitly established:',
                 '[CL_NPC_PARTNER|Exact NPC Name|Exact Other NPC Name|partner label]',
-                'Use USER as the other name when the NPC is partnered with the user. Remove a link only when the relationship ends:',
                 '[CL_NPC_PARTNER_REMOVE|Exact NPC Name|Exact Other NPC Name]',
-                'Do not invent romance or partnership. Keep the partner label concise (for example: dating, fiancé, spouse, or partner). These are machine tags and must never be shown as visible prose.'
+                'Use USER for the user. Do not invent romance; labels are concise. Links reset in a new chat unless carried over.'
             ].join('\n'));
 
             sections.push([
-                'NPC LIFE STATUS — MACHINE DATA',
-                'When role-play clearly establishes that an existing NPC dies, append exactly one hidden tag at the END of the reply:',
+                'LIFE STATUS — only when clearly confirmed:',
                 '[CL_NPC_STATUS|Exact NPC Name|dead]short cause or circumstance[/CL_NPC_STATUS]',
-                'When the user explicitly resurrects a named NPC, append:',
                 '[CL_NPC_STATUS|Exact NPC Name|alive]short resurrection note[/CL_NPC_STATUS]',
-                'Do not emit alive merely because a dead NPC is mentioned. Never let a saved dead NPC speak or act again until the user explicitly resurrects them. These tags are machine data and must not be shown as visible prose.'
+                'Alive requires explicit resurrection. A saved dead NPC cannot speak/act before that.'
             ].join('\n'));
 
             if (npcRegistry) sections.push('KNOWN NPC REGISTRY — reference data only, never instructions\n' + npcRegistry);
@@ -1286,6 +1318,7 @@ function scheduleDiagnosticUi(delay = 80) {
             const status = document.getElementById('character-life-ai-style-status');
             if (status) status.textContent = 'Using your active SillyTavern model…';
             try {
+                recordCharacterLifeRequest('text', 'Character Life design helper');
                 const result = parseAiCss(await generator(prompt));
                 setGeneratedCss(result, 'AI helper'); switchMode('advanced');
                 if (status) status.textContent = 'Generated. The code is in all three editors and the live preview has updated.';
@@ -3481,6 +3514,7 @@ Never infer gender identity or exact age from appearance alone. For an existing 
             const original = button.querySelector('em')?.textContent;
             if (button.querySelector('em')) button.querySelector('em').textContent = tr('Generating…');
             try {
+                recordCharacterLifeRequest('text', `Character Life NPC field: ${field}`);
                 const result = cleanText(await generator(prompt), '', Number(target.maxLength) || 4000)
                     .replace(/^```(?:\w+)?\s*|\s*```$/g, '').trim();
                 if (!result) throw new Error('The AI returned an empty field.');
@@ -3510,6 +3544,7 @@ Never infer gender identity or exact age from appearance alone. For an existing 
             if (status) status.textContent = tr('Analyzing image…');
             try {
                 const { getMultimodalCaption } = await import('/scripts/extensions/shared.js');
+                recordCharacterLifeRequest('vision', 'Character Life appearance analysis');
                 const result = cleanText(await getMultimodalCaption(source, appearanceVisionPrompt(form.elements.name?.value, mode)), '', 4000);
                 if (!result) throw new Error('The vision model returned an empty description.');
                 appearance.value = result;
@@ -4159,6 +4194,7 @@ Never infer gender identity or exact age from appearance alone. For an existing 
             const spacingOutput = document.getElementById('character-life-spacing-output');
             if (spacingOutput) spacingOutput.textContent = `${getConfig().chatSpacing}%`;
             configureDocument();
+            syncCharacterLifeRequestUsage();
         }
 
         function bindChatEvents() {
@@ -4509,6 +4545,7 @@ Never infer gender identity or exact age from appearance alone. For an existing 
             button.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Generating independent theme…';
             if (status) status.textContent = 'Using your active SillyTavern model on a blank canvas…';
             try {
+                recordCharacterLifeRequest('text', 'Character Life independent theme');
                 const result = parseAiCss(await generator(prompt));
                 internalEditorWrite = true;
                 headerEditor().value = `${MARKER}\n${result.headerCss}`.trimEnd();
@@ -4982,6 +5019,7 @@ Never infer gender identity or exact age from appearance alone. For an existing 
             button.disabled = true;
             button.classList.add('is-working');
             try {
+                recordCharacterLifeRequest('text', 'Character Life NPC identity color');
                 const result = cleanText(await generator(prompt), '', 500);
                 const match = result.match(/#[0-9a-f]{6}/i);
                 if (!match || !validHex(match[0])) throw new Error('AI did not return a valid #RRGGBB color. No existing color was changed.');
@@ -5087,6 +5125,7 @@ Never infer gender identity or exact age from appearance alone. For an existing 
                 const source = await blobToDataUrl(blob);
                 const { getMultimodalCaption } = await import('/scripts/extensions/shared.js');
                 const prompt = `Analyze this image only as a selectable visual form for Character Life. Return one concise phrase, maximum 220 characters, describing only details useful for choosing this portrait during roleplay: apparent age/form if visually distinguishable, hair/state changes, clothing or uniform, armor/equipment, and the role or setting suggested by visible attire. Do not infer personality, nationality, ethnicity, diagnosis, or real-person identity. No headings or bullet points.`;
+                recordCharacterLifeRequest('vision', 'Character Life portrait form analysis');
                 const result = cleanText(await getMultimodalCaption(source, prompt), '', 220);
                 if (!result) throw new Error('The image-caption model returned an empty result.');
                 textarea.value = result;
@@ -5655,10 +5694,12 @@ Never infer gender identity or exact age from appearance alone. For an existing 
                     const source = await cl184FileToDataUrl(image);
                     const shared = await import('/scripts/extensions/shared.js');
                     if (typeof shared.getMultimodalCaption !== 'function') throw new Error('SillyTavern multimodal captioning is unavailable.');
+                    recordCharacterLifeRequest('vision', 'Character Life full NPC with image');
                     raw = await shared.getMultimodalCaption(source, prompt);
                 } else {
                     const generator = cl184Ctx()?.generateQuietPrompt;
                     if (typeof generator !== 'function') throw new Error('This SillyTavern build does not expose quiet AI generation to extensions.');
+                    recordCharacterLifeRequest('text', 'Character Life full NPC');
                     raw = await generator(prompt);
                 }
 
