@@ -1792,6 +1792,7 @@ body.character-life-open { overflow: hidden; }
 .cl-skill-indication[data-cl-skill-design="arcane-dossier"] .cl-skill-copy > strong {
     font-family: inherit;
     font-weight: 500;
+    color: color-mix(in srgb, var(--cl-skill-accent) 84%, white);
 }
 .cl-skill-indication[data-cl-skill-design="arcane-dossier"] .cl-skill-rank {
     border-left: 1px solid color-mix(in srgb, var(--cl-skill-accent) 40%, transparent);
@@ -5115,6 +5116,26 @@ html.character-life-product-open body {
 #character-life-skills-overlay .cl-skill-copy > small { color: var(--cl-formal-muted) !important; overflow-wrap: anywhere; }
 #character-life-skills-overlay .cl-skill-rule { background: var(--cl-formal-accent) !important; }
 #character-life-skills-overlay .cl-skill-rank { min-width: 70px; padding: 8px; border: 1px solid var(--cl-formal-line) !important; border-radius: 0 !important; background: var(--cl-formal-bg) !important; }
+
+/* Skill previews must use the selected/semantic skill accent, not the manager's
+   formal text color. This keeps Arcane Dossier visibly distinct per ability. */
+#character-life-skills-overlay .cl-skill-indication {
+    --cl-formal-accent: var(--cl-skill-accent) !important;
+}
+#character-life-skills-overlay .cl-skill-indication .cl-skill-icon-frame {
+    border-color: var(--cl-skill-accent) !important;
+    color: var(--cl-skill-accent) !important;
+}
+#character-life-skills-overlay .cl-skill-indication .cl-skill-eyebrow b,
+#character-life-skills-overlay .cl-skill-indication .cl-skill-rank {
+    color: var(--cl-skill-accent) !important;
+}
+#character-life-skills-overlay .cl-skill-indication .cl-skill-rule {
+    background: var(--cl-skill-accent) !important;
+}
+#character-life-skills-overlay .cl-skill-indication[data-cl-skill-design="arcane-dossier"] .cl-skill-copy > strong {
+    color: color-mix(in srgb, var(--cl-skill-accent) 84%, white) !important;
+}
 
 #character-life-overlay .cl-manager-footer,
 #character-life-skills-overlay .cl-skills-manager > footer {

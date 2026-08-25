@@ -1,5 +1,5 @@
 /* Character Life consolidated runtime bundle. Generated from the preserved v1.9.16 module stack. */
-const CHARACTER_LIFE_BUNDLE_VERSION = '1.23.0';
+const CHARACTER_LIFE_BUNDLE_VERSION = '1.24.0';
 const closeCharacterLifeHostWand = () => requestAnimationFrame(() => {
     const menu = document.getElementById('extensionsMenu');
     if (!menu?.getClientRects().length) return;
@@ -8004,6 +8004,36 @@ Never infer gender identity or exact age from appearance alone. For an existing 
             .replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&#039;');
         const uid = prefix => `${prefix || 'cl'}-${globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(16).slice(2)}`}`;
         const validHex = value => /^#[0-9a-f]{6}$/i.test(String(value || '').trim());
+        const SKILL_ACCENT_RULES = Object.freeze([
+            { color: '#F06445', words: /(?:fire|flame|burn|blaze|heat|inferno|ไฟ|เพลิง|เผา)/i },
+            { color: '#4EA5E8', words: /(?:water|aqua|ocean|river|tide|น้ำ|วารี|สมุทร)/i },
+            { color: '#8FD8F4', words: /(?:ice|frost|snow|cold|blizzard|น้ำแข็ง|หิมะ|เยือกแข็ง)/i },
+            { color: '#F2C94C', words: /(?:lightning|thunder|electric|shock|สายฟ้า|ฟ้าผ่า|ไฟฟ้า)/i },
+            { color: '#73D394', words: /(?:heal|recovery|restore|regenerat|cure|รักษา|ฟื้นฟู|ถอนพิษ)/i },
+            { color: '#76B96B', words: /(?:nature|plant|forest|wood|flower|earth|stone|ธรรมชาติ|พืช|ป่า|ดิน|หิน)/i },
+            { color: '#9DBB62', words: /(?:poison|venom|toxin|acid|พิษ|ยาพิษ)/i },
+            { color: '#8C79D8', words: /(?:shadow|dark|night|void|curse|death|เงา|มืด|รัตติกาล|คำสาป|ความตาย)/i },
+            { color: '#E05C68', words: /(?:blood|vampir|crimson|เลือด|แวมไพร์)/i },
+            { color: '#E6CC72', words: /(?:light|holy|divine|sun|radiant|แสง|ศักดิ์สิทธิ์|เทพ|สุริยะ)/i },
+            { color: '#62C5BE', words: /(?:wind|air|storm|speed|swift|ลม|วายุ|พายุ|ความเร็ว)/i },
+            { color: '#CDA66A', words: /(?:sword|blade|weapon|combat|martial|strength|ดาบ|อาวุธ|ต่อสู้|พละกำลัง)/i },
+            { color: '#C18AF0', words: /(?:magic|mana|arcane|spell|illusion|space|time|เวท|มานา|คาถา|มายา|มิติ|เวลา)/i },
+        ]);
+
+        function neutralLightAccent(value) {
+            if (!validHex(value)) return false;
+            const hex = String(value).slice(1);
+            const channels = [0, 2, 4].map(index => parseInt(hex.slice(index, index + 2), 16));
+            return Math.max(...channels) >= 210 && Math.max(...channels) - Math.min(...channels) <= 24;
+        }
+
+        function resolvedSkillAccent({ name, category, ownerName, source, accent }) {
+            const explicit = validHex(accent) ? String(accent).toUpperCase() : '';
+            if (explicit && (source === 'manual' || !neutralLightAccent(explicit))) return explicit;
+            const signature = `${cleanText(category, '', 100)} ${cleanText(name, '', 140)}`;
+            const semantic = SKILL_ACCENT_RULES.find(rule => rule.words.test(signature));
+            return semantic?.color || explicit || ownerAccent(ownerName);
+        }
 
         function ctx() {
             return globalThis.SillyTavern?.getContext?.() || null;
@@ -8138,18 +8168,21 @@ Never infer gender identity or exact age from appearance alone. For an existing 
             if (!name) return null;
             const ownerName = cleanText(value.ownerName, cleanText(fallback.ownerName, currentUserName(), 120), 120);
             const ownerType = value.ownerType === 'npc' || fallback.ownerType === 'npc' ? 'npc' : 'user';
+            const category = cleanText(value.category, cleanText(fallback.category, 'General', 100), 100);
+            const source = cleanText(value.source, cleanText(fallback.source, 'manual', 80), 80);
+            const suppliedAccent = validHex(value.accent) ? value.accent : validHex(fallback.accent) ? fallback.accent : '';
             return {
                 id: cleanText(value.id, cleanText(fallback.id, uid('skill'), 160), 160),
                 ownerType,
                 ownerName,
                 ownerNpcId: cleanText(value.ownerNpcId, cleanText(fallback.ownerNpcId, '', 160), 160),
                 name,
-                category: cleanText(value.category, cleanText(fallback.category, 'General', 100), 100),
+                category,
                 rank: cleanText(value.rank, cleanText(fallback.rank, 'Unranked', 80), 80),
                 description: cleanText(value.description, cleanText(fallback.description, '', 800), 800),
-                accent: validHex(value.accent) ? value.accent.toUpperCase() : validHex(fallback.accent) ? fallback.accent.toUpperCase() : ownerAccent(ownerName),
+                accent: resolvedSkillAccent({ name, category, ownerName, source, accent: suppliedAccent }),
                 imageId: cleanText(value.imageId, cleanText(fallback.imageId, '', 180), 180),
-                source: cleanText(value.source, cleanText(fallback.source, 'manual', 80), 80),
+                source,
                 createdAt: cleanText(value.createdAt, cleanText(fallback.createdAt, new Date().toISOString(), 80), 80),
                 updatedAt: new Date().toISOString(),
             };
@@ -8245,7 +8278,13 @@ Never infer gender identity or exact age from appearance alone. For an existing 
 
         function skillCardHtml(owner, name, category, rank, description) {
             const saved = findSkill(owner, name)?.skill;
-            const accent = validHex(saved?.accent) ? saved.accent : ownerAccent(owner);
+            const accent = resolvedSkillAccent({
+                ownerName: owner,
+                name,
+                category: category || saved?.category,
+                source: saved?.source || 'auto-track',
+                accent: saved?.accent,
+            });
             const design = skillConfig().design || 'arcane-dossier';
             const imageId = cleanText(saved?.imageId, '', 180);
             const initial = cleanText(name, '?', 1).toUpperCase();
