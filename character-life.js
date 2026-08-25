@@ -1,5 +1,5 @@
 /* Character Life consolidated runtime bundle. Generated from the preserved v1.9.16 module stack. */
-const CHARACTER_LIFE_BUNDLE_VERSION = '1.21.0';
+const CHARACTER_LIFE_BUNDLE_VERSION = '1.21.1';
 const existingCharacterLifeBundle = globalThis.CharacterLifeBundleRuntimePromise;
 if (existingCharacterLifeBundle) {
     await existingCharacterLifeBundle;
@@ -193,11 +193,14 @@ globalThis.CharacterLifeBundleRuntimePromise = (async () => {
             for (const [scope, list] of lists) {
                 for (const npc of list) {
                     const view = globalThis.CharacterLifeNpcLifecycle?.forChat?.(npc, scope) || npc;
-                    if (npc?.enabled === false || view?.enabled === false) continue;
+                    // A chat-local override inherits availability from its linked source.
+                    // Its copied enabled flag may be stale after the source is toggled.
                     if (scope === 'chat' && view?.sourceScope && view?.sourceId) {
                         const sourceList = lists.find(([candidateScope]) => candidateScope === view.sourceScope)?.[1] || [];
                         const source = sourceList.find(candidate => candidate?.id === view.sourceId);
                         if (!source || source.enabled === false || source.isDead === true || source.lifeStatus === 'dead') continue;
+                    } else if (npc?.enabled === false || view?.enabled === false) {
+                        continue;
                     }
                     const name = cleanText(view?.name, '', 120);
                     if (name) map.set(name.toLocaleLowerCase(), { ...view, __clScope: scope });
@@ -1997,10 +2000,11 @@ function scheduleDiagnosticUi(delay = 80) {
         }
 
         function npcEnabledForRuntime(npc, scope, libraries = null) {
-            if (!npc || npc.enabled === false) return false;
-            if (scope !== 'chat' || !npc.sourceScope || !npc.sourceId) return true;
+            if (!npc) return false;
+            if (scope !== 'chat' || !npc.sourceScope || !npc.sourceId) return npc.enabled !== false;
             const sourceList = libraries?.get?.(npc.sourceScope) || getLibrary(npc.sourceScope);
             const source = sourceList.find(entry => entry.id === npc.sourceId);
+            // Linked chat overrides never own enabled state; the source NPC does.
             return Boolean(source && source.enabled !== false && !source.isDead);
         }
 
@@ -3001,7 +3005,7 @@ Never infer gender identity or exact age from appearance alone. For an existing 
                     const resolved = sourceForChatOverride(candidate);
                     return resolved?.scope === scope && resolved.npc.id === source.id;
                 });
-                return override ? { ...source, ...override, id: source.id, sourceScope: scope, sourceId: source.id, __chatOverrideId: override.id } : source;
+                return override ? { ...source, ...override, enabled: source.enabled !== false, id: source.id, sourceScope: scope, sourceId: source.id, __chatOverrideId: override.id } : source;
             });
         }
 
@@ -10438,7 +10442,10 @@ Never infer gender identity or exact age from appearance alone. For an existing 
                         ? scopedLibraries.find(([candidateScope]) => candidateScope === view.sourceScope)?.[1] : null;
                     const source = Array.isArray(sourceList) && view?.sourceId
                         ? sourceList.find(candidate => candidate?.id === view.sourceId) : null;
-                    const enabled = view?.enabled !== false && (!view?.sourceScope || Boolean(source && source.enabled !== false));
+                    // A linked override follows its source; ignore a stale copied flag.
+                    const enabled = view?.sourceScope
+                        ? Boolean(source && source.enabled !== false)
+                        : view?.enabled !== false;
                     const dead = view?.isDead === true || view?.lifeStatus === 'dead'
                         || source?.isDead === true || source?.lifeStatus === 'dead';
                     const name = clean(view?.name, '', 120);
