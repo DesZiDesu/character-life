@@ -1,5 +1,5 @@
 /* Character Life consolidated runtime bundle. Generated from the preserved v1.9.16 module stack. */
-const CHARACTER_LIFE_BUNDLE_VERSION = '1.21.1';
+const CHARACTER_LIFE_BUNDLE_VERSION = '1.22.0';
 const existingCharacterLifeBundle = globalThis.CharacterLifeBundleRuntimePromise;
 if (existingCharacterLifeBundle) {
     await existingCharacterLifeBundle;
@@ -1563,6 +1563,9 @@ function scheduleDiagnosticUi(delay = 80) {
                 "Enable NPC": "เปิดใช้งาน NPC",
                 "Disabled": "ปิดใช้งาน",
                 "Enabled": "เปิดใช้งาน",
+                "World map marker": "มาร์กเกอร์บนแผนที่โลก",
+                "Show on world map": "แสดงบนแผนที่โลก",
+                "Hide from world map": "ซ่อนจากแผนที่โลก",
                 "Death reason": "สาเหตุการเสียชีวิต",
                 "Original profile": "ข้อมูลต้นฉบับ",
                 "Original data is protected from AI updates.": "ข้อมูลต้นฉบับจะไม่ถูกแก้ด้วยการอัปเดตจาก AI",
@@ -1580,6 +1583,8 @@ function scheduleDiagnosticUi(delay = 80) {
         let dbPromise = null;
         let renderTimer = null;
         let chatMetadataSaveTimer = null;
+        let libraryPortraitObserver = null;
+        let chatPortraitObserver = null;
         const portraitUrls = new Map();
         const previewUrls = new Set();
         const paletteJobs = new Set();
@@ -1858,6 +1863,7 @@ function scheduleDiagnosticUi(delay = 80) {
                 accent: validColor(source.accent, namePalette(source.name).header),
                 forms,
                 activeFormId,
+                mapVisible: source.mapVisible !== false,
                 createdAt: cleanText(source.createdAt || value?.createdAt, new Date().toISOString(), 80),
             };
         }
@@ -1899,6 +1905,7 @@ function scheduleDiagnosticUi(delay = 80) {
                 forms,
                 activeFormId: active,
                 enabled: value.enabled !== false,
+                mapVisible: value.mapVisible !== false,
                 original,
                 originalAt: cleanText(value.originalAt, cleanText(value.createdAt, new Date().toISOString(), 80), 80),
                 isDead: dead,
@@ -1959,6 +1966,7 @@ function scheduleDiagnosticUi(delay = 80) {
                 deathReason: npc.deathReason,
                 diedAt: npc.diedAt,
                 enabled: npc.enabled !== false,
+                mapVisible: npc.mapVisible !== false,
                 sourceScope: scope,
                 sourceId: npc.id,
             });
@@ -1997,6 +2005,9 @@ function scheduleDiagnosticUi(delay = 80) {
             }
             updatePrompt();
             scheduleRenderAll();
+            globalThis.dispatchEvent(new CustomEvent('character-life:map-markers-updated', {
+                detail: { scope, version: VERSION },
+            }));
         }
 
         function npcEnabledForRuntime(npc, scope, libraries = null) {
@@ -2147,7 +2158,10 @@ function scheduleDiagnosticUi(delay = 80) {
             if (!(file instanceof File) || !file.type.startsWith('image/')) throw new Error('Choose an image file.');
             if (file.size > 20 * 1024 * 1024) throw new Error('Image is larger than 20 MB.');
             const image = await loadImage(file);
-            const limit = 1600;
+            // Portraits are UI thumbnails/chat cards. Keeping future uploads at
+            // 1024px avoids large decoded textures on mobile without changing
+            // existing files or backup compatibility.
+            const limit = 1024;
             const scale = Math.min(1, limit / Math.max(image.naturalWidth, image.naturalHeight));
             const width = Math.max(1, Math.round(image.naturalWidth * scale));
             const height = Math.max(1, Math.round(image.naturalHeight * scale));
@@ -2155,7 +2169,7 @@ function scheduleDiagnosticUi(delay = 80) {
             canvas.width = width;
             canvas.height = height;
             canvas.getContext('2d', { alpha: false }).drawImage(image, 0, 0, width, height);
-            const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/webp', 0.88));
+            const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/webp', 0.82));
             return blob || file;
         }
 
@@ -2796,19 +2810,38 @@ function scheduleDiagnosticUi(delay = 80) {
                 if (species) species.textContent = npc.species || 'Unknown race';
                 block.style.setProperty('--cl-local-header', palette.header);
                 const form = chooseForm(npc, block.dataset.clForm);
-                const image = block.querySelector('.cl-chat-portrait img');
-                const portrait = block.querySelector('.cl-chat-portrait');
-                if (!image || !portrait || !form?.portraitId) continue;
-                const url = await portraitUrl(form.portraitId);
-                if (!url || !image.isConnected) continue;
-                image.src = url;
-                image.alt = `${npc.name} — ${form.name}`;
-                image.hidden = false;
-                image.style.objectPosition = `${form.x}% ${form.y}%`;
-                image.style.transform = `scale(${form.zoom})`;
-                portrait.classList.add('has-image');
+                if (!form?.portraitId) continue;
+                block.dataset.clPortraitId = form.portraitId;
+                if (typeof IntersectionObserver === 'function') {
+                    chatPortraitObserver ||= new IntersectionObserver(entries => {
+                        for (const entry of entries) {
+                            if (!entry.isIntersecting) continue;
+                            chatPortraitObserver.unobserve(entry.target);
+                            void hydrateChatPortrait(entry.target);
+                        }
+                    }, { root: document.getElementById('chat'), rootMargin: '650px 0px' });
+                    chatPortraitObserver.observe(block);
+                } else void hydrateChatPortrait(block);
             }
             for (const name of unknowns) void ensureUnknownNpc(name);
+        }
+
+        async function hydrateChatPortrait(block) {
+            if (!block?.isConnected) return;
+            const resolved = resolveNpc(block.dataset.clName);
+            if (!resolved) return;
+            const form = chooseForm(resolved.npc, block.dataset.clForm);
+            const image = block.querySelector('.cl-chat-portrait img');
+            const portrait = block.querySelector('.cl-chat-portrait');
+            if (!image || !portrait || !form?.portraitId) return;
+            const url = await portraitUrl(form.portraitId);
+            if (!url || !image.isConnected) return;
+            image.src = url;
+            image.alt = `${resolved.npc.name} — ${form.name}`;
+            image.hidden = false;
+            image.style.objectPosition = `${form.x}% ${form.y}%`;
+            image.style.transform = `scale(${form.zoom})`;
+            portrait.classList.add('has-image');
         }
 
         function findMessageText(messageId) {
@@ -2836,8 +2869,9 @@ function scheduleDiagnosticUi(delay = 80) {
         }
 
         function renderAllMessages() {
-            const context = SillyTavern.getContext();
-            context.chat?.forEach((_message, index) => renderMessage(index));
+            // Only process messages that SillyTavern currently keeps in the DOM.
+            // This avoids walking a long chat history on every small UI mutation.
+            document.querySelectorAll('#chat .mes[mesid]').forEach(element => renderMessage(element.getAttribute('mesid')));
         }
 
         function scheduleRenderAll(delay = 40) {
@@ -3005,7 +3039,7 @@ Never infer gender identity or exact age from appearance alone. For an existing 
                     const resolved = sourceForChatOverride(candidate);
                     return resolved?.scope === scope && resolved.npc.id === source.id;
                 });
-                return override ? { ...source, ...override, enabled: source.enabled !== false, id: source.id, sourceScope: scope, sourceId: source.id, __chatOverrideId: override.id } : source;
+                return override ? { ...source, ...override, enabled: source.enabled !== false, mapVisible: source.mapVisible !== false, id: source.id, sourceScope: scope, sourceId: source.id, __chatOverrideId: override.id } : source;
             });
         }
 
@@ -3039,19 +3073,40 @@ Never infer gender identity or exact age from appearance alone. For an existing 
                 || cleanText(typeof stored === 'string' ? stored : stored?.description, '', 320);
         }
 
-        async function hydrateLibraryPortraits(root) {
-            for (const frame of root.querySelectorAll('[data-portrait-id]')) {
-                const id = frame.dataset.portraitId;
-                if (!id) continue;
-                const url = await portraitUrl(id);
-                const image = frame.querySelector('img');
-                if (!url || !image?.isConnected) continue;
-                image.src = url;
-                image.hidden = false;
-                image.style.objectPosition = `${frame.dataset.x}% ${frame.dataset.y}%`;
-                image.style.transform = `scale(${frame.dataset.zoom})`;
-                frame.classList.add('has-image');
+        async function hydrateLibraryPortrait(frame) {
+            const id = frame?.dataset?.portraitId;
+            if (!id || !frame.isConnected || frame.dataset.portraitHydrated === 'true') return;
+            frame.dataset.portraitHydrated = 'pending';
+            const url = await portraitUrl(id);
+            const image = frame.querySelector('img');
+            if (!url || !image?.isConnected) {
+                frame.dataset.portraitHydrated = '';
+                return;
             }
+            image.src = url;
+            image.hidden = false;
+            image.loading = 'lazy';
+            image.decoding = 'async';
+            image.style.objectPosition = `${frame.dataset.x}% ${frame.dataset.y}%`;
+            image.style.transform = `scale(${frame.dataset.zoom})`;
+            frame.classList.add('has-image');
+            frame.dataset.portraitHydrated = 'true';
+        }
+
+        function hydrateLibraryPortraits(root) {
+            const frames = root.querySelectorAll('[data-portrait-id]');
+            if (typeof IntersectionObserver !== 'function') {
+                frames.forEach(frame => void hydrateLibraryPortrait(frame));
+                return;
+            }
+            libraryPortraitObserver ||= new IntersectionObserver(entries => {
+                for (const entry of entries) {
+                    if (!entry.isIntersecting) continue;
+                    libraryPortraitObserver.unobserve(entry.target);
+                    void hydrateLibraryPortrait(entry.target);
+                }
+            }, { rootMargin: '220px 0px' });
+            frames.forEach(frame => libraryPortraitObserver.observe(frame));
         }
 
         function renderNpcList() {
@@ -3063,7 +3118,6 @@ Never infer gender identity or exact age from appearance alone. For an existing 
                 ${npcAvatar(npc)}<span><strong>${escapeHtml(npc.name)}</strong><small>${escapeHtml(npc.isDead ? `${tr('Dead')}${npc.deathReason ? ` — ${npc.deathReason}` : ''}` : npc.enabled === false ? `${tr('Disabled')} — ${npc.role || npc.affiliation || ''}` : (npc.role || npc.affiliation || `${npc.forms.length} portrait forms`))}</small></span><i class="fa-solid ${npc.isDead ? 'fa-skull-crossbones' : npc.enabled === false ? 'fa-toggle-off' : 'fa-chevron-right'}"></i></button>`).join('')
                 : `<div class="cl-empty-state"><i class="fa-solid fa-address-book"></i><strong>${escapeHtml(tr('No NPCs in this scope.'))}</strong><button type="button" data-action="new">${escapeHtml(tr('Create NPC'))}</button></div>`;
             void hydrateLibraryPortraits(list);
-            npcs.forEach(npc => void ensurePortraitPalette(npc, activeScope));
         }
 
         function scopeOptions(selected) {
@@ -3126,6 +3180,7 @@ Never infer gender identity or exact age from appearance alone. For an existing 
                         <label>${aiFieldTitle('Role / title', 'role')}<input name="role" required maxlength="160" value="${escapeHtml(value.role)}" placeholder="Occupation, rank, or narrative role"></label>
                         <label>${aiFieldTitle('Affiliation', 'affiliation')}<input name="affiliation" required maxlength="160" value="${escapeHtml(value.affiliation)}" placeholder="Faction, organization, household, or none"></label>
                         <label class="cl-enabled-toggle" data-enabled-toggle${activeScope === 'chat' ? ' hidden' : ''}><span>${escapeHtml(tr('Enabled'))}</span><span><input type="checkbox" name="enabled" value="1"${value.enabled !== false ? ' checked' : ''}> ${escapeHtml(tr('Enable NPC'))}</span></label>
+                        <label class="cl-enabled-toggle"><span>${escapeHtml(tr('World map marker'))}</span><span><input type="checkbox" name="mapVisible" value="1"${value.mapVisible !== false ? ' checked' : ''}> ${escapeHtml(tr('Show on world map'))}</span></label>
                         <label><span>${escapeHtml(tr('Theme mode'))}</span><select name="themeMode"><option value="auto"${value.themeMode !== 'custom' ? ' selected' : ''}>${escapeHtml(tr('Automatic from portrait'))}</option><option value="custom"${value.themeMode === 'custom' ? ' selected' : ''}>${escapeHtml(tr('Custom NPC colors'))}</option></select></label>
                         <label><span>${escapeHtml(tr('Header accent'))}</span><input name="headerAccent" type="color" value="${escapeHtml(palette.header)}"></label>
                         <label><span>${escapeHtml(tr('Thought accent'))}</span><input name="thoughtAccent" type="color" value="${escapeHtml(palette.thought)}"></label>
@@ -3227,8 +3282,9 @@ Never infer gender identity or exact age from appearance alone. For an existing 
                 : `<button type="button" class="cl-life-action cl-kill-action" data-action="mark-dead" title="${escapeHtml(tr('Mark dead'))}"><i class="fa-solid fa-skull-crossbones"></i><span>${escapeHtml(tr('Mark dead'))}</span></button>`;
             const enabledAction = ['global', 'character'].includes(activeScope)
                 ? `<button type="button" class="cl-life-action cl-enable-action" data-action="toggle-enabled" title="${escapeHtml(disabled ? tr('Enable NPC') : tr('Disable NPC'))}"><i class="fa-solid ${disabled ? 'fa-toggle-off' : 'fa-toggle-on'}"></i><span>${escapeHtml(disabled ? tr('Enable NPC') : tr('Disable NPC'))}</span></button>` : '';
+            const mapAction = `<button type="button" class="cl-life-action cl-map-action" data-action="toggle-map-marker" title="${escapeHtml(tr(npc.mapVisible === false ? 'Show on world map' : 'Hide from world map'))}"><i class="fa-solid fa-${npc.mapVisible === false ? 'eye-slash' : 'location-dot'}"></i><span>${escapeHtml(tr(npc.mapVisible === false ? 'Show on world map' : 'Hide from world map'))}</span></button>`;
             return `<section class="cl-profile${npc.isDead ? ' is-dead' : ''}${disabled ? ' is-disabled' : ''}"><div class="cl-profile-hero">${npcAvatar(npc, 'hero')}<div><small>${escapeHtml(npc.isDead ? tr('Dead') : disabled ? tr('Disabled') : (npc.role || 'Unknown role'))}</small><h3>${escapeHtml(npc.name)}</h3><p>${escapeHtml(npc.affiliation || 'Unknown affiliation')}</p></div>
-                <div class="cl-profile-actions">${lifeAction}${enabledAction}<button type="button" data-action="edit" title="${escapeHtml(tr('Edit NPC'))}"><i class="fa-solid fa-pen"></i></button><button type="button" data-action="delete-npc" title="${escapeHtml(tr('Delete'))}"><i class="fa-solid fa-trash"></i></button></div></div>
+                <div class="cl-profile-actions">${lifeAction}${enabledAction}${mapAction}<button type="button" data-action="edit" title="${escapeHtml(tr('Edit NPC'))}"><i class="fa-solid fa-pen"></i></button><button type="button" data-action="delete-npc" title="${escapeHtml(tr('Delete'))}"><i class="fa-solid fa-trash"></i></button></div></div>
                 ${npc.isDead ? `<div class="cl-life-banner"><i class="fa-solid fa-skull-crossbones"></i><strong>${escapeHtml(tr('Dead'))}</strong>${npc.deathReason ? `<span>${escapeHtml(npc.deathReason)}</span>` : ''}</div>` : ''}
                 ${disabled ? `<div class="cl-disabled-banner"><i class="fa-solid fa-toggle-off"></i><strong>${escapeHtml(tr('Disabled'))}</strong><span>${escapeHtml(tr('Disable NPC'))}</span></div>` : ''}
                 <p class="cl-original-note"><i class="fa-solid fa-lock"></i><span>${escapeHtml(tr('Original data is protected from AI updates.'))}</span></p>
@@ -3259,6 +3315,7 @@ Never infer gender identity or exact age from appearance alone. For an existing 
         }
 
         function renderManager() {
+            libraryPortraitObserver?.disconnect();
             const manager = document.querySelector('#character-life-overlay .cl-manager');
             if (manager) manager.dataset.view = selectedNpcId || editorMode ? 'detail' : 'list';
             configureDocument();
@@ -3272,6 +3329,14 @@ Never infer gender identity or exact age from appearance alone. For an existing 
             if (options.scope) activeScope = options.scope;
             if (!scopeAvailable(activeScope)) activeScope = 'global';
             if (options.newNpc) { editorMode = 'new'; selectedNpcId = ''; portraitEditorId = ''; }
+            else if (options.id || options.npcId) {
+                const requestedId = cleanText(options.id || options.npcId, '', 120);
+                if (getLibrary(activeScope).some(npc => npc.id === requestedId)) {
+                    selectedNpcId = requestedId;
+                    editorMode = '';
+                    portraitEditorId = '';
+                }
+            }
             const overlay = document.getElementById('character-life-overlay');
             overlay.classList.add('is-open');
             overlay.setAttribute('aria-hidden', 'false');
@@ -3347,6 +3412,19 @@ Never infer gender identity or exact age from appearance alone. For an existing 
             updatePrompt();
             scheduleRenderAll(0);
             notify('success', `${npc.name}: ${npc.enabled ? tr('Enabled') : tr('Disabled')}`);
+        }
+
+        async function toggleNpcMapMarker() {
+            const npc = currentNpc();
+            if (!npc) return;
+            const source = activeScope === 'chat' ? sourceForChatOverride(npc) : null;
+            const targetScope = source?.scope || activeScope;
+            const targetNpc = source?.npc || npc;
+            targetNpc.mapVisible = targetNpc.mapVisible === false;
+            targetNpc.updatedAt = new Date().toISOString();
+            await saveLibrary(targetScope, getLibrary(targetScope).map(entry => entry.id === targetNpc.id ? targetNpc : entry));
+            renderManager();
+            notify('success', `${targetNpc.name}: ${tr(targetNpc.mapVisible ? 'Show on world map' : 'Hide from world map')}`);
         }
 
         async function savePartner(form) {
@@ -3679,6 +3757,7 @@ Never infer gender identity or exact age from appearance alone. For an existing 
             else if (action === 'revive-npc') await reviveNpc();
             else if (action === 'mark-dead') await markNpcDead();
             else if (action === 'toggle-enabled') await toggleNpcEnabled();
+            else if (action === 'toggle-map-marker') await toggleNpcMapMarker();
             else if (action === 'remove-partner') await removePartner();
             else if (action === 'delete-npc') await deleteNpc();
             else if (action === 'activate-form') await changeActiveForm(button.dataset.formId);
@@ -3715,7 +3794,7 @@ Never infer gender identity or exact age from appearance alone. For an existing 
                     goals: data.get('goals'), abilities: data.get('abilities'), speechStyle: data.get('speechStyle'), currentState: data.get('currentState'),
                     adultProfile, adultAppearance: adultProfile ? data.get('adultAppearance') : '', notes: data.get('notes'),
                     themeMode: data.get('themeMode'), customPalette: { header: data.get('headerAccent'), thought: data.get('thoughtAccent'), dialogue: data.get('dialogueAccent') },
-                    enabled: targetScope === 'chat' ? existing?.enabled !== false : data.has('enabled'), createdAt: existing?.createdAt || new Date().toISOString(), updatedAt: new Date().toISOString(), forms: existing?.forms || [], activeFormId: existing?.activeFormId || '',
+                    enabled: targetScope === 'chat' ? existing?.enabled !== false : data.has('enabled'), mapVisible: data.has('mapVisible'), createdAt: existing?.createdAt || new Date().toISOString(), updatedAt: new Date().toISOString(), forms: existing?.forms || [], activeFormId: existing?.activeFormId || '',
                 });
                 const files = form.querySelector('[name="portraits"]')?.files;
                 if (files?.length) {
@@ -4274,14 +4353,30 @@ Never infer gender identity or exact age from appearance alone. For an existing 
                 setTimeout(() => renderMessage(messageId), 260);
             });
             if (eventTypes.CHARACTER_MESSAGE_RENDERED) eventSource.on(eventTypes.CHARACTER_MESSAGE_RENDERED, messageId => renderMessage(messageId));
-            if (eventTypes.MESSAGE_EDITED) eventSource.on(eventTypes.MESSAGE_EDITED, () => scheduleRenderAll(80));
-            if (eventTypes.MESSAGE_SWIPED) eventSource.on(eventTypes.MESSAGE_SWIPED, () => scheduleRenderAll(80));
+            const renderChangedMessage = messageId => {
+                if (messageId !== undefined && messageId !== null && Number.isFinite(Number(messageId))) setTimeout(() => renderMessage(messageId), 80);
+                else scheduleRenderAll(80);
+            };
+            if (eventTypes.MESSAGE_EDITED) eventSource.on(eventTypes.MESSAGE_EDITED, renderChangedMessage);
+            if (eventTypes.MESSAGE_SWIPED) eventSource.on(eventTypes.MESSAGE_SWIPED, renderChangedMessage);
+            if (eventTypes.MORE_MESSAGES_LOADED) eventSource.on(eventTypes.MORE_MESSAGES_LOADED, () => scheduleRenderAll(80));
         }
 
         function observeChat() {
             const chat = document.getElementById('chat');
             if (!chat || chatObserver) return;
-            chatObserver = new MutationObserver(() => scheduleRenderAll(50));
+            chatObserver = new MutationObserver(records => {
+                const ids = new Set();
+                for (const record of records) {
+                    for (const node of record.addedNodes) {
+                        if (!(node instanceof Element)) continue;
+                        const message = node.matches?.('.mes[mesid]') ? node : node.closest?.('.mes[mesid]');
+                        if (message?.getAttribute('mesid')) ids.add(message.getAttribute('mesid'));
+                        node.querySelectorAll?.('.mes[mesid]').forEach(entry => ids.add(entry.getAttribute('mesid')));
+                    }
+                }
+                ids.forEach(messageId => setTimeout(() => renderMessage(messageId), 40));
+            });
             chatObserver.observe(chat, { childList: true, subtree: true });
         }
 
@@ -10456,10 +10551,44 @@ Never infer gender identity or exact age from appearance alone. For an existing 
                         ...(Array.isArray(previous?.aliases) ? previous.aliases : []),
                         ...(Array.isArray(view?.aliases) ? view.aliases : []),
                     ].map(value => clean(value, '', 120)).filter(Boolean))];
-                    merged.set(key, { ...(previous || {}), ...cloneValue(view), aliases, enabled, isDead: dead, lifeStatus: dead ? 'dead' : 'alive', scope });
+                    merged.set(key, { ...(previous || {}), ...cloneValue(view), aliases, enabled, mapVisible: view?.mapVisible !== false, isDead: dead, lifeStatus: dead ? 'dead' : 'alive', scope });
                 }
             }
             return [...merged.values()];
+        };
+        const listMapMarkers = ({ includeHidden = false, includeDisabled = false, includeDead = false } = {}) => {
+            const scopedLibraries = libraries();
+            const result = new Map();
+            const sourceFor = raw => {
+                if (!raw?.sourceScope || !raw?.sourceId) return null;
+                const sourceList = scopedLibraries.find(([scope]) => scope === raw.sourceScope)?.[1];
+                const source = Array.isArray(sourceList) ? sourceList.find(entry => entry?.id === raw.sourceId) : null;
+                return source ? { scope: raw.sourceScope, raw: source } : null;
+            };
+            for (const [scope, list] of scopedLibraries) {
+                for (const raw of list) {
+                    const linked = scope === 'chat' ? sourceFor(raw) : null;
+                    const owner = linked?.raw || raw;
+                    const ownerScope = linked?.scope || scope;
+                    const view = globalThis.CharacterLifeNpcLifecycle?.forChat?.(raw, scope) || raw;
+                    const enabled = owner?.enabled !== false;
+                    const dead = owner?.isDead === true || owner?.lifeStatus === 'dead' || view?.isDead === true || view?.lifeStatus === 'dead';
+                    const mapVisible = owner?.mapVisible !== false;
+                    const name = clean(view?.name || owner?.name, '', 120);
+                    if (!name || (!includeDisabled && !enabled) || (!includeDead && dead) || (!includeHidden && !mapVisible)) continue;
+                    const key = `${ownerScope}:${clean(owner?.id, clean(view?.id, name, 120), 120)}`;
+                    result.set(key, {
+                        id: clean(owner?.id, clean(view?.id, '', 120), 120), scope: ownerScope, key,
+                        name, aliases: cloneValue(Array.isArray(view?.aliases) ? view.aliases : []),
+                        enabled, isDead: dead, lifeStatus: dead ? 'dead' : 'alive', mapVisible,
+                        location: clean(view?.location || view?.currentLocation || view?.currentState, '', 2000),
+                        currentState: clean(view?.currentState, '', 2000),
+                        mapX: view?.mapX !== '' && view?.mapX !== null && view?.mapX !== undefined && Number.isFinite(Number(view.mapX)) ? Number(view.mapX) : null,
+                        mapY: view?.mapY !== '' && view?.mapY !== null && view?.mapY !== undefined && Number.isFinite(Number(view.mapY)) ? Number(view.mapY) : null,
+                    });
+                }
+            }
+            return [...result.values()].map(cloneValue);
         };
         const findNpc = (query = {}) => {
             const id = clean(query.id || query.npcId, '', 120);
@@ -10592,13 +10721,14 @@ Never infer gender identity or exact age from appearance alone. For an existing 
         globalThis.CharacterLifeRpgBridge = Object.freeze({
             version: CHARACTER_LIFE_BUNDLE_VERSION,
             compatibilityVersion: 2,
-            capabilities: Object.freeze({ npcDossierSync: true, skills: true, portraits: true, sameReplyTracking: true }),
+            capabilities: Object.freeze({ npcDossierSync: true, skills: true, portraits: true, sameReplyTracking: true, mapMarkers: true }),
             listNpcs,
+            listMapMarkers,
             findNpc: query => cloneValue(findNpc(query)),
             applyRpgNpcUpdates,
             listSkills,
             portrait,
-            openNpcLibrary: () => globalThis.CharacterLifeNpcLibrary?.open?.(),
+            openNpcLibrary: options => globalThis.CharacterLifeNpcLibrary?.open?.(options),
             openSkillStorage: () => globalThis.CharacterLifeSkills?.open?.(),
         });
         globalThis.dispatchEvent(new CustomEvent('character-life:rpg-bridge-ready', { detail: { version: CHARACTER_LIFE_BUNDLE_VERSION } }));
