@@ -1,5 +1,5 @@
 /* Character Life consolidated runtime bundle. Generated from the preserved v1.9.16 module stack. */
-const CHARACTER_LIFE_BUNDLE_VERSION = '1.20.1';
+const CHARACTER_LIFE_BUNDLE_VERSION = '1.21.0';
 const existingCharacterLifeBundle = globalThis.CharacterLifeBundleRuntimePromise;
 if (existingCharacterLifeBundle) {
     await existingCharacterLifeBundle;
@@ -10489,10 +10489,106 @@ Never infer gender identity or exact age from appearance alone. For an existing 
                 npc: cloneValue(npc), scope: npc.scope,
             };
         };
+        const applyRpgNpcUpdates = async records => {
+            const ctx = context();
+            if (!ctx?.getCurrentChatId?.() || !Array.isArray(records)) return { updated: 0, created: 0 };
+            ctx.chatMetadata ||= {};
+            const chatState = ctx.chatMetadata.character_life_npcs ||= { version: 1, npcs: [], originalSources: {}, partnerLinks: [] };
+            chatState.npcs = Array.isArray(chatState.npcs) ? chatState.npcs : [];
+            const known = listNpcs({ includeDisabled: true, includeDead: true });
+            let updated = 0;
+            let created = 0;
+            const meaningful = value => {
+                const result = clean(value, '', 2000);
+                return result && !/^(?:unknown|none|n\/a|neutral|unaffiliated)$/i.test(result) ? result : '';
+            };
+            const namesFor = npc => [npc?.name, ...(Array.isArray(npc?.aliases) ? npc.aliases : [])]
+                .map(value => clean(value, '', 120).toLocaleLowerCase()).filter(Boolean);
+            for (const raw of records.slice(0, 80)) {
+                const name = clean(raw?.name, '', 120);
+                if (!name) continue;
+                const aliases = Array.isArray(raw?.aliases) ? raw.aliases.map(value => clean(value, '', 120)).filter(Boolean) : [];
+                const identityNames = [name, ...aliases].map(value => value.toLocaleLowerCase());
+                const existingView = known.find(npc => raw?.characterLifeId && npc.id === raw.characterLifeId)
+                    || known.find(npc => namesFor(npc).some(value => identityNames.includes(value)));
+                let entry = chatState.npcs.find(npc => existingView && (
+                    npc?.id === existingView.id || npc?.sourceId === existingView.id
+                    || npc?.sourceId === existingView.sourceId && npc?.sourceScope === existingView.sourceScope
+                )) || chatState.npcs.find(npc => namesFor(npc).some(value => identityNames.includes(value)));
+                if (!entry) {
+                    const seed = existingView ? cloneValue(existingView) : {
+                        id: clean(raw?.id, '', 120) || `rpg-${globalThis.crypto?.randomUUID?.() || Date.now().toString(36)}`,
+                        name,
+                        aliases,
+                        enabled: true,
+                        isDead: false,
+                        lifeStatus: 'alive',
+                        forms: [],
+                        activeFormId: '',
+                        createdAt: new Date().toISOString(),
+                    };
+                    entry = {
+                        ...seed,
+                        id: existingView?.scope === 'chat' ? existingView.id : `rpg-${clean(raw?.id, '', 100) || globalThis.crypto?.randomUUID?.() || Date.now().toString(36)}`,
+                        sourceScope: ['global', 'character'].includes(existingView?.scope) ? existingView.scope : clean(existingView?.sourceScope, '', 20),
+                        sourceId: ['global', 'character'].includes(existingView?.scope) ? existingView.id : clean(existingView?.sourceId, '', 120),
+                    };
+                    entry.original ||= cloneValue(seed.original || seed);
+                    chatState.npcs.push(entry);
+                    created += 1;
+                }
+                let changed = false;
+                const fill = (field, candidate) => {
+                    const value = meaningful(candidate);
+                    if (!value || meaningful(entry[field])) return;
+                    entry[field] = value;
+                    changed = true;
+                };
+                fill('role', raw?.title || raw?.occupation);
+                fill('affiliation', raw?.faction);
+                fill('gender', raw?.gender);
+                fill('age', raw?.age);
+                fill('species', raw?.race || raw?.species);
+                const relationship = meaningful(raw?.relationship);
+                if (relationship && entry.relationshipToUser !== relationship) {
+                    entry.relationshipToUser = relationship;
+                    changed = true;
+                }
+                const currentState = [meaningful(raw?.activity), meaningful(raw?.location)].filter(Boolean).join(' · ');
+                if (currentState && entry.currentState !== currentState) {
+                    entry.currentState = currentState;
+                    changed = true;
+                }
+                const abilities = Array.isArray(raw?.abilities)
+                    ? raw.abilities.map(value => meaningful(value?.name || value)).filter(Boolean).join(', ').slice(0, 3000) : '';
+                if (abilities && entry.abilities !== abilities) {
+                    entry.abilities = abilities;
+                    changed = true;
+                }
+                if (changed) {
+                    entry.updatedAt = new Date().toISOString();
+                    updated += 1;
+                }
+            }
+            if (!updated && !created) return { updated, created };
+            chatState.version = Math.max(1, Number(chatState.version) || 0);
+            ctx.chatMetadata.character_life_npcs = chatState;
+            if (typeof ctx.saveMetadata === 'function') await ctx.saveMetadata();
+            else if (typeof ctx.saveChat === 'function') await ctx.saveChat();
+            try { globalThis.CharacterLifeNpcDirector?.refreshPrompt?.(); } catch {}
+            try { globalThis.CharacterLifeNpcIdentity?.reconcile?.(); } catch {}
+            globalThis.dispatchEvent(new CustomEvent('character-life:rpg-compatibility-updated', {
+                detail: { updated, created, version: CHARACTER_LIFE_BUNDLE_VERSION },
+            }));
+            return { updated, created };
+        };
         globalThis.CharacterLifeRpgBridge = Object.freeze({
             version: CHARACTER_LIFE_BUNDLE_VERSION,
+            compatibilityVersion: 2,
+            capabilities: Object.freeze({ npcDossierSync: true, skills: true, portraits: true, sameReplyTracking: true }),
             listNpcs,
             findNpc: query => cloneValue(findNpc(query)),
+            applyRpgNpcUpdates,
             listSkills,
             portrait,
             openNpcLibrary: () => globalThis.CharacterLifeNpcLibrary?.open?.(),

@@ -2,7 +2,7 @@
 
 Character Life's is a responsive SillyTavern extension for persistent NPC identities, portraits, speaker presentation, AI-assisted profile updates, and optional skill tracking inside the main role-play chat.
 
-**Current version: 1.20.1**
+**Current version: 1.21.0**
 
 ## Highlights
 
@@ -110,3 +110,8 @@ Character Life processes its supported machine-control records and removes them 
 - Chat NPC metadata belongs to its chat and is also cached per character/group when automatic continuity is enabled, allowing a new chat to inherit it.
 - Portrait and skill media are handled by Character Life's persistent-media layer.
 - Character Life does not require a separate API key; it uses SillyTavern's configured generation/caption capabilities when AI assistance is requested.
+
+
+## RPG compatibility
+
+- Bridge v2 accepts RPG System v0.14 NPC dossier updates in the same normal reply, safely localizes them to the active chat, preserves protected original records, and synchronizes relationship, current activity/location, abilities, and missing identity fields without another model request.
