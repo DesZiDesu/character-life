@@ -5830,3 +5830,40 @@ html.character-life-product-open body {
         min-height: 40px !important;
     }
 }
+
+/* v1.23.0 — AstraProjecta/Vaul gesture isolation and first-open scrolling. */
+#character-life-overlay[data-astra-extension-surface="character-life-library"],
+#character-life-skills-overlay[data-astra-extension-surface="character-life-skills"] {
+    height: var(--cl-astra-viewport-height, 100dvh) !important;
+    max-height: var(--cl-astra-viewport-height, 100dvh) !important;
+    touch-action: none !important;
+    overscroll-behavior: none !important;
+    isolation: isolate;
+}
+
+#character-life-overlay .cl-manager,
+#character-life-skills-overlay .cl-skills-manager {
+    min-height: 0 !important;
+    max-height: var(--cl-astra-viewport-height, 100dvh) !important;
+}
+
+#character-life-overlay .cl-manager-layout,
+#character-life-skills-overlay .cl-skills-layout {
+    min-height: 0 !important;
+    overflow: hidden !important;
+}
+
+#character-life-overlay [data-list],
+#character-life-overlay [data-detail],
+#character-life-skills-overlay [data-cl-skill-list],
+#character-life-skills-overlay [data-cl-skill-detail] {
+    min-height: 0 !important;
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+    touch-action: pan-y !important;
+    overscroll-behavior-x: none !important;
+    overscroll-behavior-y: contain !important;
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: auto !important;
+    overflow-anchor: none;
+}
