@@ -1,5 +1,5 @@
 /* Character Life consolidated runtime bundle. Generated from the preserved v1.9.16 module stack. */
-const CHARACTER_LIFE_BUNDLE_VERSION = '1.24.0';
+const CHARACTER_LIFE_BUNDLE_VERSION = '1.25.0';
 const closeCharacterLifeHostWand = () => requestAnimationFrame(() => {
     const menu = document.getElementById('extensionsMenu');
     if (!menu?.getClientRects().length) return;
@@ -11054,6 +11054,270 @@ Never infer gender identity or exact age from appearance alone. For an existing 
         void restore().then(restored => { if (!restored) scheduleCapture(900); });
     };
     installNewChatContinuity();
+    const installTurnRollback = () => {
+        const HISTORY_KEY = 'character_life_turn_history';
+        const OWNED_METADATA_KEYS = Object.freeze(['character_life_npcs', 'character_life_skills']);
+        let rollbackQueue = Promise.resolve();
+        let restoring = false;
+        const settleTimers = new Map();
+
+        const context = () => globalThis.SillyTavern?.getContext?.() || null;
+        const cloneValue = value => value == null ? value
+            : globalThis.structuredClone ? structuredClone(value) : JSON.parse(JSON.stringify(value));
+        const hash = value => {
+            let result = 2166136261;
+            for (const character of String(value ?? '')) {
+                result ^= character.charCodeAt(0);
+                result = Math.imul(result, 16777619);
+            }
+            return (result >>> 0).toString(36);
+        };
+        const characterKey = ctx => {
+            const group = ctx?.groupId ?? ctx?.selectedGroup ?? ctx?.group?.id;
+            if (group !== undefined && group !== null && group !== '') return `group:${group}`;
+            const id = ctx?.characterId ?? ctx?.chid ?? ctx?.character?.id;
+            const character = ctx?.character || (Array.isArray(ctx?.characters) ? ctx.characters[id] : null);
+            return `character:${String(character?.avatar || character?.filename || character?.name || ctx?.name2 || id || 'unknown').slice(0, 240)}`;
+        };
+        const turnKey = (messageId, ctx = context()) => {
+            const id = Number(messageId);
+            if (!Number.isInteger(id) || id < 0) return '';
+            for (let index = Math.min(id - 1, (ctx?.chat?.length || 0) - 1); index >= 0; index -= 1) {
+                const message = ctx.chat[index];
+                if (message?.is_user && !message.is_system) {
+                    return `${id}:${index}:${hash(`${message.send_date || ''}|${message.mes || ''}`)}`;
+                }
+            }
+            return `${id}:-1:`;
+        };
+        const variantKey = message => {
+            const swipe = Number.isInteger(Number(message?.swipe_id)) ? Number(message.swipe_id) : -1;
+            return `${swipe}:${hash(message?.mes || '')}`;
+        };
+        const latestAssistantId = ctx => {
+            for (let index = (ctx?.chat?.length || 0) - 1; index >= 0; index -= 1) {
+                const message = ctx.chat[index];
+                if (message && !message.is_user && !message.is_system) return index;
+            }
+            return null;
+        };
+        const history = (ctx = context(), create = true) => {
+            if (!ctx?.getCurrentChatId?.()) return null;
+            ctx.chatMetadata ||= {};
+            if (create) ctx.chatMetadata[HISTORY_KEY] ||= { version: 1, entries: [] };
+            const value = ctx.chatMetadata[HISTORY_KEY];
+            if (!value || typeof value !== 'object') return null;
+            value.version = 1;
+            value.entries = Array.isArray(value.entries) ? value.entries : [];
+            return value;
+        };
+        const propertySnapshot = (object, key) => ({
+            present: Boolean(object && Object.hasOwn(object, key)),
+            value: object && Object.hasOwn(object, key) ? cloneValue(object[key]) : null,
+        });
+        const restoreProperty = (object, key, snapshot) => {
+            if (!object || !snapshot) return;
+            if (snapshot.present) object[key] = cloneValue(snapshot.value);
+            else delete object[key];
+        };
+
+        function ownedSnapshot(ctx = context()) {
+            const root = ctx?.extensionSettings?.character_life || {};
+            const key = characterKey(ctx);
+            const skillSystem = root.skillSystem || {};
+            const metadata = {};
+            for (const name of OWNED_METADATA_KEYS) metadata[name] = propertySnapshot(ctx?.chatMetadata, name);
+            return {
+                metadata,
+                settings: {
+                    globalNpcs: propertySnapshot(root, 'globalNpcs'),
+                    characterNpcs: propertySnapshot(root.characterNpcs, key),
+                    globalSkills: propertySnapshot(skillSystem, 'globalSkills'),
+                    characterSkills: propertySnapshot(skillSystem.characterSkills, key),
+                },
+                characterKey: key,
+            };
+        }
+
+        function checkpoint(messageId, { create = false } = {}) {
+            const ctx = context();
+            const key = turnKey(messageId, ctx);
+            const ledger = history(ctx, create);
+            if (!key || !ledger) return null;
+            let entry = ledger.entries.find(candidate => candidate?.key === key)
+                || (!create ? [...ledger.entries].reverse().find(candidate => Number(candidate?.messageId) === Number(messageId)) : null);
+            if (!entry && create) {
+                entry = {
+                    key,
+                    messageId: Number(messageId),
+                    baseState: ownedSnapshot(ctx),
+                    variants: {},
+                    activeVariant: '',
+                    applied: false,
+                    createdAt: new Date().toISOString(),
+                };
+                ledger.entries.push(entry);
+                ledger.entries = ledger.entries.slice(-3);
+            }
+            if (entry) {
+                entry.messageId = Number(messageId);
+                entry.variants = entry.variants && typeof entry.variants === 'object' ? entry.variants : {};
+            }
+            return entry || null;
+        }
+
+        async function persistOwnedState() {
+            const ctx = context();
+            if (!ctx) return;
+            if (typeof ctx.saveMetadata === 'function') await ctx.saveMetadata();
+            else if (typeof ctx.saveChat === 'function') await ctx.saveChat();
+            const saver = ctx.saveSettingsDebounced;
+            if (typeof saver === 'function') {
+                const queued = saver();
+                if (typeof saver.flush === 'function') {
+                    const flushed = saver.flush();
+                    if (flushed?.then) await flushed;
+                } else if (queued?.then) await queued;
+            }
+        }
+
+        function refreshAfterRollback() {
+            try { globalThis.CharacterLifeNpcDirector?.refreshPrompt?.(); } catch {}
+            try { globalThis.CharacterLifeNpcDirector?.refreshColors?.(); } catch {}
+            try { globalThis.CharacterLifeNpcIdentity?.reconcile?.(); } catch {}
+            try { globalThis.CharacterLifeNpcLibrary?.refresh?.(); } catch {}
+            try { globalThis.CharacterLifeToolUi?.refresh?.(); } catch {}
+            if (document.getElementById('character-life-skills-overlay')?.classList.contains('is-open')) {
+                try { globalThis.CharacterLifeSkills?.open?.(); } catch {}
+            }
+            globalThis.dispatchEvent(new CustomEvent('character-life:skill-updated', { detail: { rollback: true } }));
+        }
+
+        async function restoreOwned(snapshot) {
+            const ctx = context();
+            if (!ctx || !snapshot) return false;
+            ctx.chatMetadata ||= {};
+            for (const name of OWNED_METADATA_KEYS) restoreProperty(ctx.chatMetadata, name, snapshot.metadata?.[name]);
+            ctx.extensionSettings ||= {};
+            const root = ctx.extensionSettings.character_life ||= {};
+            root.characterNpcs ||= {};
+            root.skillSystem ||= {};
+            root.skillSystem.characterSkills ||= {};
+            restoreProperty(root, 'globalNpcs', snapshot.settings?.globalNpcs);
+            restoreProperty(root.characterNpcs, snapshot.characterKey || characterKey(ctx), snapshot.settings?.characterNpcs);
+            restoreProperty(root.skillSystem, 'globalSkills', snapshot.settings?.globalSkills);
+            restoreProperty(root.skillSystem.characterSkills, snapshot.characterKey || characterKey(ctx), snapshot.settings?.characterSkills);
+            await persistOwnedState();
+            refreshAfterRollback();
+            return true;
+        }
+
+        async function replaceTurn(messageId, { reuseVariant = false, reason = 'swipe' } = {}) {
+            const ctx = context();
+            const entry = checkpoint(messageId);
+            if (!entry?.baseState) return false;
+            const key = reuseVariant ? variantKey(ctx?.chat?.[Number(messageId)]) : '';
+            const stored = key ? entry.variants?.[key] : null;
+            restoring = true;
+            try {
+                await restoreOwned(entry.baseState);
+                entry.activeVariant = '';
+                entry.applied = false;
+                if (stored?.state) {
+                    await restoreOwned(stored.state);
+                    entry.activeVariant = key;
+                    entry.applied = true;
+                }
+                await persistOwnedState();
+                globalThis.dispatchEvent(new CustomEvent('character-life:turn-rollback', {
+                    detail: { messageId: Number(messageId), reason, restoredVariant: Boolean(stored?.state) },
+                }));
+                return true;
+            } finally {
+                restoring = false;
+            }
+        }
+
+        function queueReplacement(messageId, options) {
+            rollbackQueue = rollbackQueue.catch(() => undefined).then(() => replaceTurn(messageId, options))
+                .catch(error => console.warn("[Character Life's] Could not roll back the replaced assistant turn.", error));
+            return rollbackQueue;
+        }
+
+        function scheduleSettle(messageId, delay) {
+            const id = Number(messageId);
+            if (!Number.isInteger(id) || id < 0) return;
+            const timerKey = `${id}:${delay}`;
+            clearTimeout(settleTimers.get(timerKey));
+            settleTimers.set(timerKey, setTimeout(async () => {
+                settleTimers.delete(timerKey);
+                await rollbackQueue.catch(() => undefined);
+                if (restoring) return;
+                const ctx = context();
+                const message = ctx?.chat?.[id];
+                if (!message || message.is_user || message.is_system) return;
+                const entry = checkpoint(id, { create: true });
+                if (!entry) return;
+                const key = variantKey(message);
+                entry.variants[key] = { state: ownedSnapshot(ctx), savedAt: new Date().toISOString() };
+                const variantKeys = Object.keys(entry.variants);
+                for (const stale of variantKeys.slice(0, Math.max(0, variantKeys.length - 6))) delete entry.variants[stale];
+                entry.activeVariant = key;
+                entry.applied = JSON.stringify(entry.baseState) !== JSON.stringify(entry.variants[key].state);
+                await ctx.saveMetadata?.();
+            }, delay));
+        }
+
+        const ctx = context();
+        const source = ctx?.eventSource;
+        const types = ctx?.eventTypes || {};
+        if (source?.on) {
+            if (types.CHAT_CHANGED) source.on(types.CHAT_CHANGED, () => {
+                rollbackQueue = Promise.resolve();
+                for (const timer of settleTimers.values()) clearTimeout(timer);
+                settleTimers.clear();
+            });
+            if (types.MESSAGE_RECEIVED) source.on(types.MESSAGE_RECEIVED, messageId => {
+                checkpoint(Number(messageId), { create: true });
+                void context()?.saveMetadata?.();
+                for (const delay of [350, 1200, 2600]) scheduleSettle(messageId, delay);
+            });
+            if (types.MESSAGE_SWIPED) source.on(types.MESSAGE_SWIPED, messageId => {
+                void queueReplacement(Number(messageId), { reuseVariant: true, reason: 'swipe' });
+                for (const delay of [350, 1200, 2600]) scheduleSettle(messageId, delay);
+            });
+            if (types.GENERATION_STARTED) source.on(types.GENERATION_STARTED, generationType => {
+                const value = typeof generationType === 'string' ? generationType : JSON.stringify(generationType || '');
+                if (!/regenerat|swipe/i.test(value)) return;
+                const ctx = context();
+                const ledger = history(ctx, false);
+                const tail = ctx?.chat?.[ctx.chat.length - 1];
+                const latestEntry = [...(ledger?.entries || [])].reverse().find(entry => entry?.baseState);
+                const messageId = tail?.is_user ? Number(latestEntry?.messageId) : latestAssistantId(ctx);
+                if (Number.isInteger(messageId) && checkpoint(messageId)) {
+                    void queueReplacement(messageId, { reuseVariant: false, reason: 'regenerate' });
+                }
+            });
+            if (types.MESSAGE_DELETED) source.on(types.MESSAGE_DELETED, messageId => {
+                const ctx = context();
+                const ledger = history(ctx, false);
+                const numericId = Number(messageId);
+                const tail = ctx?.chat?.[ctx.chat.length - 1];
+                if (!tail?.is_user) return;
+                const removed = [...(ledger?.entries || [])].filter(entry => entry?.baseState
+                    && (!Number.isInteger(numericId) || Number(entry.messageId) >= numericId)).reverse();
+                for (const entry of removed) {
+                    void queueReplacement(entry.messageId, { reuseVariant: false, reason: 'delete-or-group-regenerate' });
+                }
+            });
+        }
+
+        globalThis.CharacterLifeTurnRollback = Object.freeze({
+            version: CHARACTER_LIFE_BUNDLE_VERSION,
+            restore: messageId => queueReplacement(Number(messageId), { reuseVariant: true, reason: 'manual' }),
+        });
+    };
+    installTurnRollback();
     try { globalThis.CharacterLifeReliability?.refresh?.(); } catch (error) { console.warn("[Character Life's] Reliability refresh skipped safely.", error); }
     console.info("[Character Life's] consolidated v" + CHARACTER_LIFE_BUNDLE_VERSION + " runtime loaded.");
 })();
