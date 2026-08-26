@@ -2,7 +2,7 @@
 
 Character Life's is a responsive SillyTavern extension for persistent NPC identities, portraits, speaker presentation, AI-assisted profile updates, and optional skill tracking inside the main role-play chat.
 
-**Current version: 1.21.0**
+**Current version: 1.26.0**
 
 ## Highlights
 
@@ -15,11 +15,13 @@ Character Life's is a responsive SillyTavern extension for persistent NPC identi
 - Main-chat NPC profile updates, stable NPC identity colors, native Character Life notifications, and responsive mobile/desktop UI.
 - Compact SVG backup controls stay beside the close button in the Characters header on desktop and mobile.
 - Quota-optimized prompts prioritize recent, chat-local, incomplete, partnered, and lifecycle-relevant NPCs; Settings count every separate AI helper or vision request started by Character Life.
-- New NPCs receive an identity bootstrap for role, affiliation, gender, age, and species/race; unavailable values use explicit visible fallbacks until established.
+- Saved NPC records keep a readable identity minimum; unsaved speakers retain only facts actually established in the role-play until the user approves promotion.
+- Unknown tagged speakers now remain ephemeral: Character Life scores repeated appearances, durable roles, meaningful interaction, and distinct traits locally, then asks Yes/No before saving an important candidate to Chat scope. Rejected candidates wait at least 20 assistant messages and require two new evidence signals before they can be suggested again.
 - NPCs can be enabled or disabled in Global and Character scopes without deleting their original data; death and revive controls are visible in the profile.
 - Each NPC can keep a short relationship-to-user label, while Partner links can connect NPCs from Global, Character, or Chat to each other or to the user. Partner links are chat-local and can be carried through a backup.
 - Dedicated Skill Storage with persistent images, optional AI tracking, per-chat enable state, and a Tensei System bridge.
 - Tretaresia RPG bridge for scoped NPC identity lookup, portrait/form reuse, and shared Skill Storage data without an additional model request.
+- World-map portraits are generated as real 64px WebP thumbnails only when requested, kept in a 40-entry LRU cache, and expose initials/clustering fallback guidance when marker density is high.
 - English and Thai interface support.
 
 ## Extensions drawer
