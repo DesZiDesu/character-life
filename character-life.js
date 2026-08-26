@@ -1,12 +1,22 @@
 /* Character Life consolidated runtime bundle. Generated from the preserved v1.9.16 module stack. */
-const CHARACTER_LIFE_BUNDLE_VERSION = '1.25.0';
-const closeCharacterLifeHostWand = () => requestAnimationFrame(() => {
+const CHARACTER_LIFE_BUNDLE_VERSION = '1.25.1';
+const closeCharacterLifeHostWand = () => {
     const menu = document.getElementById('extensionsMenu');
-    if (!menu?.getClientRects().length) return;
+    if (!menu) return;
     const toggle = document.querySelector('#extensionsMenuButton, [data-drawer-id="extensionsMenu"], [aria-controls="extensionsMenu"]');
-    if (toggle instanceof HTMLElement) toggle.click();
-    else globalThis.jQuery?.(menu).stop(true, true).slideUp(0);
-});
+    const hide = () => {
+        if (!menu.getClientRects().length && getComputedStyle(menu).display === 'none') return;
+        globalThis.jQuery?.(menu).stop(true, true).hide();
+        menu.style.display = 'none';
+        if (toggle instanceof HTMLElement) toggle.setAttribute('aria-expanded', 'false');
+    };
+    // Close before the product overlay acquires focus/scroll guards, then run
+    // two guarded fallbacks for host themes that enqueue their own drawer animation.
+    if (menu.getClientRects().length && toggle instanceof HTMLElement && toggle.getAttribute('aria-expanded') === 'true') toggle.click();
+    hide();
+    requestAnimationFrame(hide);
+    setTimeout(hide, 80);
+};
 const existingCharacterLifeBundle = globalThis.CharacterLifeBundleRuntimePromise;
 if (existingCharacterLifeBundle) {
     await existingCharacterLifeBundle;
@@ -4140,12 +4150,13 @@ Never infer gender identity or exact age from appearance alone. For an existing 
                 anchor = row;
                 bindWandPress(row, () => {
                     setWandExpanded(false);
+                    closeCharacterLifeHostWand();
                     const api = {
                         library: globalThis.CharacterLifeNpcLibrary,
                         skills: globalThis.CharacterLifeSkills,
                     }[product];
                     if (typeof api?.open === 'function') api.open();
-                }, { allowHostClose: true });
+                });
             }
 
             bindWandPress(launcher, () => setWandExpanded(launcher.dataset.expanded !== 'true'));
