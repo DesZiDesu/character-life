@@ -1,5 +1,5 @@
 /* Character Life consolidated runtime bundle. Generated from the preserved v1.9.16 module stack. */
-const CHARACTER_LIFE_BUNDLE_VERSION = '1.26.0';
+const CHARACTER_LIFE_BUNDLE_VERSION = '1.26.1';
 const closeCharacterLifeHostWand = () => {
     const menu = document.getElementById('extensionsMenu');
     if (!menu) return;
@@ -2109,6 +2109,18 @@ function scheduleDiagnosticUi(delay = 80) {
             return source.map(normalizeNpc).filter(Boolean);
         }
 
+        async function persistNpcSettings(context) {
+            const saver = context?.saveSettingsDebounced;
+            if (typeof saver !== 'function') return;
+            const queued = saver();
+            if (typeof saver.flush === 'function') {
+                const flushed = saver.flush();
+                if (flushed?.then) await flushed;
+            } else if (queued?.then) {
+                await queued;
+            }
+        }
+
         async function saveLibrary(scope, candidates) {
             const context = SillyTavern.getContext();
             const npcs = candidates.map(normalizeNpc).filter(Boolean);
@@ -2120,10 +2132,10 @@ function scheduleDiagnosticUi(delay = 80) {
                 await context.saveMetadata();
             } else if (scope === 'character') {
                 rootSettings().characterNpcs[characterKey()] = npcs;
-                context.saveSettingsDebounced();
+                await persistNpcSettings(context);
             } else {
                 rootSettings().globalNpcs = npcs;
-                context.saveSettingsDebounced();
+                await persistNpcSettings(context);
             }
             updatePrompt();
             scheduleRenderAll();
@@ -3039,6 +3051,10 @@ function scheduleDiagnosticUi(delay = 80) {
                 if (!resolved || resolved.npc[update.field] === update.value) continue;
                 if (update.field === 'adultAppearance' && !resolved.npc.adultProfile) continue;
                 if (resolved.npc.isDead) continue;
+                // Appearance and personality are author-owned once populated. The AI
+                // may fill either field while it is empty, but ordinary role-play
+                // updates must never replace text the user has already saved.
+                if (['appearance', 'personality'].includes(update.field) && cleanText(resolved.npc[update.field], '', 4000)) continue;
                 resolved.npc[update.field] = update.value;
                 resolved.npc.updatedAt = new Date().toISOString();
                 changedScopes.add(resolved.scope);
@@ -4182,6 +4198,7 @@ Never infer gender identity or exact age from appearance alone. For a saved NPC,
             const form = event.target;
             if (form.dataset.form === 'npc') {
                 const data = new FormData(form);
+                const savedField = (name, fallback = '') => form.elements.namedItem(name) ? data.get(name) : fallback;
                 const targetScope = data.get('scope');
                 const existing = cleanText(data.get('id')) ? currentNpc() : null;
                 const previousNpc = existing ? clone(existing) : null;
@@ -4197,6 +4214,7 @@ Never infer gender identity or exact age from appearance alone. For a saved NPC,
                 const npc = normalizeNpc({
                     ...(existing || {}), id: existing?.id || uid('npc'), name: data.get('name'), aliases: String(data.get('aliases') || '').split(','),
                     role: data.get('role'), affiliation: data.get('affiliation'), pronouns: data.get('pronouns'), gender: data.get('gender'), age: data.get('age'), species: data.get('species'),
+                    appearance: savedField('appearance', existing?.appearance), personality: savedField('personality', existing?.personality),
                     relationshipToUser: data.get('relationshipToUser'), relationship: data.get('relationship'), background: data.get('background'),
                     goals: data.get('goals'), abilities: data.get('abilities'), speechStyle: data.get('speechStyle'), currentState: data.get('currentState'),
                     adultProfile, adultAppearance: adultProfile ? data.get('adultAppearance') : '', notes: data.get('notes'),
@@ -6210,7 +6228,7 @@ Never infer gender identity or exact age from appearance alone. For a saved NPC,
         ${imageInstruction}
         ${adultRule}
 
-        Return ONLY valid JSON matching this exact key set. Every value must be a string. No markdown, code fence, comments, or extra keys.
+        Return ONLY valid JSON matching this exact key set. Begin the response with { and end it with }. Every value must be a string. No reasoning, preamble, markdown, code fence, comments, or extra keys.
         Aliases must be a comma-separated string. Keep fields concise but useful for role-play. name, role, species, age, gender, and affiliation must all be non-empty. Creatively generate them when the user requested a new NPC; preserve established draft facts. For any required field that is intentionally unknowable, use a concise user-readable fallback such as "Unknown age" rather than an empty string. Optional fields may remain empty.
 
         SCHEMA:
@@ -6223,15 +6241,111 @@ Never infer gender identity or exact age from appearance alone. For a saved NPC,
         ${existing}`;
         }
 
+        function cl184ProfileObject(value, depth = 0) {
+            if (!value || depth > 6) return null;
+            if (Array.isArray(value)) {
+                for (const item of value) {
+                    const found = cl184ProfileObject(item, depth + 1);
+                    if (found) return found;
+                }
+                return null;
+            }
+            if (typeof value !== 'object') return null;
+            if (CL184_FIELDS.some(field => Object.hasOwn(value, field)) || Object.hasOwn(value, 'adultAppearance')) return value;
+            for (const key of ['profile', 'data', 'result', 'output', 'message', 'content']) {
+                const found = cl184ProfileObject(value[key], depth + 1);
+                if (found) return found;
+            }
+            return null;
+        }
+
+        function cl184ResponseText(value, depth = 0) {
+            if (depth > 6 || value == null) return '';
+            if (typeof value === 'string') return value;
+            if (Array.isArray(value)) return value.map(item => cl184ResponseText(item, depth + 1)).filter(Boolean).join('\n');
+            if (typeof value !== 'object') return '';
+            return ['text', 'content', 'response', 'output_text', 'output', 'message', 'result', 'data']
+                .map(key => cl184ResponseText(value[key], depth + 1)).filter(Boolean).join('\n');
+        }
+
+        function cl184JsonCandidates(text) {
+            const candidates = [];
+            let start = -1, depth = 0, quote = '', escaped = false;
+            for (let index = 0; index < text.length; index += 1) {
+                const character = text[index];
+                if (quote) {
+                    if (escaped) escaped = false;
+                    else if (character === '\\') escaped = true;
+                    else if (character === quote) quote = '';
+                    continue;
+                }
+                if (character === '"') { quote = character; continue; }
+                if (character === '{') {
+                    if (depth === 0) start = index;
+                    depth += 1;
+                } else if (character === '}' && depth > 0) {
+                    depth -= 1;
+                    if (depth === 0 && start >= 0) {
+                        candidates.push(text.slice(start, index + 1));
+                        start = -1;
+                    }
+                }
+            }
+            return candidates;
+        }
+
+        function cl184ParseJsonCandidate(candidate) {
+            const variants = [candidate, candidate.replace(/[“”]/g, '"').replace(/[‘’]/g, "'")];
+            for (const source of variants) {
+                for (const text of [source, source.replace(/,\s*([}\]])/g, '$1')]) {
+                    try {
+                        const parsed = JSON.parse(text);
+                        const profile = cl184ProfileObject(parsed);
+                        if (profile) return profile;
+                    } catch {}
+                }
+            }
+            return null;
+        }
+
+        function cl184ParseLabeledProfile(text) {
+            const fieldMap = new Map([...CL184_FIELDS, 'adultAppearance'].map(field => [field.toLowerCase(), field]));
+            const aliases = new Map([
+                ['race', 'species'], ['speciesrace', 'species'], ['title', 'role'], ['occupation', 'role'],
+                ['organization', 'affiliation'], ['faction', 'affiliation'], ['relationshipwithuser', 'relationshipToUser'],
+                ['userrelationship', 'relationshipToUser'], ['speech', 'speechStyle'], ['status', 'currentState'],
+            ]);
+            const profile = {};
+            let activeField = '';
+            for (const rawLine of text.split(/\r?\n/)) {
+                const line = rawLine.replace(/^\s*(?:#{1,6}\s+|[-*+]\s+|\d+[.)]\s+)?/, '').replace(/\*\*/g, '').trim();
+                if (!line) continue;
+                const match = line.match(/^["']?([\p{L}][\p{L}\p{N} _/-]{0,60})["']?\s*[:=]\s*(.*)$/u);
+                if (match) {
+                    const normalized = match[1].toLowerCase().replace(/[^a-z0-9]/g, '');
+                    activeField = fieldMap.get(normalized) || aliases.get(normalized) || '';
+                    if (!activeField) continue;
+                    profile[activeField] = match[2].replace(/^(["'])([\s\S]*)\1,?$/, '$2').replace(/,$/, '').trim();
+                } else if (activeField && profile[activeField]) {
+                    profile[activeField] = `${profile[activeField]} ${line}`.trim();
+                }
+            }
+            return Object.keys(profile).length ? profile : null;
+        }
+
         function cl184ExtractJson(raw) {
-            let text = cl184Text(raw, '', 30000);
-            text = text.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '').trim();
-            const start = text.indexOf('{');
-            const end = text.lastIndexOf('}');
-            if (start < 0 || end <= start) throw new Error('The AI did not return a JSON profile.');
-            const parsed = JSON.parse(text.slice(start, end + 1));
-            if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) throw new Error('The AI returned an invalid profile.');
-            return parsed;
+            const direct = cl184ProfileObject(raw);
+            if (direct) return direct;
+            let text = cl184ResponseText(raw).replace(/^\uFEFF/, '').trim();
+            text = text.replace(/<(?:think|thinking|analysis|planning|reasoning)\b[^>]*>[\s\S]*?<\/(?:think|thinking|analysis|planning|reasoning)>/gi, '').trim();
+            const fenced = [...text.matchAll(/```(?:json)?\s*([\s\S]*?)```/gi)].map(match => match[1]);
+            for (const candidate of [...fenced, ...cl184JsonCandidates(text)]) {
+                const parsed = cl184ParseJsonCandidate(candidate);
+                if (parsed) return parsed;
+            }
+            const labeled = cl184ParseLabeledProfile(text);
+            if (labeled) return labeled;
+            throw new Error('The AI response contained no usable NPC profile. No existing fields were changed.');
         }
 
         function cl184SetField(form, field, value, fillMode) {
@@ -7138,7 +7252,7 @@ Never infer gender identity or exact age from appearance alone. For a saved NPC,
 
         function exposeApi() {
             globalThis.CharacterLifeMedia = Object.freeze({
-                version: '1.26.0',
+                version: '1.26.1',
                 ensure: ensurePersistentImage,
                 store: storePersistentImage,
                 path: persistentImagePath,
