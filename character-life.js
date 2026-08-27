@@ -1,5 +1,5 @@
 /* Character Life consolidated runtime bundle. Generated from the preserved v1.9.16 module stack. */
-const CHARACTER_LIFE_BUNDLE_VERSION = '1.26.1';
+const CHARACTER_LIFE_BUNDLE_VERSION = '1.26.2';
 const closeCharacterLifeHostWand = () => {
     const menu = document.getElementById('extensionsMenu');
     if (!menu) return;
@@ -1560,6 +1560,8 @@ function scheduleDiagnosticUi(delay = 80) {
                 "Copy NPC": "คัดลอก NPC",
                 "Export backup": "ส่งออกข้อมูลสำรอง",
                 "Import backup": "นำเข้าข้อมูลสำรอง",
+                "Preparing low-memory backup…": "กำลังเตรียมข้อมูลสำรองแบบใช้หน่วยความจำต่ำ…",
+                "Backup exported.": "ส่งออกข้อมูลสำรองแล้ว",
                 "Close": "ปิด",
                 "Current bot": "บอทปัจจุบัน",
                 "Current chat": "แชตปัจจุบัน",
@@ -3409,7 +3411,7 @@ Never infer gender identity or exact age from appearance alone. For a saved NPC,
                         </div><label class="cl-search"><i class="fa-solid fa-magnifying-glass"></i><input type="search" data-search placeholder="${escapeHtml(tr('Search NPCs'))}"></label>
                         <button type="button" class="cl-primary" data-action="new"><i class="fa-solid fa-user-plus"></i>${escapeHtml(tr('Create NPC'))}</button></div>
                     <div class="cl-manager-layout"><aside class="cl-npc-list" data-list></aside><main class="cl-npc-detail" data-detail></main></div>
-                    <input type="file" accept="application/json" data-backup-input hidden>
+                    <input type="file" accept=".zip,.json,application/zip,application/json" data-backup-input hidden>
                 </section>`;
             document.body.appendChild(overlay);
             installManagerAstraCompatibility(overlay);
@@ -4119,30 +4121,217 @@ Never infer gender identity or exact age from appearance alone. For a saved NPC,
             return new Blob([array], { type: mime });
         }
 
-        async function exportBackup() {
-            const root = rootSettings();
-            const libraries = { global: getLibrary('global'), character: getLibrary('character'), chat: getLibrary('chat') };
-            const ids = [...new Set(Object.values(libraries).flatMap(npcs => npcs.flatMap(npc => npc.forms.map(form => form.portraitId))).filter(Boolean))];
-            const portraits = {};
-            for (const id of ids) {
-                const blob = await portraitGet(id);
-                if (blob) portraits[id] = await blobToDataUrl(blob);
+        const ZIP_LOCAL_SIGNATURE = 0x04034b50;
+        const ZIP_CENTRAL_SIGNATURE = 0x02014b50;
+        const ZIP_END_SIGNATURE = 0x06054b50;
+        const ZIP_UTF8_FLAG = 0x0800;
+        let backupCrcTable = null;
+
+        function crcTable() {
+            if (backupCrcTable) return backupCrcTable;
+            backupCrcTable = new Uint32Array(256);
+            for (let index = 0; index < 256; index += 1) {
+                let value = index;
+                for (let bit = 0; bit < 8; bit += 1) value = (value >>> 1) ^ (value & 1 ? 0xedb88320 : 0);
+                backupCrcTable[index] = value >>> 0;
             }
-            const backup = { format: 'character-life-backup', version: 2, exportedAt: new Date().toISOString(), config: root.config, customDesigns: root.customDesigns, libraries, portraits, partnerLinks: hasChat() ? chatState().partnerLinks : [] };
-            const blob = new Blob([JSON.stringify(backup)], { type: 'application/json' });
+            return backupCrcTable;
+        }
+
+        async function blobCrc32(blob) {
+            const table = crcTable();
+            let crc = 0xffffffff;
+            const consume = bytes => {
+                for (let index = 0; index < bytes.length; index += 1) crc = (crc >>> 8) ^ table[(crc ^ bytes[index]) & 0xff];
+            };
+            if (typeof blob.stream === 'function') {
+                const reader = blob.stream().getReader();
+                try {
+                    while (true) {
+                        const { value, done } = await reader.read();
+                        if (done) break;
+                        consume(value);
+                    }
+                } finally {
+                    reader.releaseLock();
+                }
+            } else {
+                const chunkSize = 1024 * 1024;
+                for (let offset = 0; offset < blob.size; offset += chunkSize) {
+                    consume(new Uint8Array(await blob.slice(offset, offset + chunkSize).arrayBuffer()));
+                }
+            }
+            return (crc ^ 0xffffffff) >>> 0;
+        }
+
+        function zipDateTime(value = new Date()) {
+            const year = Math.max(1980, value.getFullYear());
+            return {
+                date: ((year - 1980) << 9) | ((value.getMonth() + 1) << 5) | value.getDate(),
+                time: (value.getHours() << 11) | (value.getMinutes() << 5) | Math.floor(value.getSeconds() / 2),
+            };
+        }
+
+        function zipLocalHeader(nameLength, size, crc, timestamp) {
+            const bytes = new Uint8Array(30);
+            const view = new DataView(bytes.buffer);
+            view.setUint32(0, ZIP_LOCAL_SIGNATURE, true);
+            view.setUint16(4, 20, true);
+            view.setUint16(6, ZIP_UTF8_FLAG, true);
+            view.setUint16(8, 0, true);
+            view.setUint16(10, timestamp.time, true);
+            view.setUint16(12, timestamp.date, true);
+            view.setUint32(14, crc, true);
+            view.setUint32(18, size, true);
+            view.setUint32(22, size, true);
+            view.setUint16(26, nameLength, true);
+            return bytes;
+        }
+
+        function zipCentralHeader(record) {
+            const bytes = new Uint8Array(46);
+            const view = new DataView(bytes.buffer);
+            view.setUint32(0, ZIP_CENTRAL_SIGNATURE, true);
+            view.setUint16(4, 20, true);
+            view.setUint16(6, 20, true);
+            view.setUint16(8, ZIP_UTF8_FLAG, true);
+            view.setUint16(10, 0, true);
+            view.setUint16(12, record.timestamp.time, true);
+            view.setUint16(14, record.timestamp.date, true);
+            view.setUint32(16, record.crc, true);
+            view.setUint32(20, record.size, true);
+            view.setUint32(24, record.size, true);
+            view.setUint16(28, record.nameBytes.length, true);
+            view.setUint32(42, record.offset, true);
+            return bytes;
+        }
+
+        function zipEndHeader(entryCount, centralSize, centralOffset) {
+            const bytes = new Uint8Array(22);
+            const view = new DataView(bytes.buffer);
+            view.setUint32(0, ZIP_END_SIGNATURE, true);
+            view.setUint16(8, entryCount, true);
+            view.setUint16(10, entryCount, true);
+            view.setUint32(12, centralSize, true);
+            view.setUint32(16, centralOffset, true);
+            return bytes;
+        }
+
+        async function createStoredZip(entries, onProgress) {
+            const encoder = new TextEncoder();
+            const parts = [];
+            const records = [];
+            const timestamp = zipDateTime();
+            let offset = 0;
+            for (let index = 0; index < entries.length; index += 1) {
+                const entry = entries[index];
+                const blob = entry.data instanceof Blob ? entry.data : new Blob([entry.data]);
+                const nameBytes = encoder.encode(entry.name);
+                if (nameBytes.length > 0xffff || blob.size > 0xffffffff) throw new Error('A backup entry is too large for the portable ZIP format.');
+                const crc = await blobCrc32(blob);
+                const header = zipLocalHeader(nameBytes.length, blob.size, crc, timestamp);
+                records.push({ nameBytes, size: blob.size, crc, offset, timestamp });
+                parts.push(header, nameBytes, blob);
+                offset += header.length + nameBytes.length + blob.size;
+                if (offset > 0xffffffff) throw new Error('This backup is larger than 4 GB and cannot be exported as a portable ZIP.');
+                onProgress?.(index + 1, entries.length);
+                if (index % 3 === 2) await new Promise(resolve => setTimeout(resolve, 0));
+            }
+            const centralOffset = offset;
+            for (const record of records) {
+                const header = zipCentralHeader(record);
+                parts.push(header, record.nameBytes);
+                offset += header.length + record.nameBytes.length;
+            }
+            const centralSize = offset - centralOffset;
+            parts.push(zipEndHeader(records.length, centralSize, centralOffset));
+            return new Blob(parts, { type: 'application/zip' });
+        }
+
+        function portraitBackupExtension(blob) {
+            if (blob.type === 'image/png') return 'png';
+            if (blob.type === 'image/jpeg') return 'jpg';
+            if (blob.type === 'image/gif') return 'gif';
+            if (blob.type === 'image/avif') return 'avif';
+            if (blob.type === 'image/webp') return 'webp';
+            return 'bin';
+        }
+
+        function downloadBackup(blob, extension) {
             const url = URL.createObjectURL(blob);
             const anchor = document.createElement('a');
             anchor.href = url;
-            anchor.download = `character-life-backup-${new Date().toISOString().slice(0, 10)}.json`;
+            anchor.download = `character-life-backup-${new Date().toISOString().slice(0, 10)}.${extension}`;
+            anchor.hidden = true;
+            document.body.append(anchor);
             anchor.click();
-            setTimeout(() => URL.revokeObjectURL(url), 1000);
+            anchor.remove();
+            // Large Safari downloads may not open the object URL immediately.
+            setTimeout(() => URL.revokeObjectURL(url), 60_000);
         }
 
-        async function importBackup(file) {
-            const backup = JSON.parse(await file.text());
+        async function exportBackup(button) {
+            if (button?.disabled) return;
+            const originalTitle = button?.title || tr('Export backup');
+            if (button) { button.disabled = true; button.classList.add('is-working'); }
+            notify('info', tr('Preparing low-memory backup…'));
+            try {
+                const root = rootSettings();
+                const libraries = { global: getLibrary('global'), character: getLibrary('character'), chat: getLibrary('chat') };
+                const ids = [...new Set(Object.values(libraries).flatMap(npcs => npcs.flatMap(npc => npc.forms.map(form => form.portraitId))).filter(Boolean))];
+                const portraitFiles = {};
+                const portraitEntries = [];
+                for (let index = 0; index < ids.length; index += 1) {
+                    const id = ids[index];
+                    const blob = await portraitGet(id);
+                    if (!blob) continue;
+                    const path = `portraits/${String(index + 1).padStart(5, '0')}.${portraitBackupExtension(blob)}`;
+                    portraitFiles[id] = { path, type: blob.type || 'application/octet-stream', size: blob.size };
+                    portraitEntries.push({ name: path, data: blob });
+                }
+                const backup = {
+                    format: 'character-life-backup', version: 3, exportedAt: new Date().toISOString(),
+                    config: root.config, customDesigns: root.customDesigns, libraries, portraitFiles,
+                    partnerLinks: hasChat() ? chatState().partnerLinks : [],
+                };
+                const metadata = new Blob([JSON.stringify(backup)], { type: 'application/json' });
+                const entries = [{ name: 'backup.json', data: metadata }, ...portraitEntries];
+                const archive = await createStoredZip(entries, (done, total) => {
+                    if (button) button.title = `${tr('Export backup')} ${done}/${total}`;
+                });
+                downloadBackup(archive, 'zip');
+                notify('success', tr('Backup exported.'));
+            } finally {
+                if (button) { button.disabled = false; button.classList.remove('is-working'); button.title = originalTitle; }
+            }
+        }
+
+        async function readStoredZipEntry(file, offset) {
+            const headerBytes = new Uint8Array(await file.slice(offset, offset + 30).arrayBuffer());
+            if (headerBytes.length < 4) return null;
+            const view = new DataView(headerBytes.buffer, headerBytes.byteOffset, headerBytes.byteLength);
+            const signature = view.getUint32(0, true);
+            if (signature === ZIP_CENTRAL_SIGNATURE || signature === ZIP_END_SIGNATURE) return null;
+            if (signature !== ZIP_LOCAL_SIGNATURE || headerBytes.length < 30) throw new Error('Invalid Character Life ZIP backup.');
+            const flags = view.getUint16(6, true);
+            const method = view.getUint16(8, true);
+            const size = view.getUint32(18, true);
+            const uncompressedSize = view.getUint32(22, true);
+            const nameLength = view.getUint16(26, true);
+            const extraLength = view.getUint16(28, true);
+            if ((flags & 1) || (flags & 8) || method !== 0 || size !== uncompressedSize) throw new Error('This ZIP uses an unsupported compression or encryption mode.');
+            const nameStart = offset + 30;
+            const dataStart = nameStart + nameLength + extraLength;
+            const dataEnd = dataStart + size;
+            if (dataEnd > file.size) throw new Error('The Character Life ZIP backup is truncated.');
+            const name = new TextDecoder().decode(await file.slice(nameStart, nameStart + nameLength).arrayBuffer());
+            return { name, blob: file.slice(dataStart, dataEnd), nextOffset: dataEnd };
+        }
+
+        async function applyBackup(backup, importPortraits) {
             if (backup?.format !== 'character-life-backup' || !backup.libraries) throw new Error('Invalid Character Life backup.');
             if (!confirm('Replace the current Global, current Character, and current Chat NPC libraries with this backup?')) return;
-            for (const [id, dataUrl] of Object.entries(backup.portraits || {})) await portraitPut(id, dataUrlToBlob(dataUrl));
+            await importPortraits?.();
             const root = rootSettings();
             root.config = { ...clone(DEFAULT_CONFIG), ...(backup.config && typeof backup.config === 'object' ? backup.config : {}) };
             root.customDesigns = Array.isArray(backup.customDesigns) ? backup.customDesigns.map(value => normalizeCustomDesign(value)).filter(Boolean) : root.customDesigns;
@@ -4155,7 +4344,7 @@ Never infer gender identity or exact age from appearance alone. For a saved NPC,
                 SillyTavern.getContext().chatMetadata[CHAT_KEY] = state;
                 await SillyTavern.getContext().saveMetadata();
             }
-            SillyTavern.getContext().saveSettingsDebounced();
+            await persistNpcSettings(SillyTavern.getContext());
             configureDocument();
             selectedNpcId = '';
             editorMode = '';
@@ -4163,6 +4352,35 @@ Never infer gender identity or exact age from appearance alone. For a saved NPC,
             updatePrompt();
             scheduleRenderAll();
             notify('success', tr('Backup imported.'));
+        }
+
+        async function importZipBackup(file) {
+            const first = await readStoredZipEntry(file, 0);
+            if (!first || first.name !== 'backup.json') throw new Error('This ZIP is not a Character Life backup.');
+            const backup = JSON.parse(await first.blob.text());
+            const files = backup?.portraitFiles && typeof backup.portraitFiles === 'object' ? backup.portraitFiles : {};
+            const idsByPath = new Map(Object.entries(files).map(([id, descriptor]) => [cleanText(descriptor?.path, '', 500), { id, type: cleanText(descriptor?.type, '', 120) }]));
+            await applyBackup(backup, async () => {
+                let offset = first.nextOffset;
+                while (offset < file.size) {
+                    const entry = await readStoredZipEntry(file, offset);
+                    if (!entry) break;
+                    const descriptor = idsByPath.get(entry.name);
+                    if (descriptor?.id) await portraitPut(descriptor.id, entry.blob.slice(0, entry.blob.size, descriptor.type || entry.blob.type));
+                    offset = entry.nextOffset;
+                }
+            });
+        }
+
+        async function importBackup(file) {
+            const signatureBytes = await file.slice(0, 4).arrayBuffer();
+            if (signatureBytes.byteLength < 4) throw new Error('Invalid Character Life backup.');
+            const signature = new DataView(signatureBytes).getUint32(0, true);
+            if (signature === ZIP_LOCAL_SIGNATURE) return importZipBackup(file);
+            const backup = JSON.parse(await file.text());
+            return applyBackup(backup, async () => {
+                for (const [id, dataUrl] of Object.entries(backup.portraits || {})) await portraitPut(id, dataUrlToBlob(dataUrl));
+            });
         }
 
         async function onManagerClick(event) {
@@ -4189,7 +4407,7 @@ Never infer gender identity or exact age from appearance alone. For a saved NPC,
             else if (action === 'reset-crop') setCropFrame(button.closest('[data-crop-host]')?.querySelector('[data-crop-stage]'), 50, 18, 1);
             else if (action === 'ai-field') await generateNpcField(button);
             else if (action === 'analyze-appearance') await analyzeAppearance(button);
-            else if (action === 'export') await exportBackup();
+            else if (action === 'export') await exportBackup(button);
             else if (action === 'import') document.querySelector('[data-backup-input]')?.click();
         }
 
@@ -7252,7 +7470,7 @@ Never infer gender identity or exact age from appearance alone. For a saved NPC,
 
         function exposeApi() {
             globalThis.CharacterLifeMedia = Object.freeze({
-                version: '1.26.1',
+                version: '1.26.2',
                 ensure: ensurePersistentImage,
                 store: storePersistentImage,
                 path: persistentImagePath,

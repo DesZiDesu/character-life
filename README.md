@@ -2,7 +2,7 @@
 
 Character Life's is a responsive SillyTavern extension for persistent NPC identities, portraits, speaker presentation, AI-assisted profile updates, and optional skill tracking inside the main role-play chat.
 
-**Current version: 1.26.1**
+**Current version: 1.26.2**
 
 ## Highlights
 
@@ -13,7 +13,7 @@ Character Life's is a responsive SillyTavern extension for persistent NPC identi
 - One-call **Generate Full NPC** workflow with optional image reference and multimodal appearance guidance.
 - Chronicle-style Thought, Header, and Dialogue rendering with seven built-in designs plus an independent theme creator.
 - Main-chat NPC profile updates, stable NPC identity colors, native Character Life notifications, and responsive mobile/desktop UI.
-- Compact SVG backup controls stay beside the close button in the Characters header on desktop and mobile.
+- Compact SVG backup controls stay beside the close button in the Characters header on desktop and mobile. Full backups use a low-memory ZIP with raw portrait files to prevent large iOS/Safari libraries from being duplicated as base64 in RAM; legacy JSON backups remain importable.
 - Quota-optimized prompts prioritize recent, chat-local, incomplete, partnered, and lifecycle-relevant NPCs; Settings count every separate AI helper or vision request started by Character Life.
 - Saved NPC records keep a readable identity minimum; unsaved speakers retain only facts actually established in the role-play until the user approves promotion.
 - Unknown tagged speakers now remain ephemeral: Character Life scores repeated appearances, durable roles, meaningful interaction, and distinct traits locally, then asks Yes/No before saving an important candidate to Chat scope. Rejected candidates wait at least 20 assistant messages and require two new evidence signals before they can be suggested again.
