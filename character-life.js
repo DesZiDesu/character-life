@@ -1,5 +1,5 @@
 /* Character Life consolidated runtime bundle. Generated from the preserved v1.9.16 module stack. */
-const CHARACTER_LIFE_BUNDLE_VERSION = '1.26.2';
+const CHARACTER_LIFE_BUNDLE_VERSION = '1.26.3';
 const closeCharacterLifeHostWand = () => {
     const menu = document.getElementById('extensionsMenu');
     if (!menu) return;
@@ -2669,8 +2669,30 @@ function scheduleDiagnosticUi(delay = 80) {
             return state.candidates.find(candidate => candidate.id === state.pendingCandidateId && candidate.status === 'candidate') || null;
         }
 
+        let candidateViewportCleanup = null;
+
         function closeCandidateDialog() {
+            candidateViewportCleanup?.();
+            candidateViewportCleanup = null;
             document.getElementById('character-life-candidate-overlay')?.remove();
+        }
+
+        function bindCandidateVisualViewport(overlay) {
+            const viewport = globalThis.visualViewport;
+            const sync = () => {
+                if (!overlay?.isConnected) return;
+                overlay.style.setProperty('--cl-candidate-viewport-top', `${Math.max(0, Number(viewport?.offsetTop) || 0)}px`);
+                overlay.style.setProperty('--cl-candidate-viewport-height', `${Math.max(240, Number(viewport?.height) || globalThis.innerHeight || 640)}px`);
+            };
+            sync();
+            viewport?.addEventListener?.('resize', sync, { passive: true });
+            viewport?.addEventListener?.('scroll', sync, { passive: true });
+            globalThis.addEventListener?.('orientationchange', sync, { passive: true });
+            candidateViewportCleanup = () => {
+                viewport?.removeEventListener?.('resize', sync);
+                viewport?.removeEventListener?.('scroll', sync);
+                globalThis.removeEventListener?.('orientationchange', sync);
+            };
         }
 
         function showCandidateDialog() {
@@ -2679,7 +2701,7 @@ function scheduleDiagnosticUi(delay = 80) {
             if (!candidate) { closeCandidateDialog(); return; }
             const current = document.getElementById('character-life-candidate-overlay');
             if (current?.dataset.candidateId === candidate.id) return;
-            current?.remove();
+            if (current) closeCandidateDialog();
             const thai = getConfig().language === 'th';
             const evidence = candidateEvidenceLabels(candidate);
             const overlay = document.createElement('div');
@@ -2701,6 +2723,7 @@ function scheduleDiagnosticUi(delay = 80) {
                 void handleCandidateDecision(candidate.id, action === 'accept').finally(() => { candidateDialogBusy = false; });
             });
             document.body.append(overlay);
+            bindCandidateVisualViewport(overlay);
             requestAnimationFrame(() => overlay.classList.add('is-open'));
             overlay.querySelector('[data-candidate-action="accept"]')?.focus({ preventScroll: true });
         }

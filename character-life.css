@@ -5890,8 +5890,13 @@ html.character-life-product-open body {
 }
 /* Ephemeral NPC promotion — v1.26 */
 .cl-candidate-overlay {
+    box-sizing: border-box;
     position: fixed;
-    inset: 0;
+    top: var(--cl-candidate-viewport-top, 0px);
+    left: 0;
+    right: 0;
+    bottom: auto;
+    height: var(--cl-candidate-viewport-height, 100dvh);
     z-index: 100080;
     display: grid;
     place-items: center;
@@ -5903,9 +5908,12 @@ html.character-life-product-open body {
 }
 .cl-candidate-overlay.is-open { opacity: 1; }
 .cl-candidate-dialog {
+    box-sizing: border-box;
     width: min(440px, 100%);
-    max-height: min(620px, calc(100dvh - 36px));
+    max-height: min(620px, 100%);
     overflow: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
     display: grid;
     grid-template-columns: auto minmax(0, 1fr);
     gap: 14px;
@@ -5975,7 +5983,8 @@ html.character-life-product-open body {
 }
 .cl-candidate-actions button:focus-visible { outline: 2px solid var(--cl-ui-accent, #c39a62); outline-offset: 2px; }
 @media (max-width: 520px) {
-    .cl-candidate-dialog { grid-template-columns: 40px minmax(0, 1fr); gap: 11px; padding: 17px; border-radius: 17px; }
+    .cl-candidate-overlay { padding: max(10px, env(safe-area-inset-top)) 12px max(10px, env(safe-area-inset-bottom)); }
+    .cl-candidate-dialog { width: 100%; max-height: min(100%, 560px); grid-template-columns: 40px minmax(0, 1fr); gap: 11px; padding: 17px; border-radius: 17px; }
     .cl-candidate-icon { width: 40px; height: 40px; border-radius: 12px; }
     .cl-candidate-actions { grid-template-columns: 1fr; }
 }
