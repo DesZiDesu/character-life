@@ -2,7 +2,9 @@
 
 Character Life's is a responsive SillyTavern extension for persistent NPC identities, portraits, speaker presentation, AI-assisted profile updates, and optional skill tracking inside the main role-play chat.
 
-**Current version: 1.26.6**
+**Current version: 1.26.7**
+
+- v1.26.7 keeps full Character Life state before the newest user turn, adds a compact depth-0 speaker-format guard, and renders untagged plain assistant replies through a local Header + Dialogue fallback.
 
 - v1.26.6 places the unified response contract before the newest user turn to prevent exact previous-response replay, and adds a verified cross-extension NPC dossier opener for Marvel Nexus.
 

@@ -1,5 +1,5 @@
 /* Character Life consolidated runtime bundle. Generated from the preserved v1.9.16 module stack. */
-const CHARACTER_LIFE_BUNDLE_VERSION = '1.26.6';
+const CHARACTER_LIFE_BUNDLE_VERSION = '1.26.7';
 const closeCharacterLifeHostWand = () => {
     const menu = document.getElementById('extensionsMenu');
     if (!menu) return;
@@ -91,11 +91,12 @@ globalThis.CharacterLifeBundleRuntimePromise = (async () => {
         // consolidated prompt and fallback renderer for reliable dialogue presentation
         // when a model misses presentation tags. No additional AI generation is used.
 
-        const CL196_VERSION = '1.9.7';
+        const CL196_VERSION = '1.9.8';
         // SillyTavern joins same-role extension prompts in lexical key order. Keep
         // Character Life's compact output contract last so another UI extension
         // cannot accidentally supersede the required speaker markup.
         const UNIFIED_PROMPT_KEY = 'zz_character_life_unified_protocol_v197';
+        const OUTPUT_GUARD_PROMPT_KEY = 'zzzz_character_life_output_guard_v198';
         const NPC_CHAT_KEY = 'character_life_npcs';
         const SKILL_CHAT_KEY = 'character_life_skills';
         const SKILL_ENABLED_KEY = 'character_life_skill_indicators_enabled';
@@ -112,6 +113,7 @@ globalThis.CharacterLifeBundleRuntimePromise = (async () => {
 
         let nativeGetContext = null;
         let lastUnifiedPrompt = '';
+        let lastOutputGuardPrompt = '';
         let promptTimer = null;
         let diagnosticTimer = null;
         let fallbackTimer = null;
@@ -127,6 +129,7 @@ globalThis.CharacterLifeBundleRuntimePromise = (async () => {
             promptFallbackUsed: false,
             promptFallbackCount: 0,
             lastPromptError: '',
+            outputGuardActive: false,
             errors: [],
         };
 
@@ -378,6 +381,15 @@ globalThis.CharacterLifeBundleRuntimePromise = (async () => {
             ].filter(Boolean).join('\n');
         }
 
+        function outputGuardPrompt(context = rawContext()) {
+            const marvelActive = Boolean(context?.extensionPrompts?.marvel_nexus_roleplay_state?.value);
+            return [
+                'CHARACTER LIFE OUTPUT GUARD — format only the new reply you are about to write for the newest user message. Never replay, restart, quote, or paraphrase an earlier assistant reply.',
+                'Every NPC speech, including unnamed speakers, MUST be emitted as [CL_HEADER|Exact Name or Stable Descriptor] followed by [CL_DIALOGUE|same speaker]dialogue[/CL_DIALOGUE]. Narration stays outside the tags. Do not use Markdown code fences.',
+                marvelActive ? 'Keep Character Life tags in the visible role-play and append the requested MARVEL_NEXUS_PATCH last; both protocols must coexist.' : '',
+            ].filter(Boolean).join('\n');
+        }
+
         function buildUnifiedPrompt() {
             const context = rawContext();
             const root = rootSettings(context);
@@ -441,11 +453,15 @@ globalThis.CharacterLifeBundleRuntimePromise = (async () => {
                 const context = rawContext();
                 if (typeof context?.setExtensionPrompt !== 'function') {
                     diagnostic.unifiedPromptActive = false;
+                    diagnostic.outputGuardActive = false;
                     scheduleDiagnosticUi();
                     return;
                 }
                 const prompt = buildUnifiedPrompt();
-                if (prompt === lastUnifiedPrompt && diagnostic.unifiedPromptActive === Boolean(prompt)) {
+                const outputGuard = prompt ? outputGuardPrompt(context) : '';
+                if (prompt === lastUnifiedPrompt && outputGuard === lastOutputGuardPrompt
+                    && diagnostic.unifiedPromptActive === Boolean(prompt)
+                    && diagnostic.outputGuardActive === Boolean(outputGuard)) {
                     scheduleDiagnosticUi();
                     return;
                 }
@@ -453,8 +469,14 @@ globalThis.CharacterLifeBundleRuntimePromise = (async () => {
                 // places an injected system turn after the user on chat-completion
                 // backends and can make continuation models replay the prior answer.
                 context.setExtensionPrompt(UNIFIED_PROMPT_KEY, prompt, 1, 1, false, 0);
+                // Keep only the compact presentation contract after the newest user
+                // message. This preserves tag compliance without moving registry or
+                // continuity data past the user turn and reintroducing reply replay.
+                context.setExtensionPrompt(OUTPUT_GUARD_PROMPT_KEY, outputGuard, 1, 0, false, 0);
                 lastUnifiedPrompt = prompt;
+                lastOutputGuardPrompt = outputGuard;
                 diagnostic.unifiedPromptActive = Boolean(prompt);
+                diagnostic.outputGuardActive = Boolean(outputGuard);
                 diagnostic.lastPromptAt = new Date().toISOString();
                 scheduleDiagnosticUi();
             } catch (error) {
@@ -466,18 +488,24 @@ globalThis.CharacterLifeBundleRuntimePromise = (async () => {
                     const context = rawContext();
                     if (typeof context?.setExtensionPrompt === 'function') {
                         const fallback = baseUnifiedPrompt(context) + '\n\n' + finalUnifiedPromptRules(context);
-                        if (fallback !== lastUnifiedPrompt || !diagnostic.unifiedPromptActive) {
+                        const outputGuard = outputGuardPrompt(context);
+                        if (fallback !== lastUnifiedPrompt || outputGuard !== lastOutputGuardPrompt || !diagnostic.unifiedPromptActive) {
                             context.setExtensionPrompt(UNIFIED_PROMPT_KEY, fallback, 1, 1, false, 0);
+                            context.setExtensionPrompt(OUTPUT_GUARD_PROMPT_KEY, outputGuard, 1, 0, false, 0);
                             lastUnifiedPrompt = fallback;
+                            lastOutputGuardPrompt = outputGuard;
                             diagnostic.lastPromptAt = new Date().toISOString();
                         }
                         diagnostic.unifiedPromptActive = true;
+                        diagnostic.outputGuardActive = true;
                     } else {
                         diagnostic.unifiedPromptActive = false;
+                        diagnostic.outputGuardActive = false;
                     }
                 } catch (fallbackError) {
                     recordError('Unified prompt fallback failed', fallbackError);
                     diagnostic.unifiedPromptActive = false;
+                    diagnostic.outputGuardActive = false;
                     diagnostic.lastPromptError = 'Unified prompt fallback failed: ' + promptErrorText(fallbackError);
                 }
                 scheduleDiagnosticUi();
@@ -603,6 +631,22 @@ function schedulePrompt(delay = 40) {
             return true;
         }
 
+        function wrapPlainAssistantMessage(element, message, context) {
+            if (!element || element.querySelector('.cl-chat-block')) return false;
+            let visible = String(element.textContent || '');
+            visible = visible.replace(/\[MARVEL_NEXUS_PATCH\][\s\S]*?\[\/MARVEL_NEXUS_PATCH\]/gi, '');
+            visible = visible.replace(/<!--\s*MARVEL_NEXUS_PATCH[\s\S]*?MARVEL_NEXUS_PATCH\s*-->/gi, '');
+            visible = visible.replace(/\[CL_NPC_(?:UPDATE|STATUS|DEATH|REVIVE|RESURRECT)\|[^\]]+\][\s\S]*?\[\/CL_NPC_(?:UPDATE|STATUS|DEATH|REVIVE|RESURRECT)\]/gi, '');
+            visible = visible.replace(/\[CL_NPC_(?:UPDATE|PARTNER|PARTNER_REMOVE)\|[^\]]+\]/gi, '');
+            visible = visible.trim();
+            if (!visible) return false;
+            const speaker = speakerNameFor(message, context);
+            const holder = document.createElement('div');
+            holder.innerHTML = headerHtml(speaker) + dialogueHtml(speaker, visible, 1);
+            element.replaceChildren(...holder.childNodes);
+            return true;
+        }
+
         function applyNpcIdentityToFallback(element, context) {
             if (!element) return;
             const registry = effectiveNpcRegistry(context);
@@ -667,7 +711,8 @@ function schedulePrompt(delay = 40) {
                 return recovered;
             }
 
-            const changed = wrapPlainQuotedDialogue(element, message, context);
+            const changed = wrapPlainQuotedDialogue(element, message, context)
+                || wrapPlainAssistantMessage(element, message, context);
             if (!changed) { scheduleDiagnosticUi(); return false; }
             configureFallbackDataset(element, context);
             applyNpcIdentityToFallback(element, context);
@@ -702,6 +747,7 @@ function schedulePrompt(delay = 40) {
                 release: globalThis.CharacterLifeVersion || globalThis.CharacterLifeBootstrap?.version || CL196_VERSION,
                 chatOpen: Boolean(context?.getCurrentChatId?.()),
                 unifiedPrompt: diagnostic.unifiedPromptActive,
+                outputGuard: diagnostic.outputGuardActive,
                 promptFallbackUsed: diagnostic.promptFallbackUsed,
                 promptFallbackCount: diagnostic.promptFallbackCount,
                 lastPromptError: diagnostic.lastPromptError,
@@ -780,6 +826,7 @@ function ensureReliabilityStyle() {
                 : 'No prompt fallbacks used.';
             body.innerHTML = [
                 statusRow('Unified response protocol', status.unifiedPrompt, promptDetail),
+                statusRow('Latest-turn output guard', status.outputGuard, status.outputGuard ? 'Active at depth 0; full Character Life state remains at depth 1.' : 'Inactive for this chat or speaker prompting is disabled.'),
                 statusRow('Prompt fallback health', status.promptFallbackCount === 0, fallbackDetail),
                 statusRow('NPC Library', status.npcLibrary, status.npcLibrary ? 'Manager loaded.' : 'Manager did not initialize.'),
                 statusRow('Skill Storage', status.skillsApi, status.skillsApi ? 'Loaded · indicators ' + (status.skillIndicators ? 'ON' : 'OFF') : 'Skill runtime unavailable.'),
