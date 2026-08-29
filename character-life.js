@@ -1,5 +1,5 @@
 /* Character Life consolidated runtime bundle. Generated from the preserved v1.9.16 module stack. */
-const CHARACTER_LIFE_BUNDLE_VERSION = '1.26.7';
+const CHARACTER_LIFE_BUNDLE_VERSION = '1.26.8';
 const closeCharacterLifeHostWand = () => {
     const menu = document.getElementById('extensionsMenu');
     if (!menu) return;
@@ -362,12 +362,12 @@ globalThis.CharacterLifeBundleRuntimePromise = (async () => {
             return [
                 'CHARACTER LIFE — UNIFIED RESPONSE PROTOCOL v' + CL196_VERSION,
                 `ACTIVE USER PERSONA: ${personaName}. This exact name identifies the user/player in narration, relationships, partner links, and skill ownership. Never replace it with User, Player, {{user}}, or a generic placeholder in visible role-play. The machine token USER, where explicitly required below, resolves only to ${personaName}.`,
-                'Apply inside the SAME normal role-play reply; never run another generation. Narration stays outside tags. For every speaking NPC, in any language, use:',
+                'Apply inside the SAME normal role-play reply; never run another generation. Classify each passage by meaning: narration/action/description stays ordinary prose outside every Character Life tag; only words audibly spoken by an NPC are dialogue; only that NPC\'s private unspoken thought is monologue. For every speaking NPC, in any language, use:',
                 '[CL_HEADER|Exact NPC Name|optional-form]',
                 '[CL_DIALOGUE|Exact NPC Name|optional-form]the dialogue[/CL_DIALOGUE]',
-                'One header may precede several dialogue blocks; repeat it only after the speaker changes. Optional private thought:',
+                'One header may precede several dialogue blocks; repeat it only after the speaker changes. Every explicitly written private/internal NPC thought MUST use:',
                 '[CL_THOUGHT|Exact NPC Name|optional-form]private thought[/CL_THOUGHT]',
-                'Use only a listed matching form; otherwise omit it. Never output portrait URLs/IDs, code fences, or substitute Markdown quotes.'
+                'Never put narration, actions, descriptions, instructions, lists, setup text, or the whole reply inside CL_DIALOGUE or CL_THOUGHT. Never invent speech or thought merely to create a block. Use only a listed matching form; otherwise omit it. Never output portrait URLs/IDs, code fences, or substitute Markdown quotes.'
             ].join('\n');
         }
 
@@ -375,7 +375,8 @@ globalThis.CharacterLifeBundleRuntimePromise = (async () => {
             const marvelActive = Boolean(context?.extensionPrompts?.marvel_nexus_roleplay_state?.value);
             return [
                 'FINAL OUTPUT CONTRACT — highest priority: answer the newest user turn and advance the scene. The assistant reply immediately before the newest user message is completed history: never reproduce, paraphrase, restart, or continue from its opening. Respond to what changed in the newest user turn.',
-                'Every NPC speech MUST use CL_HEADER + CL_DIALOGUE, including unnamed or newly introduced NPCs (use the exact stable descriptor shown in narration until a name is known). Narration remains ordinary prose. All CL tags are plain machine markup, never Markdown code.',
+                'Every audibly spoken NPC utterance MUST use CL_HEADER + CL_DIALOGUE, including unnamed or newly introduced NPCs (use the exact stable descriptor shown in narration until a name is known). Every private/internal NPC thought that appears in the reply MUST use CL_THOUGHT. Narration, actions, descriptions, instructions, and setup text remain ordinary prose outside all Character Life blocks. Never classify an entire reply as dialogue or monologue.',
+                'CL_DIALOGUE contains only the exact spoken words. CL_THOUGHT contains only the exact unspoken thought. CL_HEADER identifies the speaker and never contains prose. All CL tags are plain machine markup, never Markdown code.',
                 'Character Life markup and every other active extension protocol must coexist in this SAME response; never omit one protocol because another extension also requests machine output.',
                 marvelActive ? 'MARVEL NEXUS COMPATIBILITY: emit Character Life speaker/profile tags first, then append the requested [MARVEL_NEXUS_PATCH] block last. Both protocols are mandatory when their confirmed-change conditions apply.' : '',
             ].filter(Boolean).join('\n');
@@ -385,7 +386,8 @@ globalThis.CharacterLifeBundleRuntimePromise = (async () => {
             const marvelActive = Boolean(context?.extensionPrompts?.marvel_nexus_roleplay_state?.value);
             return [
                 'CHARACTER LIFE OUTPUT GUARD — format only the new reply you are about to write for the newest user message. Never replay, restart, quote, or paraphrase an earlier assistant reply.',
-                'Every NPC speech, including unnamed speakers, MUST be emitted as [CL_HEADER|Exact Name or Stable Descriptor] followed by [CL_DIALOGUE|same speaker]dialogue[/CL_DIALOGUE]. Narration stays outside the tags. Do not use Markdown code fences.',
+                'Every audibly spoken NPC utterance, including unnamed speakers, MUST be emitted as [CL_HEADER|Exact Name or Stable Descriptor] followed by [CL_DIALOGUE|same speaker]exact spoken words only[/CL_DIALOGUE]. Every private/internal NPC thought that is written MUST use [CL_THOUGHT|same speaker]exact unspoken thought only[/CL_THOUGHT].',
+                'Narration, actions, descriptions, instructions, lists, and setup text MUST stay outside Character Life tags. Never wrap the whole response in Dialogue or Monologue. Do not invent speech/thought just to create a block. Do not use Markdown code fences.',
                 marvelActive ? 'Keep Character Life tags in the visible role-play and append the requested MARVEL_NEXUS_PATCH last; both protocols must coexist.' : '',
             ].filter(Boolean).join('\n');
         }
@@ -631,22 +633,6 @@ function schedulePrompt(delay = 40) {
             return true;
         }
 
-        function wrapPlainAssistantMessage(element, message, context) {
-            if (!element || element.querySelector('.cl-chat-block')) return false;
-            let visible = String(element.textContent || '');
-            visible = visible.replace(/\[MARVEL_NEXUS_PATCH\][\s\S]*?\[\/MARVEL_NEXUS_PATCH\]/gi, '');
-            visible = visible.replace(/<!--\s*MARVEL_NEXUS_PATCH[\s\S]*?MARVEL_NEXUS_PATCH\s*-->/gi, '');
-            visible = visible.replace(/\[CL_NPC_(?:UPDATE|STATUS|DEATH|REVIVE|RESURRECT)\|[^\]]+\][\s\S]*?\[\/CL_NPC_(?:UPDATE|STATUS|DEATH|REVIVE|RESURRECT)\]/gi, '');
-            visible = visible.replace(/\[CL_NPC_(?:UPDATE|PARTNER|PARTNER_REMOVE)\|[^\]]+\]/gi, '');
-            visible = visible.trim();
-            if (!visible) return false;
-            const speaker = speakerNameFor(message, context);
-            const holder = document.createElement('div');
-            holder.innerHTML = headerHtml(speaker) + dialogueHtml(speaker, visible, 1);
-            element.replaceChildren(...holder.childNodes);
-            return true;
-        }
-
         function applyNpcIdentityToFallback(element, context) {
             if (!element) return;
             const registry = effectiveNpcRegistry(context);
@@ -711,8 +697,9 @@ function schedulePrompt(delay = 40) {
                 return recovered;
             }
 
-            const changed = wrapPlainQuotedDialogue(element, message, context)
-                || wrapPlainAssistantMessage(element, message, context);
+            // Untagged prose is never safe to classify wholesale. Recover only
+            // explicitly quoted speech and leave all other narration untouched.
+            const changed = wrapPlainQuotedDialogue(element, message, context);
             if (!changed) { scheduleDiagnosticUi(); return false; }
             configureFallbackDataset(element, context);
             applyNpcIdentityToFallback(element, context);
