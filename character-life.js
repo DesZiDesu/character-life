@@ -1,5 +1,5 @@
 /* Character Life consolidated runtime bundle. Generated from the preserved v1.9.16 module stack. */
-const CHARACTER_LIFE_BUNDLE_VERSION = '1.26.5';
+const CHARACTER_LIFE_BUNDLE_VERSION = '1.26.6';
 const closeCharacterLifeHostWand = () => {
     const menu = document.getElementById('extensionsMenu');
     if (!menu) return;
@@ -371,7 +371,7 @@ globalThis.CharacterLifeBundleRuntimePromise = (async () => {
         function finalUnifiedPromptRules(context = rawContext()) {
             const marvelActive = Boolean(context?.extensionPrompts?.marvel_nexus_roleplay_state?.value);
             return [
-                'FINAL OUTPUT CONTRACT — highest priority: answer the newest user turn and advance the scene; do not repeat the prior reply unless asked.',
+                'FINAL OUTPUT CONTRACT — highest priority: answer the newest user turn and advance the scene. The assistant reply immediately before the newest user message is completed history: never reproduce, paraphrase, restart, or continue from its opening. Respond to what changed in the newest user turn.',
                 'Every NPC speech MUST use CL_HEADER + CL_DIALOGUE, including unnamed or newly introduced NPCs (use the exact stable descriptor shown in narration until a name is known). Narration remains ordinary prose. All CL tags are plain machine markup, never Markdown code.',
                 'Character Life markup and every other active extension protocol must coexist in this SAME response; never omit one protocol because another extension also requests machine output.',
                 marvelActive ? 'MARVEL NEXUS COMPATIBILITY: emit Character Life speaker/profile tags first, then append the requested [MARVEL_NEXUS_PATCH] block last. Both protocols are mandatory when their confirmed-change conditions apply.' : '',
@@ -449,7 +449,10 @@ globalThis.CharacterLifeBundleRuntimePromise = (async () => {
                     scheduleDiagnosticUi();
                     return;
                 }
-                context.setExtensionPrompt(UNIFIED_PROMPT_KEY, prompt, 1, 0, false, 0);
+                // Depth 1 keeps the newest user message after this contract. Depth 0
+                // places an injected system turn after the user on chat-completion
+                // backends and can make continuation models replay the prior answer.
+                context.setExtensionPrompt(UNIFIED_PROMPT_KEY, prompt, 1, 1, false, 0);
                 lastUnifiedPrompt = prompt;
                 diagnostic.unifiedPromptActive = Boolean(prompt);
                 diagnostic.lastPromptAt = new Date().toISOString();
@@ -464,7 +467,7 @@ globalThis.CharacterLifeBundleRuntimePromise = (async () => {
                     if (typeof context?.setExtensionPrompt === 'function') {
                         const fallback = baseUnifiedPrompt(context) + '\n\n' + finalUnifiedPromptRules(context);
                         if (fallback !== lastUnifiedPrompt || !diagnostic.unifiedPromptActive) {
-                            context.setExtensionPrompt(UNIFIED_PROMPT_KEY, fallback, 1, 0, false, 0);
+                            context.setExtensionPrompt(UNIFIED_PROMPT_KEY, fallback, 1, 1, false, 0);
                             lastUnifiedPrompt = fallback;
                             diagnostic.lastPromptAt = new Date().toISOString();
                         }
@@ -11721,10 +11724,20 @@ Never infer gender identity or exact age from appearance alone. For a saved NPC,
             }));
             return { updated, created, deferred };
         };
+        const openNpcDossier = query => {
+            const npc = findNpc(query || {});
+            const library = globalThis.CharacterLifeNpcLibrary;
+            if (!npc || typeof library?.open !== 'function') {
+                return { opened: false, reason: npc ? 'library-unavailable' : 'npc-not-found' };
+            }
+            library.open({ scope: npc.scope, id: npc.id, npcId: npc.id, name: npc.name });
+            const opened = Boolean(document.getElementById('character-life-overlay')?.classList.contains('is-open'));
+            return { opened, npc: { id: npc.id, scope: npc.scope, name: npc.name } };
+        };
         globalThis.CharacterLifeRpgBridge = Object.freeze({
             version: CHARACTER_LIFE_BUNDLE_VERSION,
             compatibilityVersion: 3,
-            capabilities: Object.freeze({ npcDossierSync: true, skills: true, portraits: true, sameReplyTracking: true, mapMarkers: true, mapMarkerThumbnails: true, lazyMarkerPortraits: true, densityFallback: true }),
+            capabilities: Object.freeze({ npcDossierSync: true, npcDossierOpen: true, skills: true, portraits: true, sameReplyTracking: true, mapMarkers: true, mapMarkerThumbnails: true, lazyMarkerPortraits: true, densityFallback: true }),
             listNpcs,
             listMapMarkers,
             findNpc: query => cloneValue(findNpc(query)),
@@ -11733,7 +11746,8 @@ Never infer gender identity or exact age from appearance alone. For a saved NPC,
             portrait,
             markerPresentation,
             mapMarkerPolicy: MAP_MARKER_POLICY,
-            openNpcLibrary: options => globalThis.CharacterLifeNpcLibrary?.open?.(options),
+            openNpcDossier,
+            openNpcLibrary: openNpcDossier,
             openSkillStorage: () => globalThis.CharacterLifeSkills?.open?.(),
         });
         globalThis.dispatchEvent(new CustomEvent('character-life:rpg-bridge-ready', { detail: { version: CHARACTER_LIFE_BUNDLE_VERSION } }));
