@@ -1,5 +1,5 @@
 /* Character Life consolidated runtime bundle. Generated from the preserved v1.9.16 module stack. */
-const CHARACTER_LIFE_BUNDLE_VERSION = '1.26.3';
+const CHARACTER_LIFE_BUNDLE_VERSION = '1.26.4';
 const closeCharacterLifeHostWand = () => {
     const menu = document.getElementById('extensionsMenu');
     if (!menu) return;
@@ -346,9 +346,15 @@ globalThis.CharacterLifeBundleRuntimePromise = (async () => {
             }
         }
 
-        function baseUnifiedPrompt() {
+        function currentPersonaName(context = rawContext()) {
+            return cleanText(context?.name1 || context?.userName, 'User', 120) || 'User';
+        }
+
+        function baseUnifiedPrompt(context = rawContext()) {
+            const personaName = currentPersonaName(context);
             return [
                 'CHARACTER LIFE — UNIFIED RESPONSE PROTOCOL v' + CL196_VERSION,
+                `ACTIVE USER PERSONA: ${personaName}. This exact name identifies the user/player in narration, relationships, partner links, and skill ownership. Never replace it with User, Player, {{user}}, or a generic placeholder in visible role-play. The machine token USER, where explicitly required below, resolves only to ${personaName}.`,
                 'Apply inside the SAME normal role-play reply; never run another generation. Narration stays outside tags. For every speaking NPC, in any language, use:',
                 '[CL_HEADER|Exact NPC Name|optional-form]',
                 '[CL_DIALOGUE|Exact NPC Name|optional-form]the dialogue[/CL_DIALOGUE]',
@@ -377,7 +383,8 @@ globalThis.CharacterLifeBundleRuntimePromise = (async () => {
             const skillRegistry = safePromptPart('skill registry prompt', () => skillRegistryPrompt(context));
             const skillEnabled = Boolean(skillRegistry) || Boolean(safePromptPart('skill tracking state', () => skillTrackingEnabled(context), false));
             const profileUpdates = cfg.autoProfileUpdates !== false;
-            const sections = [baseUnifiedPrompt()];
+            const personaName = currentPersonaName(context);
+            const sections = [baseUnifiedPrompt(context)];
 
             if (skillEnabled) {
                 sections.push([
@@ -402,7 +409,7 @@ globalThis.CharacterLifeBundleRuntimePromise = (async () => {
                 'Only when explicitly established:',
                 '[CL_NPC_PARTNER|Exact NPC Name|Exact Other NPC Name|partner label]',
                 '[CL_NPC_PARTNER_REMOVE|Exact NPC Name|Exact Other NPC Name]',
-                'Use USER for the user. Do not invent romance; labels are concise. Links reset in a new chat unless carried over.'
+                `Use USER only as the machine endpoint for the active persona ${personaName}; visible narration must use ${personaName}. Do not invent romance; labels are concise. Links reset in a new chat unless carried over.`
             ].join('\n'));
 
             sections.push([
@@ -447,7 +454,7 @@ globalThis.CharacterLifeBundleRuntimePromise = (async () => {
                 try {
                     const context = rawContext();
                     if (typeof context?.setExtensionPrompt === 'function') {
-                        const fallback = baseUnifiedPrompt() + '\n\n' + finalUnifiedPromptRules();
+                        const fallback = baseUnifiedPrompt(context) + '\n\n' + finalUnifiedPromptRules();
                         if (fallback !== lastUnifiedPrompt || !diagnostic.unifiedPromptActive) {
                             context.setExtensionPrompt(UNIFIED_PROMPT_KEY, fallback, 1, 0, false, 0);
                             lastUnifiedPrompt = fallback;
@@ -785,6 +792,13 @@ function scheduleDiagnosticUi(delay = 80) {
                 scheduleDiagnosticUi(300);
                 return;
             }
+            if (['MESSAGE_SENT', 'GENERATION_STARTED'].includes(key)) {
+                clearTimeout(promptTimer);
+                promptTimer = null;
+                lastUnifiedPrompt = '';
+                refreshUnifiedPrompt();
+                return;
+            }
             if (['MESSAGE_RECEIVED', 'MESSAGE_EDITED', 'MESSAGE_SWIPED', 'CHARACTER_MESSAGE_RENDERED'].includes(key)) {
                 schedulePrompt(100);
                 scheduleFallback(messageId, key === 'MESSAGE_RECEIVED' ? 190 : 120);
@@ -798,7 +812,7 @@ function scheduleDiagnosticUi(delay = 80) {
             const types = context?.eventTypes || {};
             if (!source?.on) return false;
             const seen = new Set();
-            for (const key of ['CHAT_CHANGED', 'CHAT_LOADED', 'MESSAGE_RECEIVED', 'MESSAGE_EDITED', 'MESSAGE_SWIPED', 'CHARACTER_MESSAGE_RENDERED', 'MORE_MESSAGES_LOADED']) {
+            for (const key of ['CHAT_CHANGED', 'CHAT_LOADED', 'MESSAGE_SENT', 'GENERATION_STARTED', 'MESSAGE_RECEIVED', 'MESSAGE_EDITED', 'MESSAGE_SWIPED', 'CHARACTER_MESSAGE_RENDERED', 'MORE_MESSAGES_LOADED']) {
                 const type = types[key];
                 if (!type || seen.has(type)) continue;
                 seen.add(type);
@@ -3242,8 +3256,15 @@ function scheduleDiagnosticUi(delay = 80) {
             const element = findMessageText(messageId);
             if (!element) return;
             if (element.classList.contains('character-life-rendered') && !containsSpeakerMarkup(element.innerHTML)) return;
-            const extracted = extractNpcUpdates(element.innerHTML);
             const candidateSource = typeof message.mes === 'string' ? message.mes : element.innerHTML;
+            const rawExtracted = extractNpcUpdates(candidateSource);
+            const renderedExtracted = extractNpcUpdates(element.innerHTML);
+            const extracted = {
+                html: renderedExtracted.html,
+                updates: rawExtracted.updates.length ? rawExtracted.updates : renderedExtracted.updates,
+                lifeEvents: rawExtracted.lifeEvents.length ? rawExtracted.lifeEvents : renderedExtracted.lifeEvents,
+                partnerEvents: rawExtracted.partnerEvents.length ? rawExtracted.partnerEvents : renderedExtracted.partnerEvents,
+            };
             void processNpcCandidates(candidateSource, extracted.updates, messageId, message)
                 .catch(error => console.warn("[Character Life's] NPC candidate evaluation failed safely.", error));
             const transformed = transformSpeakerMarkup(extracted.html);
