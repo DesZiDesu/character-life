@@ -2,7 +2,9 @@
 
 Character Life's is a responsive SillyTavern extension for persistent NPC identities, portraits, speaker presentation, AI-assisted profile updates, and optional skill tracking inside the main role-play chat.
 
-**Current version: 1.26.8**
+**Current version: 1.26.9**
+
+- v1.26.9 strengthens the final speaker-format self-check and safely recovers unquoted `Known NPC: dialogue` lines when the label exactly matches the active character or saved NPC registry, without treating general narration as dialogue.
 
 - v1.26.8 strictly separates presentation semantics: only spoken NPC words become Dialogue, only private NPC thoughts become Monologue, narration remains ordinary prose, and untagged messages are never wrapped wholesale as Dialogue.
 

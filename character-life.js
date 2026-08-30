@@ -1,5 +1,5 @@
 /* Character Life consolidated runtime bundle. Generated from the preserved v1.9.16 module stack. */
-const CHARACTER_LIFE_BUNDLE_VERSION = '1.26.8';
+const CHARACTER_LIFE_BUNDLE_VERSION = '1.26.9';
 const closeCharacterLifeHostWand = () => {
     const menu = document.getElementById('extensionsMenu');
     if (!menu) return;
@@ -388,6 +388,7 @@ globalThis.CharacterLifeBundleRuntimePromise = (async () => {
                 'CHARACTER LIFE OUTPUT GUARD — format only the new reply you are about to write for the newest user message. Never replay, restart, quote, or paraphrase an earlier assistant reply.',
                 'Every audibly spoken NPC utterance, including unnamed speakers, MUST be emitted as [CL_HEADER|Exact Name or Stable Descriptor] followed by [CL_DIALOGUE|same speaker]exact spoken words only[/CL_DIALOGUE]. Every private/internal NPC thought that is written MUST use [CL_THOUGHT|same speaker]exact unspoken thought only[/CL_THOUGHT].',
                 'Narration, actions, descriptions, instructions, lists, and setup text MUST stay outside Character Life tags. Never wrap the whole response in Dialogue or Monologue. Do not invent speech/thought just to create a block. Do not use Markdown code fences.',
+                'MANDATORY SELF-CHECK BEFORE SENDING: if this new reply contains any NPC spoken words, it must contain a matching [CL_DIALOGUE| speaker block. If it contains any written private NPC thought, it must contain a matching [CL_THOUGHT| block. Correct missing presentation tags before returning the reply; never remove narration to satisfy this check.',
                 marvelActive ? 'Keep Character Life tags in the visible role-play and append the requested MARVEL_NEXUS_PATCH last; both protocols must coexist.' : '',
             ].filter(Boolean).join('\n');
         }
@@ -633,6 +634,44 @@ function schedulePrompt(delay = 40) {
             return true;
         }
 
+        function explicitSpeakerName(label, fallback, registry) {
+            const wanted = cleanText(label, '', 120).replace(/^[*_`\s]+|[*_`\s]+$/g, '').toLocaleLowerCase();
+            if (!wanted) return '';
+            const speakers = [{ name: fallback, aliases: [] }, ...registry];
+            for (const npc of speakers) {
+                const canonical = cleanText(npc?.name, '', 120);
+                const names = [canonical, ...(Array.isArray(npc?.aliases) ? npc.aliases : [])]
+                    .map(value => cleanText(value, '', 120).toLocaleLowerCase()).filter(Boolean);
+                if (names.includes(wanted)) return canonical;
+            }
+            return '';
+        }
+
+        function wrapExplicitSpeakerDialogue(element, message, context) {
+            if (!element || element.querySelector('.cl-chat-block')) return false;
+            const registry = effectiveNpcRegistry(context);
+            const fallback = speakerNameFor(message, context);
+            const blocks = [...element.querySelectorAll('p, li, blockquote')]
+                .filter(block => !block.closest('pre, code, .cl-chat-block, .reasoning') && !block.querySelector('p, li, blockquote'));
+            let number = 0;
+            let previousSpeaker = '';
+            let changed = false;
+            for (const block of blocks) {
+                const line = cleanText(block.textContent, '', 1500);
+                const match = line.match(/^(?:\*\*|__)?([^:\n：*]{1,120}?)(?:\*\*|__)?\s*[:：]\s*(?:\*\*|__)?[“\"「『]?([\s\S]{2,1200}?)[”\"」』]?\s*$/);
+                if (!match) continue;
+                const speaker = explicitSpeakerName(match[1], fallback, registry);
+                const spoken = cleanText(match[2], '', 1200);
+                if (!speaker || !spoken) continue;
+                const holder = document.createElement('div');
+                holder.innerHTML = `${speaker !== previousSpeaker ? headerHtml(speaker) : ''}${dialogueHtml(speaker, spoken, ++number)}`;
+                block.replaceWith(...holder.childNodes);
+                previousSpeaker = speaker;
+                changed = true;
+            }
+            return changed;
+        }
+
         function applyNpcIdentityToFallback(element, context) {
             if (!element) return;
             const registry = effectiveNpcRegistry(context);
@@ -699,7 +738,8 @@ function schedulePrompt(delay = 40) {
 
             // Untagged prose is never safe to classify wholesale. Recover only
             // explicitly quoted speech and leave all other narration untouched.
-            const changed = wrapPlainQuotedDialogue(element, message, context);
+            const changed = wrapPlainQuotedDialogue(element, message, context)
+                || wrapExplicitSpeakerDialogue(element, message, context);
             if (!changed) { scheduleDiagnosticUi(); return false; }
             configureFallbackDataset(element, context);
             applyNpcIdentityToFallback(element, context);
