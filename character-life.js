@@ -1,5 +1,5 @@
 /* Character Life consolidated runtime bundle. Generated from the preserved v1.9.16 module stack. */
-const CHARACTER_LIFE_BUNDLE_VERSION = '1.26.9';
+const CHARACTER_LIFE_BUNDLE_VERSION = '1.26.10';
 const closeCharacterLifeHostWand = () => {
     const menu = document.getElementById('extensionsMenu');
     if (!menu) return;
@@ -422,7 +422,7 @@ globalThis.CharacterLifeBundleRuntimePromise = (async () => {
                     'NPC FACTS — machine tags at reply END:',
                     '[CL_NPC_UPDATE|Exact NPC Name|field]factual value[/CL_NPC_UPDATE]',
                     'Fields: pronouns,gender,age,species,role,affiliation,appearance,personality,relationshipToUser,relationship,background,goals,abilities,speechStyle,currentState,notes,aliases,identityColor.',
-                    'For an unsaved new NPC, emit only durable facts actually established in the scene; never invent or pad unknown fields. Character Life keeps that speaker ephemeral until local importance rules qualify it and the user approves saving. For saved NPCs, fill missing identity fields when facts become available and otherwise emit only newly established/materially changed facts. Never infer gender or exact age from appearance.'
+                    'For an unsaved new NPC, emit one tag for every durable profile fact already established in the card, lore, world info, or scene—not just the name. Never invent or pad unknown fields. Character Life keeps that speaker ephemeral until local importance rules qualify it and the user approves saving. For saved NPCs, fill missing identity fields when facts become available and otherwise emit only newly established/materially changed facts. Never infer gender or exact age from appearance.'
                 ].join('\n'));
             }
 
@@ -1558,6 +1558,7 @@ function scheduleDiagnosticUi(delay = 80) {
             showWand: true,
             injectPrompt: true,
             autoDiscover: true,
+            candidateReminderTurns: 20,
             autoProfileUpdates: true,
             autoContinuity: true,
             design: 'signature',
@@ -1856,9 +1857,16 @@ function scheduleDiagnosticUi(delay = 80) {
             config.showWand = Boolean(config.showWand);
             config.injectPrompt = Boolean(config.injectPrompt);
             config.autoDiscover = Boolean(config.autoDiscover);
+            config.candidateReminderTurns = Math.round(clamp(config.candidateReminderTurns, DEFAULT_CONFIG.candidateReminderTurns, 1, 200));
             config.autoProfileUpdates = Boolean(config.autoProfileUpdates);
             config.autoContinuity = config.autoContinuity !== false;
             return config;
+        }
+
+        function rpgCompatibilityInstalled() {
+            return typeof globalThis.TretaresiaRpgGenerateInterceptor === 'function'
+                || Boolean(globalThis.TretaresiaRpgContinuity)
+                || Boolean(document.getElementById('tretaresia-rpg-settings'));
         }
 
         function characterKey() {
@@ -2759,8 +2767,53 @@ function scheduleDiagnosticUi(delay = 80) {
         function candidateCanRequest(candidate, state) {
             if (!candidate || candidate.score < 5 || (!candidate.evidence.repeated && !candidate.evidence.ongoing)) return false;
             if (candidate.status !== 'rejected') return true;
-            return state.candidateTurn >= candidate.rejectUntilTurn
+            const configuredTurn = candidate.rejectedAtTurn > 0
+                ? candidate.rejectedAtTurn + getConfig().candidateReminderTurns
+                : candidate.rejectUntilTurn;
+            return state.candidateTurn >= configuredTurn
                 && candidate.evidenceKeys.length - candidate.rejectedEvidenceCount >= 2;
+        }
+
+        function enrichCandidateProfile(value) {
+            if (!hasChat() || !value || typeof value !== 'object') return null;
+            const name = cleanText(value.name, '', 120);
+            const key = candidateKey(name);
+            if (!name || !key) return null;
+            const state = chatState(true);
+            let candidate = state.candidates.find(item => item.key === key);
+            if (!candidate) candidate = normalizeCandidate({ name, createdAt: new Date().toISOString() });
+            const incoming = normalizeCandidateProfile(value);
+            const profile = normalizeCandidateProfile(candidate.profile);
+            for (const field of CANDIDATE_PROFILE_FIELDS) {
+                const fact = meaningfulCandidateValue(incoming[field]);
+                if (!fact) continue;
+                profile[field] = fact;
+                candidate.evidenceKeys.push(`compat:${field}:${candidateHash(fact)}`);
+            }
+            if (Array.isArray(incoming.aliases)) {
+                profile.aliases = [...new Set([...(profile.aliases || []), ...incoming.aliases])].slice(0, 30);
+                if (incoming.aliases.length) candidate.evidenceKeys.push(`compat:aliases:${candidateHash(incoming.aliases.join('|'))}`);
+            }
+            if (incoming.identityColor) profile.identityColor = incoming.identityColor;
+            candidate.profile = normalizeCandidateProfile(profile);
+            candidate.evidence.uniqueName = !isGenericNpcLabel(name);
+            candidate.evidence.generic = !candidate.evidence.uniqueName;
+            candidate.evidence.ongoing ||= ['role', 'affiliation', 'relationshipToUser', 'relationship', 'background', 'goals', 'currentState']
+                .some(field => Boolean(meaningfulCandidateValue(candidate.profile[field])));
+            candidate.evidence.distinctive ||= ['appearance', 'personality', 'abilities', 'speechStyle']
+                .some(field => Boolean(meaningfulCandidateValue(candidate.profile[field])));
+            candidate.evidence.oneShot = candidate.seenMessages.length <= 1 && !candidate.evidence.ongoing;
+            candidate.evidenceKeys = [...new Set(candidate.evidenceKeys)].slice(-240);
+            candidate.updatedAt = new Date().toISOString();
+            candidate.score = candidateScore(candidate);
+            const index = state.candidates.findIndex(item => item.id === candidate.id);
+            if (index >= 0) state.candidates[index] = candidate;
+            else state.candidates.push(candidate);
+            state.candidates = state.candidates.slice(-120);
+            SillyTavern.getContext().chatMetadata[CHAT_KEY] = state;
+            queueChatMetadataSave();
+            showCandidateDialog();
+            return clone(candidate);
         }
 
         function pendingCandidate() {
@@ -2853,14 +2906,15 @@ function scheduleDiagnosticUi(delay = 80) {
             }
             candidate.status = 'rejected';
             candidate.rejectedAtTurn = state.candidateTurn;
-            candidate.rejectUntilTurn = state.candidateTurn + 20;
+            const reminderTurns = getConfig().candidateReminderTurns;
+            candidate.rejectUntilTurn = state.candidateTurn + reminderTurns;
             candidate.rejectedEvidenceCount = candidate.evidenceKeys.length;
             candidate.updatedAt = new Date().toISOString();
             state.pendingCandidateId = '';
             SillyTavern.getContext().chatMetadata[CHAT_KEY] = state;
             await SillyTavern.getContext().saveMetadata?.();
             closeCandidateDialog();
-            notify('info', getConfig().language === 'th' ? `จะยังไม่บันทึก ${candidate.name} และจะไม่ถามซ้ำอย่างน้อย 20 ข้อความ` : `${candidate.name} will stay ephemeral; Character Life will wait at least 20 messages before asking again.`);
+            notify('info', getConfig().language === 'th' ? `จะยังไม่บันทึก ${candidate.name} และจะไม่ถามซ้ำอย่างน้อย ${reminderTurns} คำตอบของ AI` : `${candidate.name} will stay ephemeral; Character Life will wait at least ${reminderTurns} AI replies before asking again.`);
         }
 
         async function processNpcCandidates(source, extractedUpdates, messageId, message) {
@@ -3452,6 +3506,7 @@ Keep machine tags at the END of the same normal assistant reply. Never place the
 [CL_NPC_UPDATE|Exact NPC Name|field]new factual value[/CL_NPC_UPDATE]
 Allowed fields: pronouns, gender, age, species, role, affiliation, appearance, personality, relationshipToUser, relationship, background, goals, abilities, speechStyle, currentState, notes.
 UNSAVED NPC POLICY: For a newly introduced unsaved NPC, emit only durable facts actually established by the character card, lorebook, world info, or conversation. Do not emit Unknown placeholders. Character Life keeps the speaker ephemeral, scores importance locally, and asks the user before creating a saved record.
+When those established facts exist, emit each useful profile field in this reply rather than recording only the NPC's name. The speaker header does not populate the dossier fields.
 Never infer gender identity or exact age from appearance alone. For a saved NPC, fill fields listed as missingIdentity or currently using an Unknown fallback only when supported facts become available. Otherwise emit only newly established or materially changed facts. The exact NPC name belongs in every tag's name slot.` : '';
             const relationshipProtocol = `\nNPC RELATIONSHIPS AND PARTNERS — CHAT-LOCAL MACHINE DATA\nRelationship to user is a short current label such as friend, employer, sibling, spouse, rival, or stranger. When it is newly established or materially changed, emit:\n[CL_NPC_UPDATE|Exact NPC Name|relationshipToUser]short relationship to the user[/CL_NPC_UPDATE]\nPartner links exist only in the current chat and reset when a new chat starts unless the chat data is carried over. Create a symmetric link only when the scene or user explicitly establishes it:\n[CL_NPC_PARTNER|Exact NPC Name|Exact Other NPC Name|partner label]\nUse USER as the other name when the NPC is partnered with the user. Remove a link only when the relationship ends:\n[CL_NPC_PARTNER_REMOVE|Exact NPC Name|Exact Other NPC Name]\nDo not invent romance or partnership. Keep the partner label concise (for example: dating, fiancé, spouse, or partner). These are machine tags and must never be shown as visible prose.`;
             const lifeProtocol = `\nNPC LIFE STATUS\nWhen role-play clearly establishes that an existing NPC dies, emit one hidden status tag at the END of the reply:\n[CL_NPC_STATUS|Exact NPC Name|dead]short cause or circumstance[/CL_NPC_STATUS]\nWhen the user explicitly resurrects a named NPC, emit:\n[CL_NPC_STATUS|Exact NPC Name|alive]short resurrection note[/CL_NPC_STATUS]\nDo not emit alive merely because a dead NPC is mentioned. Never let a saved dead NPC speak or act again until the user explicitly resurrects them. These are machine tags and must never be shown as visible prose.`;
@@ -3716,6 +3771,7 @@ Never infer gender identity or exact age from appearance alone. For a saved NPC,
         function editorForm(npc = null) {
             const value = npc || normalizeNpc({ name: 'New NPC', accent: getConfig().headerColor });
             const palette = npcPalette(value);
+            const mapCompatibility = rpgCompatibilityInstalled();
             const portraitOptions = value.forms.map(form => `<option value="${escapeHtml(form.id)}"${form.id === value.activeFormId ? ' selected' : ''}>${escapeHtml(form.name)}</option>`).join('');
             return `<section class="cl-editor"><div class="cl-detail-heading"><div><small>${escapeHtml(npc ? tr('Edit NPC') : tr('Create NPC'))}</small><h3>${escapeHtml(npc?.name || tr('Create NPC'))}</h3></div></div>
                 <form data-form="npc" class="cl-editor-form"><input type="hidden" name="id" value="${escapeHtml(npc?.id || '')}">
@@ -3730,7 +3786,7 @@ Never infer gender identity or exact age from appearance alone. For a saved NPC,
                         <label>${aiFieldTitle('Role / title', 'role')}<input name="role" required maxlength="160" value="${escapeHtml(value.role)}" placeholder="Occupation, rank, or narrative role"></label>
                         <label>${aiFieldTitle('Affiliation', 'affiliation')}<input name="affiliation" required maxlength="160" value="${escapeHtml(value.affiliation)}" placeholder="Faction, organization, household, or none"></label>
                         <label class="cl-enabled-toggle" data-enabled-toggle${activeScope === 'chat' ? ' hidden' : ''}><span>${escapeHtml(tr('Enabled'))}</span><span><input type="checkbox" name="enabled" value="1"${value.enabled !== false ? ' checked' : ''}> ${escapeHtml(tr('Enable NPC'))}</span></label>
-                        <label class="cl-enabled-toggle"><span>${escapeHtml(tr('World map marker'))}</span><span><input type="checkbox" name="mapVisible" value="1"${value.mapVisible !== false ? ' checked' : ''}> ${escapeHtml(tr('Show on world map'))}</span></label>
+                        ${mapCompatibility ? `<label class="cl-enabled-toggle"><span>${escapeHtml(tr('World map marker'))}</span><span><input type="checkbox" name="mapVisible" value="1"${value.mapVisible !== false ? ' checked' : ''}> ${escapeHtml(tr('Show on world map'))}</span></label>` : ''}
                         <label><span>${escapeHtml(tr('Theme mode'))}</span><select name="themeMode"><option value="auto"${value.themeMode !== 'custom' ? ' selected' : ''}>${escapeHtml(tr('Automatic from portrait'))}</option><option value="custom"${value.themeMode === 'custom' ? ' selected' : ''}>${escapeHtml(tr('Custom NPC colors'))}</option></select></label>
                         <label><span>${escapeHtml(tr('Header accent'))}</span><input name="headerAccent" type="color" value="${escapeHtml(palette.header)}"></label>
                         <label><span>${escapeHtml(tr('Thought accent'))}</span><input name="thoughtAccent" type="color" value="${escapeHtml(palette.thought)}"></label>
@@ -3832,7 +3888,9 @@ Never infer gender identity or exact age from appearance alone. For a saved NPC,
                 : `<button type="button" class="cl-life-action cl-kill-action" data-action="mark-dead" title="${escapeHtml(tr('Mark dead'))}"><i class="fa-solid fa-skull-crossbones"></i><span>${escapeHtml(tr('Mark dead'))}</span></button>`;
             const enabledAction = ['global', 'character'].includes(activeScope)
                 ? `<button type="button" class="cl-life-action cl-enable-action" data-action="toggle-enabled" title="${escapeHtml(disabled ? tr('Enable NPC') : tr('Disable NPC'))}"><i class="fa-solid ${disabled ? 'fa-toggle-off' : 'fa-toggle-on'}"></i><span>${escapeHtml(disabled ? tr('Enable NPC') : tr('Disable NPC'))}</span></button>` : '';
-            const mapAction = `<button type="button" class="cl-life-action cl-map-action" data-action="toggle-map-marker" title="${escapeHtml(tr(npc.mapVisible === false ? 'Show on world map' : 'Hide from world map'))}"><i class="fa-solid fa-${npc.mapVisible === false ? 'eye-slash' : 'location-dot'}"></i><span>${escapeHtml(tr(npc.mapVisible === false ? 'Show on world map' : 'Hide from world map'))}</span></button>`;
+            const mapAction = rpgCompatibilityInstalled()
+                ? `<button type="button" class="cl-life-action cl-map-action" data-action="toggle-map-marker" title="${escapeHtml(tr(npc.mapVisible === false ? 'Show on world map' : 'Hide from world map'))}"><i class="fa-solid fa-${npc.mapVisible === false ? 'eye-slash' : 'location-dot'}"></i><span>${escapeHtml(tr(npc.mapVisible === false ? 'Show on world map' : 'Hide from world map'))}</span></button>`
+                : '';
             return `<section class="cl-profile${npc.isDead ? ' is-dead' : ''}${disabled ? ' is-disabled' : ''}"><div class="cl-profile-hero">${npcAvatar(npc, 'hero')}<div><small>${escapeHtml(npc.isDead ? tr('Dead') : disabled ? tr('Disabled') : (npc.role || 'Unknown role'))}</small><h3>${escapeHtml(npc.name)}</h3><p>${escapeHtml(npc.affiliation || 'Unknown affiliation')}</p></div>
                 <div class="cl-profile-actions">${lifeAction}${enabledAction}${mapAction}<button type="button" data-action="edit" title="${escapeHtml(tr('Edit NPC'))}"><i class="fa-solid fa-pen"></i></button><button type="button" data-action="delete-npc" title="${escapeHtml(tr('Delete'))}"><i class="fa-solid fa-trash"></i></button></div></div>
                 ${npc.isDead ? `<div class="cl-life-banner"><i class="fa-solid fa-skull-crossbones"></i><strong>${escapeHtml(tr('Dead'))}</strong>${npc.deathReason ? `<span>${escapeHtml(npc.deathReason)}</span>` : ''}</div>` : ''}
@@ -4566,7 +4624,9 @@ Never infer gender identity or exact age from appearance alone. For a saved NPC,
                     goals: data.get('goals'), abilities: data.get('abilities'), speechStyle: data.get('speechStyle'), currentState: data.get('currentState'),
                     adultProfile, adultAppearance: adultProfile ? data.get('adultAppearance') : '', notes: data.get('notes'),
                     themeMode: data.get('themeMode'), customPalette: { header: data.get('headerAccent'), thought: data.get('thoughtAccent'), dialogue: data.get('dialogueAccent') },
-                    enabled: targetScope === 'chat' ? existing?.enabled !== false : data.has('enabled'), mapVisible: data.has('mapVisible'), createdAt: existing?.createdAt || new Date().toISOString(), updatedAt: new Date().toISOString(), forms: existing?.forms || [], activeFormId: existing?.activeFormId || '',
+                    enabled: targetScope === 'chat' ? existing?.enabled !== false : data.has('enabled'),
+                    mapVisible: rpgCompatibilityInstalled() ? data.has('mapVisible') : existing?.mapVisible !== false,
+                    createdAt: existing?.createdAt || new Date().toISOString(), updatedAt: new Date().toISOString(), forms: existing?.forms || [], activeFormId: existing?.activeFormId || '',
                 });
                 const files = form.querySelector('[name="portraits"]')?.files;
                 if (files?.length) {
@@ -4871,7 +4931,8 @@ Never infer gender identity or exact age from appearance alone. For a saved NPC,
             if (element.type === 'checkbox') element.checked = Boolean(config[key]);
             else element.value = String(config[key]);
             const update = () => {
-                config[key] = element.type === 'checkbox' ? element.checked : element.type === 'range' ? Number(element.value) : element.value;
+                config[key] = element.type === 'checkbox' ? element.checked : ['range', 'number'].includes(element.type) ? Number(element.value) : element.value;
+                getConfig();
                 SillyTavern.getContext().saveSettingsDebounced();
                 callback?.();
             };
@@ -5057,6 +5118,7 @@ Never infer gender identity or exact age from appearance alone. For a saved NPC,
             bindSetting('character-life-wand', 'showWand', syncWandVisibility);
             bindSetting('character-life-inject', 'injectPrompt', updatePrompt);
             bindSetting('character-life-discover', 'autoDiscover', showCandidateDialog);
+            bindSetting('character-life-candidate-reminder-turns', 'candidateReminderTurns');
             bindSetting('character-life-profile-updates', 'autoProfileUpdates', updatePrompt);
             bindSetting('character-life-auto-continuity', 'autoContinuity', () => {
                 if (getConfig().autoContinuity) globalThis.CharacterLifeContinuity?.capture?.();
@@ -5174,6 +5236,7 @@ Never infer gender identity or exact age from appearance alone. For a saved NPC,
                     version: CHARACTER_LIFE_BUNDLE_VERSION,
                     list: () => clone(chatState().candidates),
                     pending: () => clone(pendingCandidate()),
+                    enrich: value => enrichCandidateProfile(value),
                     accept: id => handleCandidateDecision(cleanText(id || chatState().pendingCandidateId, '', 120), true),
                     reject: id => handleCandidateDecision(cleanText(id || chatState().pendingCandidateId, '', 120), false),
                 });
@@ -6470,7 +6533,7 @@ Never infer gender identity or exact age from appearance alone. For a saved NPC,
             context.setExtensionPrompt(
                 CL184_PROMPT_KEY,
                 `CHARACTER LIFE — SPARSE NPC FACT POLICY v${CL184_VERSION}
-        Unsaved new speakers remain ephemeral until Character Life's local importance rules qualify them and the user approves saving. For those speakers, emit [CL_NPC_UPDATE] only for durable facts actually established by the card, lorebook, world info, or conversation; do not manufacture identity-minimum values or Unknown placeholders.
+        Unsaved new speakers remain ephemeral until Character Life's local importance rules qualify them and the user approves saving. For those speakers, emit [CL_NPC_UPDATE] for every useful durable profile fact already established by the card, lorebook, world info, or conversation—not only the name; do not manufacture identity-minimum values or Unknown placeholders.
         Saved NPCs may keep a user-readable identity minimum of name, role, species/race, age, gender, and affiliation. Replace a saved fallback only when a supported fact becomes available, and keep all other unknown profile fields empty.
         Automatic [CL_NPC_UPDATE] tags may only record facts actually established by the character card, lorebook, world info, or conversation. Appearance alone must not be used to guess exact age, gender identity, ethnicity, nationality, personality, health, or background.
         Outside the six-field identity minimum, an empty field is valid and should remain empty until the information becomes established. relationshipToUser is a short label for the NPC's relationship with the user; do not invent a partner link here.
@@ -11739,9 +11802,27 @@ Never infer gender identity or exact age from appearance alone. For a saved NPC,
                 )) || chatState.npcs.find(npc => namesFor(npc).some(value => identityNames.includes(value)));
                 if (!entry) {
                     // Unknown RPG records stay ephemeral. The same reply's speaker
-                    // tags feed the candidate scorer; only an approved candidate may
-                    // become a Chat-scope NPC.
-                    if (!existingView) { deferred += 1; continue; }
+                    // tags feed the candidate scorer; enrich that pending candidate
+                    // with the RPG dossier before the user decides whether to save it.
+                    if (!existingView) {
+                        const abilities = Array.isArray(raw?.abilities)
+                            ? raw.abilities.map(value => meaningful(value?.name || value)).filter(Boolean).join(', ').slice(0, 3000) : '';
+                        await globalThis.CharacterLifeNpcCandidates?.enrich?.({
+                            name,
+                            aliases,
+                            role: raw?.title || raw?.occupation,
+                            affiliation: raw?.faction || raw?.affiliation,
+                            gender: raw?.gender,
+                            age: raw?.age,
+                            species: raw?.race || raw?.species,
+                            relationshipToUser: raw?.relationship,
+                            currentState: [meaningful(raw?.activity), meaningful(raw?.location)].filter(Boolean).join(' · '),
+                            abilities,
+                            notes: raw?.notes,
+                        });
+                        deferred += 1;
+                        continue;
+                    }
                     const seed = cloneValue(existingView);
                     entry = {
                         ...seed,
