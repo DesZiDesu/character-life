@@ -2,7 +2,9 @@
 
 Character Life's is a responsive SillyTavern extension for persistent NPC identities, portraits, speaker presentation, AI-assisted profile updates, and optional skill tracking inside the main role-play chat.
 
-**Current version: 1.26.10**
+**Current version: 1.26.11**
+
+- v1.26.11 keeps chat portraits in sync with the current Global/Character library, including linked chat overrides and portraits added after a chat started. Existing headers refresh after edits, server-saved images load without relying on the browser image database, and versioned JS/CSS URLs pick up this release after the extension update and a normal page reload; clearing Safari data is unnecessary.
 
 - v1.26.10 shows RPG-only map controls only while Tretaresia RPG is installed, carries Tretaresia NPC dossier fields into Character Life candidates, and makes the rejected-candidate reminder interval configurable.
 

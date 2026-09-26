@@ -1,5 +1,5 @@
 /* Character Life consolidated runtime bundle. Generated from the preserved v1.9.16 module stack. */
-const CHARACTER_LIFE_BUNDLE_VERSION = '1.26.10';
+const CHARACTER_LIFE_BUNDLE_VERSION = '1.26.11';
 const closeCharacterLifeHostWand = () => {
     const menu = document.getElementById('extensionsMenu');
     if (!menu) return;
@@ -2183,12 +2183,22 @@ function scheduleDiagnosticUi(delay = 80) {
         }
 
         function chatAwareNpc(npc, scope) {
-            if (!npc || !['global', 'character'].includes(scope) || !hasChat()) return npc;
+            if (!npc || !hasChat()) return npc;
+            // Portraits are author-owned presentation, not frozen story state.
+            // Linked AI overrides use the same live source as the Characters panel.
+            if (scope === 'chat') {
+                if (!npc.sourceId || !['global', 'character'].includes(npc.sourceScope)) return npc;
+                const source = getLibrary(npc.sourceScope).find(entry => entry.id === npc.sourceId);
+                return source ? { ...npc, forms: clone(source.forms), activeFormId: source.activeFormId } : npc;
+            }
+            if (!['global', 'character'].includes(scope)) return npc;
             const state = ensureChatOriginals();
             const key = `${scope}:${npc.id}`;
             const original = state?.originalSources?.[key] || npcProfileSnapshot(npc, true);
             const view = normalizeNpc({
                 ...clone(original),
+                forms: clone(npc.forms),
+                activeFormId: npc.activeFormId,
                 id: npc.id,
                 original: clone(original),
                 originalAt: npc.originalAt,
@@ -2205,7 +2215,7 @@ function scheduleDiagnosticUi(delay = 80) {
         }
 
         function getChatAwareLibrary(scope) {
-            if (!['global', 'character'].includes(scope) || !hasChat()) return getLibrary(scope);
+            if (!hasChat()) return getLibrary(scope);
             return getLibrary(scope).map(npc => chatAwareNpc(npc, scope));
         }
 
@@ -2272,7 +2282,7 @@ function scheduleDiagnosticUi(delay = 80) {
         function effectiveNpcs() {
             const merged = new Map();
             for (const scope of ['global', 'character', 'chat']) {
-                const library = scope === 'chat' ? getLibrary(scope) : getChatAwareLibrary(scope);
+                const library = getChatAwareLibrary(scope);
                 for (const npc of library) {
                     if (!npcEnabledForRuntime(npc, scope)) continue;
                     const keys = [npc.name, ...npc.aliases].map(name => name.toLocaleLowerCase());
@@ -2335,11 +2345,18 @@ function scheduleDiagnosticUi(delay = 80) {
         async function portraitUrl(id) {
             if (!id) return '';
             if (portraitUrls.has(id)) return portraitUrls.get(id);
-            const blob = await portraitGet(id);
-            if (!blob) return '';
-            const url = URL.createObjectURL(blob);
-            portraitUrls.set(id, url);
-            return url;
+            const blob = await portraitGet(id).catch(() => null);
+            if (blob) {
+                const url = URL.createObjectURL(blob);
+                portraitUrls.set(id, url);
+                return url;
+            }
+            // Server-saved portraits must not depend on this browser's IndexedDB.
+            // Do not cache a missing image or server path: later imports/replacements
+            // can restore the same asset ID without a browser cache reset.
+            const savedPath = rootSettings().config?.persistentMedia?.assets?.[id]?.path;
+            if (savedPath) return savedPath;
+            return await globalThis.CharacterLifeMedia?.path?.(id).catch(() => '') || '';
         }
 
         function loadImage(file) {
@@ -3288,6 +3305,8 @@ function scheduleDiagnosticUi(delay = 80) {
                 target.autoPalette = await paletteFromImage(blob, target.name);
                 if (['global', 'character'].includes(scope)) refreshNpcOriginal(target, scope);
                 await saveLibrary(scope, getLibrary(scope).map(entry => entry.id === target.id ? target : entry));
+            } catch (error) {
+                console.warn("[Character Life's] Optional portrait palette unavailable.", error);
             } finally {
                 paletteJobs.delete(key);
             }
@@ -3349,7 +3368,14 @@ function scheduleDiagnosticUi(delay = 80) {
                 if (species) species.textContent = npc.species || 'Unknown race';
                 block.style.setProperty('--cl-local-header', palette.header);
                 const form = chooseForm(npc, block.dataset.clForm);
-                if (!form?.portraitId) continue;
+                if (!form?.portraitId) {
+                    delete block.dataset.clPortraitId;
+                    const image = block.querySelector('.cl-chat-portrait img');
+                    if (image) { image.hidden = true; image.removeAttribute('src'); }
+                    block.querySelector('.cl-chat-portrait')?.classList.remove('has-image');
+                    chatPortraitObserver?.unobserve(block);
+                    continue;
+                }
                 block.dataset.clPortraitId = form.portraitId;
                 if (typeof IntersectionObserver === 'function') {
                     chatPortraitObserver ||= new IntersectionObserver(entries => {
@@ -3373,7 +3399,7 @@ function scheduleDiagnosticUi(delay = 80) {
             const portrait = block.querySelector('.cl-chat-portrait');
             if (!image || !portrait || !form?.portraitId) return;
             const url = await portraitUrl(form.portraitId);
-            if (!url || !image.isConnected) return;
+            if (!url || !image.isConnected || block.dataset.clPortraitId !== form.portraitId) return;
             image.src = url;
             image.alt = `${resolved.npc.name} — ${form.name}`;
             image.hidden = false;
@@ -3394,7 +3420,12 @@ function scheduleDiagnosticUi(delay = 80) {
             if (!message || message.is_user || message.is_system) return;
             const element = findMessageText(messageId);
             if (!element) return;
-            if (element.classList.contains('character-life-rendered') && !containsSpeakerMarkup(element.innerHTML)) return;
+            if (element.classList.contains('character-life-rendered') && !containsSpeakerMarkup(element.innerHTML)) {
+                // Rehydrate existing headers after a library edit without reapplying
+                // AI updates or replacing the user's rendered dialogue/narration.
+                void hydrateChat(element);
+                return;
+            }
             const candidateSource = typeof message.mes === 'string' ? message.mes : element.innerHTML;
             const rawExtracted = extractNpcUpdates(candidateSource);
             const renderedExtracted = extractNpcUpdates(element.innerHTML);
@@ -3430,7 +3461,7 @@ function scheduleDiagnosticUi(delay = 80) {
         function effectiveRegistry() {
             const unique = new Map();
             for (const scope of ['global', 'character', 'chat']) {
-                const library = scope === 'chat' ? getLibrary(scope) : getChatAwareLibrary(scope);
+                const library = getChatAwareLibrary(scope);
                 for (const npc of library) {
                     if (!npcEnabledForRuntime(npc, scope)) continue;
                     unique.set(npc.name.toLocaleLowerCase(), { ...npc, scope });
@@ -5225,7 +5256,7 @@ Never infer gender identity or exact age from appearance alone. For a saved NPC,
             try {
                 rootSettings();
                 exposeLifecycleApi();
-                await openDb();
+                await openDb().catch(error => console.warn("[Character Life's] Local portrait cache unavailable; using server images.", error));
                 configureDocument();
                 buildManager();
                 bindScopeButtons();
@@ -5245,6 +5276,13 @@ Never infer gender identity or exact age from appearance alone. For a saved NPC,
                 scheduleRenderAll(150);
                 setTimeout(showCandidateDialog, 180);
                 document.addEventListener('keydown', event => { if (event.key === 'Escape') closeManager(); });
+                globalThis.addEventListener('character-life:portrait-replaced', event => {
+                    const id = event.detail?.portraitId;
+                    const url = portraitUrls.get(id);
+                    if (url) URL.revokeObjectURL(url);
+                    portraitUrls.delete(id);
+                    scheduleRenderAll(0);
+                });
                 window.addEventListener('beforeunload', () => portraitUrls.forEach(url => URL.revokeObjectURL(url)), { once: true });
                 console.info(`[Character Life's] v${VERSION} loaded.`);
             } catch (error) {

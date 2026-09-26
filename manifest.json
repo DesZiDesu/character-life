@@ -4,9 +4,9 @@
     "requires": [],
     "optional": [],
     "dependencies": [],
-    "js": "character-life.js?v=1.26.10",
+    "js": "character-life.js?v=1.26.11",
     "author": "DesZiDesu",
-    "version": "1.26.10",
+    "version": "1.26.11",
     "homePage": "https://github.com/DesZiDesu/character-life",
     "auto_update": true
 }
